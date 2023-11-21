@@ -99,8 +99,8 @@ void printArray(int arr[], int size) {
 }
 
 int main() {
-    //const int size = 1000000000; // Change this value as needed
-    const int size = 10000000;
+    const int size = 1000000000; // Change this value as needed
+    //const int size = 10000000;
     int* arr = new int[size];
 
     srand(time(nullptr)); // Initialize random seed
