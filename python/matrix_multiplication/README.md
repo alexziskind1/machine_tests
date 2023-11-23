@@ -1,6 +1,6 @@
 
-1. conda create --name matrix_multi python=3.11
-2. conda activate matrix_multi
+1. conda create --name az_test_matrix_multi python=3.11
+2. conda activate az_test_matrix_multi
 3. If not using accelerate framework (slower)
     pip install numpy
    else if using the accelerate framework (faster), build numpy
