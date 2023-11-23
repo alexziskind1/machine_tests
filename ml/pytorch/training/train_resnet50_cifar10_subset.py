@@ -4,6 +4,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader, Subset
 
+batch_size = 128
 num_epochs = 1
 num_samples = 1000  # Number of samples to use for a quick test
 
@@ -34,7 +35,7 @@ transform = transforms.Compose([
 ])
 train_dataset = datasets.CIFAR100(root='./data', train=True, download=True, transform=transform)
 train_subset = Subset(train_dataset, range(num_samples))
-train_loader = DataLoader(train_subset, batch_size=128, shuffle=True)
+train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
 
 # Define the model
 model = models.resnet50(weights=None, num_classes=100).to(device)
