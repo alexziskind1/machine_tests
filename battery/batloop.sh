@@ -21,7 +21,7 @@ while true; do
     iterations=0
     end=$((SECONDS+60))
     while [ $SECONDS -lt $end ]; do
-        python ./benchmarksgame/python/mandelbrot/main.py 1000 >/dev/null
+        python ../../benchmarksgame/python/mandelbrot/main.py 1000 >/dev/null
 
         # Check if the program ran successfully
         if [ $? -ne 0 ]; then
