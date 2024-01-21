@@ -1,0 +1,18 @@
+2024-01-20 15:01:04, Battery: 100% (100%;), CPU: , Memory: , Work Done: 14 iterations, Total Work Done: 0 iterations
+2024-01-20 15:04:48, Battery: 97% (97%;), CPU: 7.20% 8.4%, Memory: 15G 0B, Work Done: 112 iterations, Total Work Done: 112 iterations
+2024-01-20 15:06:49, Battery: 94% (94%;), CPU: 3.31% 5.63%, Memory: 16G 0B, Work Done: 114 iterations, Total Work Done: 226 iterations
+2024-01-20 15:08:50, Battery: 91% (91%;), CPU: 6.21% 7.16%, Memory: 16G 0B, Work Done: 112 iterations, Total Work Done: 338 iterations
+2024-01-20 15:10:51, Battery: 89% (89%;), CPU: 3.48% 6.31%, Memory: 16G 0B, Work Done: 114 iterations, Total Work Done: 452 iterations
+2024-01-20 15:12:52, Battery: 86% (86%;), CPU: 1.84% 4.69%, Memory: 16G 0B, Work Done: 114 iterations, Total Work Done: 566 iterations
+2024-01-20 15:14:53, Battery: 84% (84%;), CPU: 1.99% 5.15%, Memory: 16G 0B, Work Done: 112 iterations, Total Work Done: 678 iterations
+2024-01-20 15:16:54, Battery: 81% (81%;), CPU: 1.57% 5.8%, Memory: 16G 0B, Work Done: 115 iterations, Total Work Done: 793 iterations
+2024-01-20 15:18:55, Battery: 78% (78%;), CPU: 1.57% 5.24%, Memory: 16G 0B, Work Done: 117 iterations, Total Work Done: 910 iterations
+2024-01-20 15:20:56, Battery: 1% (1%;), CPU: 1.54% 4.75%, Memory: 16G 0B, Work Done: 99 iterations, Total Work Done: 1009 iterations
+2024-01-20 15:22:57, Battery: 1% (1%;), CPU: 3.52% 5.28%, Memory: 16G 0B, Work Done: 97 iterations, Total Work Done: 1106 iterations
+2024-01-20 15:24:58, Battery: 1% (1%;), CPU: 1.90% 4.99%, Memory: 16G 0B, Work Done: 96 iterations, Total Work Done: 1202 iterations
+2024-01-20 15:26:59, Battery: 1% (1%;), CPU: 2.61% 5.45%, Memory: 17G 0B, Work Done: 86 iterations, Total Work Done: 1288 iterations
+2024-01-20 15:29:00, Battery: 1% (1%;), CPU: 2.51% 5.37%, Memory: 17G 0B, Work Done: 85 iterations, Total Work Done: 1373 iterations
+2024-01-20 15:31:01, Battery: 1% (1%;), CPU: 2.19% 5.42%, Memory: 17G 0B, Work Done: 85 iterations, Total Work Done: 1458 iterations
+2024-01-20 15:33:03, Battery: 1% (1%;), CPU: 2.62% 5.59%, Memory: 17G 0B, Work Done: 86 iterations, Total Work Done: 1544 iterations
+2024-01-20 15:35:04, Battery: 1% (1%;), CPU: 2.72% 5.66%, Memory: 17G 0B, Work Done: 86 iterations, Total Work Done: 1630 iterations
+2024-01-20 15:37:05, Battery: 1% (1%;), CPU: 2.37% 5.43%, Memory: 17G 0B, Work Done: 86 iterations, Total Work Done: 1716 iterations
