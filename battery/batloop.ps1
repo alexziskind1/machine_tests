@@ -19,7 +19,7 @@ try {
         $iterations = 0
         $end = (Get-Date).AddSeconds(60)
         while ((Get-Date) -lt $end) {
-            $output = python ../../benchmarksgame/python/mandelbrot/main.py 1000 | Out-Null
+            $output = python ../benchmarksgame/python/mandelbrot/main.py 1000 | Out-Null
 
             if ($LASTEXITCODE -ne 0) {
                 $errorLog = "Mandelbrot program encountered an error at $(Get-Date)"
