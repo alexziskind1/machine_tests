@@ -33,7 +33,7 @@ def clean_filename(file_name, filename_to_model):
 
 
 def clean_battery(battery_value):
-    return battery_value.split()[1]
+    return int(battery_value.split("%")[0].split(":")[-1].strip())
 
 
 def split_cpu(cpu_value):
