@@ -2,43 +2,40 @@ import os
 import pandas as pd
 
 
-def clean_filename(file_name):
-    """
-    Cleans the filename by removing 'batlog_' prefix and '.txt' suffix.
+filename_to_model = {
+    "m1pro14": "MacBook Pro 14 M1",
+    "m2max16": "MacBook Pro 16 M2 Max",
+    "corei9_mbp2019": "MacBook Pro 19 Core i9",
+    "xelite_galaxybook4edge": "Samsung Galaxy Book 4 Edge X Elite",
+    "coreU7_155H_xps13": "Dell XPS 13 Core Ultra 7 155H",
+    "xelite_vivobooks15": "Asus VivoBook S15 X Elite",
+    "m2mba13": "MacBook Air 13 M2",
+    "corei5_2017mba": "MacBook Air 2017 Core i5",
+    "xelite_surface_laptop7": "Microsoft Surface Laptop 7 X Elite",
+    "m2max16_2": "MacBook Pro 16 M2 Max (2)",
+    "m1mba": "MacBook Air M1",
+    "m3mbp": "MacBook Pro M3",
+    "xplus_surface_laptop7": "Microsoft Surface Laptop 7 X Plus",
+    "xelite_xps13": "Dell XPS 13 X Elite",
+    "m3mba": "MacBook Air 13 M3",
+    "m3pro14": "MacBook Pro 14 M3 Pro",
+    "m3max16": "MacBook Pro 16 M3 Max",
+    "coreU7_165H_surface_laptop6": "Microsoft Surface Laptop 6 Core Ultra 7 165H",
+}
 
-    Parameters:
-    file_name (str): The original filename.
 
-    Returns:
-    str: The cleaned filename.
-    """
-    return file_name.replace("batlog_", "").replace(".txt", "")
+def clean_filename(file_name, filename_to_model):
+    cleaned_name = file_name.replace("batlog_", "").replace(".txt", "")
+    return filename_to_model.get(
+        cleaned_name, cleaned_name
+    )  # Default to cleaned_name if not found
 
 
 def clean_battery(battery_value):
-    """
-    Cleans the battery percentage value to remove unnecessary details.
-
-    Parameters:
-    battery_value (str): The original battery string.
-
-    Returns:
-    str: The cleaned battery percentage value.
-    """
     return battery_value.split()[1]
 
 
 def split_cpu(cpu_value):
-    """
-    Splits the CPU usage into two separate columns for each percentage.
-    Returns 'Unknown' for either or both values if data is incomplete or malformed.
-
-    Parameters:
-    cpu_value (str): The original CPU string.
-
-    Returns:
-    tuple: The first and second CPU usage percentages, or 'Unknown' if data is malformed.
-    """
     try:
         # Attempt to split the string and extract both CPU percentages
         percentages = cpu_value.split(":")[1].strip().split()
@@ -54,15 +51,6 @@ def split_cpu(cpu_value):
 
 
 def clean_memory(memory_value):
-    """
-    Cleans the memory usage to only keep the second value.
-
-    Parameters:
-    memory_value (str): The original memory string.
-
-    Returns:
-    str: The second memory value, or 'Unknown' if data is malformed.
-    """
     try:
         # Attempt to split the string and extract the second memory value
         return memory_value.split(":")[1].strip().split()[1]
@@ -72,25 +60,14 @@ def clean_memory(memory_value):
 
 
 def extract_iterations(iteration_string):
-    """
-    Extracts the integer number of iterations.
-
-    Parameters:
-    iteration_string (str): The original iteration string.
-
-    Returns:
-    int: The number of iterations.
-    """
     return int(iteration_string.split(":")[1].strip().split()[0])
 
 
 def read_data(file_path, columns, file_name):
-    """
-    Reads a single file, cleans necessary fields, and returns a DataFrame with specified columns.
-    Adds and cleans the filename as the first column and cleans other specified fields.
-    """
     data = pd.read_csv(file_path, names=columns, skiprows=1)
-    data.insert(0, "Filename", clean_filename(file_name))
+    data.insert(
+        0, "Model", clean_filename(file_name, filename_to_model)
+    )  # Use 'Model' instead of 'Filename'
     data["Battery"] = data["Battery"].apply(clean_battery)
     data[["CPU1", "CPU2"]] = data.apply(
         lambda x: split_cpu(x["CPU"]), axis=1, result_type="expand"
@@ -105,17 +82,6 @@ def read_data(file_path, columns, file_name):
 
 
 def combine_data(directory, file_extension, columns):
-    """
-    Combines and cleans data from all files in a directory that have a specific file extension into a single DataFrame.
-
-    Parameters:
-    directory (str): The directory to search for files.
-    file_extension (str): The file extension to look for.
-    columns (list): The list of column names for the DataFrames, without 'Filename'.
-
-    Returns:
-    pd.DataFrame: The combined and cleaned DataFrame from all files.
-    """
     data_frames = []
     for filename in os.listdir(directory):
         if filename.endswith(file_extension):
@@ -125,19 +91,12 @@ def combine_data(directory, file_extension, columns):
 
 
 def save_data(df, output_file):
-    """
-    Saves the DataFrame to a CSV file.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame to save.
-    output_file (str): The path to the output file where the data should be saved.
-    """
     df.to_csv(output_file, index=False)
     print(f"Data combined and saved to {output_file}")
 
 
 def main():
-    directory = "batloop_logs"
+    directory = "../batloop_logs"
     output_file = "combined_data.csv"
     columns = ["Timestamp", "Battery", "CPU", "Memory", "Work Done", "Total Work Done"]
     combined_data = combine_data(directory, ".txt", columns)
