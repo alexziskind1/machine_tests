@@ -1,4 +1,3 @@
-2024-01-20 15:01:04, Battery: 100% (100%;), CPU: , Memory: , Work Done: 14 iterations, Total Work Done: 0 iterations
 2024-01-20 15:04:48, Battery: 97% (97%;), CPU: 7.20% 8.4%, Memory: 15G 0B, Work Done: 112 iterations, Total Work Done: 112 iterations
 2024-01-20 15:06:49, Battery: 94% (94%;), CPU: 3.31% 5.63%, Memory: 16G 0B, Work Done: 114 iterations, Total Work Done: 226 iterations
 2024-01-20 15:08:50, Battery: 91% (91%;), CPU: 6.21% 7.16%, Memory: 16G 0B, Work Done: 112 iterations, Total Work Done: 338 iterations
