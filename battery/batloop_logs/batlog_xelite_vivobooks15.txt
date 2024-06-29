@@ -1,5 +1,3 @@
-Mandelbrot program encountered an error at 06/26/2024 16:56:59
-2024-06-26 16:58:31, Battery: 98% (Charging), CPU: 4.17155038376532%, Memory: Available 5534MB, Work Done: 157 157[0] iterations, Total Work Done: 157 157[1] iterations
 2024-06-26 22:24:59, Battery: 100% (Discharging), CPU: 1.68936507858279%, Memory: Available 5940MB, Work Done: 177 177[0] iterations, Total Work Done: 177 177[1] iterations
 2024-06-26 22:27:01, Battery: 100% (Discharging), CPU: 4.70985638688516%, Memory: Available 5966MB, Work Done: 172 349[0] iterations, Total Work Done: 172 349[1] iterations
 2024-06-26 22:29:03, Battery: 99% (Discharging), CPU: 4.69529680022496%, Memory: Available 6127MB, Work Done: 169 518[0] iterations, Total Work Done: 169 518[1] iterations
