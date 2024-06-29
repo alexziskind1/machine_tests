@@ -8,7 +8,7 @@ def read_data(filepath):
     """Reads the CSV data from the specified filepath."""
     data = pd.read_csv(filepath)
     data["Timestamp"] = pd.to_datetime(data["Timestamp"])
-    data["Battery"] = data["Battery"].str.rstrip("%").astype(int)
+    # Assume Battery is already an integer, so no need for conversion
     return data
 
 
@@ -26,7 +26,6 @@ def process_data(data):
     data["Battery"] = (
         data["Battery"].round().astype(int)
     )  # Ensure Battery is an integer after averaging
-
     return data
 
 
