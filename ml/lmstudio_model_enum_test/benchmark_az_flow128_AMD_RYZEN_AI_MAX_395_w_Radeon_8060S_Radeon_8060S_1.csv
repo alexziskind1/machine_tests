@@ -1,0 +1,11 @@
+host,system,release,cpu,total_ram_gb,gpu_names,gpu_memory_gb,model_name,params_b,size_gb,architecture,format,tokens_per_second,total_tokens,time_to_first_token,generation_time
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,DeepSeek-R1-Distill-Qwen-7B-Q4_K_M,7.0,4.361451804637909,qwen2,gguf,37.433263439976145,184,0.262,4.461
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,qwen2.5-coder-14b-instruct-q4_k_m,14.0,8.370829999446869,qwen2,gguf,20.83322943023201,76,0.276,1.584
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,llama-3.2-1b-instruct-q8_0,1.0,1.2303508818149567,llama,gguf,111.56791976035211,70,0.02,0.412
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,Llama-3.3-70B-Instruct-Q4_K_M,70.0,39.60020703077316,llama,gguf,4.610823833499295,104,1.254,11.919
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,gemma-3-12B-it-QAT-Q4_0,12.0,7.209707498550415,gemma3,gguf,21.78597801990447,71,0.098,2.248
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,gemma-3-27B-it-QAT-Q4_0,27.0,15.29709967970848,gemma3,gguf,10.767842972480672,88,0.195,6.129
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,gemma-3-4B-it-QAT-Q4_0,4.0,2.99398136138916,gemma3,gguf,59.75510997860088,66,0.04,0.736
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,gemma-3-1B-it-QAT-Q4_0,1.0,0.6709485054016113,gemma3,gguf,140.10875942450326,54,0.019,0.228
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,gemma-3-27b-it-Q4_K_M,27.0,16.208872109651566,gemma3,gguf,2.9435546896271783,73,3.032,17.326
+az_flow128,Windows,11,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,126.6,Radeon 8060S,1,Llama-4-Scout-17B-16E-Instruct-Q3_K_L-00001-of-00002,17.0,53.8300441801548,llama4,gguf,14.51477353969686,86,1.096,4.34
