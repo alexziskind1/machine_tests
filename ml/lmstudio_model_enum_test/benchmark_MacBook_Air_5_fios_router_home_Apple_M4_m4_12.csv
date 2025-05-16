@@ -1,0 +1,9 @@
+host,system,release,cpu,total_ram_gb,gpu_names,gpu_memory_gb,model_name,params_b,size_gb,architecture,format,tokens_per_second,total_tokens,time_to_first_token,generation_time
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,DeepSeek-R1-Distill-Qwen-7B-4bit,,4.000802411697805,qwen2,safetensors,24.847049126680115,408,0.879,15.656
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,DeepSeek-R1-Distill-Qwen-7B-Q4_K_M,7.0,4.361451804637909,qwen2,gguf,19.621164687646974,319,0.206,15.392
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,llama-3.2-1b-instruct-q8_0,1.0,1.2303508818149567,llama,gguf,69.4032095128666,60,0.052,0.519
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,Qwen2.5-Coder-14B-Instruct-MLX-4bit,,7.753708904609084,qwen2,safetensors,12.917119021058813,81,1.211,2.942
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,Llama-3.2-1B-Instruct-8bit,,1.2315112333744764,llama,safetensors,73.69194532111409,100,0.247,0.693
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,gemma-3-12B-it-QAT-Q4_0,12.0,7.209707498550415,gemma3,gguf,13.399660742466997,71,0.332,3.656
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,gemma-3-4B-it-QAT-Q4_0,4.0,2.99398136138916,gemma3,gguf,35.03193080875193,66,0.13,1.256
+MacBook_Air_5_fios_router_home,Darwin,24.3.0,Apple_M4,16.0,m4,12,gemma-3-1B-it-QAT-Q4_0,1.0,0.6709485054016113,gemma3,gguf,101.76630915719798,45,0.049,0.226
