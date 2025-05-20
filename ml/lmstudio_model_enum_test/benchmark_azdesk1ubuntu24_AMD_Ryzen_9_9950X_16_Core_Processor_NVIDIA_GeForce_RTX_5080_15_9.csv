@@ -1,0 +1,6 @@
+host,system,release,cpu,total_ram_gb,gpu_names,gpu_memory_gb,model_name,params_b,size_gb,architecture,format,tokens_per_second,total_tokens,time_to_first_token,generation_time
+azdesk1ubuntu24,Linux,6.11.0-26-generic,AMD_Ryzen_9_9950X_16_Core_Processor,46.2,NVIDIA GeForce RTX 5080,15.9,DeepSeek-R1-Distill-Qwen-7B-Q4_K_M,7.0,4.361451804637909,qwen2,gguf,135.8029104973062,427,0.024,3.019
+azdesk1ubuntu24,Linux,6.11.0-26-generic,AMD_Ryzen_9_9950X_16_Core_Processor,46.2,NVIDIA GeForce RTX 5080,15.9,gemma-3-4B-it-QAT-Q4_0,4.0,2.99398136138916,gemma3,gguf,175.1804687291289,78,0.021,0.319
+azdesk1ubuntu24,Linux,6.11.0-26-generic,AMD_Ryzen_9_9950X_16_Core_Processor,46.2,NVIDIA GeForce RTX 5080,15.9,gemma-3-12B-it-QAT-Q4_0,12.0,7.209707498550415,gemma3,gguf,83.03278797976903,55,0.029,0.397
+azdesk1ubuntu24,Linux,6.11.0-26-generic,AMD_Ryzen_9_9950X_16_Core_Processor,46.2,NVIDIA GeForce RTX 5080,15.9,gemma-3-1B-it-QAT-Q4_0,1.0,0.6709485054016113,gemma3,gguf,288.51759384877346,44,0.014,0.077
+azdesk1ubuntu24,Linux,6.11.0-26-generic,AMD_Ryzen_9_9950X_16_Core_Processor,46.2,NVIDIA GeForce RTX 5080,15.9,qwen2.5-coder-14b-instruct-q4_k_m,14.0,8.370829999446869,qwen2,gguf,74.94558388518057,70,0.044,0.361
