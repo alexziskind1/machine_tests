@@ -1,0 +1,11 @@
+host,system,release,cpu,total_ram_gb,gpu_names,gpu_memory_gb,model_name,params_b,size_gb,architecture,format,tokens_per_second,total_tokens,time_to_first_token,generation_time
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,qwen2.5-coder-32b-instruct-q4_k_m,32.0,18.487997233867645,qwen2,gguf,10.83010596175673,74,0.334,2.862
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,qwen2.5-coder-14b-instruct-q4_k_m,14.0,8.370829999446869,qwen2,gguf,23.79706321394759,68,0.163,1.05
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,llama-3.2-1b-instruct-q8_0,1.0,1.2303508818149567,llama,gguf,130.3437270485312,73,0.089,0.375
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,gemma-3-1B-it-QAT-Q4_0,1.0,0.6709485054016113,gemma3,gguf,159.32261816306814,55,0.079,0.207
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,Llama-3.3-70B-Instruct-Q4_K_M,70.0,39.60020703077316,llama,gguf,5.002778482790982,107,1.011,11.593
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,gemma-3-12B-it-QAT-Q4_0,12.0,7.209707498550415,gemma3,gguf,23.93746413394284,63,0.083,1.713
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,gemma-3-4B-it-QAT-Q4_0,4.0,2.99398136138916,gemma3,gguf,66.86350291353999,67,0.035,0.672
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,Qwen3-32B-Q4_K_M,32.0,18.404935896396637,qwen3,gguf,10.609815177058197,297,0.333,25.919
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,DeepSeek-R1-Distill-Qwen-7B-Q3_K_L,7.0,3.8076741099357605,qwen2,gguf,44.905809698078315,569,0.262,12.292
+NucBox_EVO_X2,Windows,10,AMD_RYZEN_AI_MAX_395_w_Radeon_8060S,63.6,N/A,N/A,DeepSeek-R1-Distill-Qwen-7B-Q4_K_M,7.0,4.361451804637909,qwen2,gguf,44.27257861019003,889,0.095,19.696
