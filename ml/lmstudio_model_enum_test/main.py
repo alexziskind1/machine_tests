@@ -11,6 +11,7 @@ import platform
 import psutil
 import GPUtil
 from cpuinfo import get_cpu_info
+import os
 
 SERVER_URL = "http://localhost:1234"
 
@@ -133,7 +134,12 @@ def main():
 
     # Build filename with machine + GPU info
     gpu_part = sanitize(mi["gpu_names"] + "_" + mi["gpu_memory_gb"])
-    outfile  = f"benchmark_{mi['host']}_{mi['cpu']}_{gpu_part}.csv"
+    
+    # Create tps directory if it doesn't exist
+    output_dir = "tps"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    outfile = os.path.join(output_dir, f"benchmark_{mi['host']}_{mi['cpu']}_{gpu_part}.csv")
 
     start_server()
     models = list_models()
