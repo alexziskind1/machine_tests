@@ -1,6 +1,11 @@
 # Benchmarking LLMs with LM Studio
 
-Automate performance benchmarking of large language models (LLMs) via the LM Studio CLI. The `main.py` script will:
+Automate performance benchmarking of large language models (LLMs) via the LM Studio CLI. This directory contains two benchmarking scripts with different capabilities:
+
+## Scripts Overview
+
+### `main.py` - Basic Benchmarking
+The original script performs standard LLM benchmarking:
 
 1. Detect machine specs (host, OS, CPU, RAM, GPU names & memory).
 2. Start the LM Studio REST API server.
@@ -12,11 +17,28 @@ Automate performance benchmarking of large language models (LLMs) via the LM Stu
    - Unload the model.
 5. Save all results (including machine info) to a CSV file named by host, CPU, GPU details.
 
+### `main2.py` - Enhanced Memory & Context Analysis
+An enhanced version with additional capabilities:
+
+**Key Differences from `main.py`:**
+- **Multiple Context Length Testing**: Tests each model with different context lengths (default: 256, 2048, 8192 tokens)
+- **Memory Usage Tracking**: Monitors RAM and GPU VRAM usage before/after model loading and inference
+- **macOS/Apple Silicon Optimization**: Handles Apple Silicon GPU detection gracefully (hardcoded as "N/A")
+- **Minimal Test Prompt**: Uses "Just say hello." instead of longer prompts for consistent comparison
+- **Enhanced CSV Output**: Includes context length and memory usage columns
+- **Resource Delta Reporting**: Shows memory usage changes during inference
+
+**Use Cases:**
+- Understanding memory requirements across different context lengths
+- Analyzing resource efficiency on Apple Silicon Macs
+- Detailed memory profiling for model deployment planning
+
 ---
 
 ## Contents
 
-- `main.py` — Benchmarking script with machine and model metadata.
+- `main.py` — Basic benchmarking script with machine and model metadata.
+- `main2.py` — Enhanced script with memory tracking and multiple context length testing.
 - `benchmark_<host>_<cpu>_<gpu>_<mem>.csv` — Output file generated per run.
 - `README.md` — This documentation.
 
@@ -44,6 +66,8 @@ lms install <model-identifier>
 
 ## Usage
 
+### Basic Benchmarking (`main.py`)
+
 ```bash
 python main.py [options]
 ```
@@ -59,6 +83,20 @@ python main.py [options]
 - `--gpu-memory <mem>`  
   Override detected GPU memory in GB (semicolon-separated).
 
+### Enhanced Memory & Context Benchmarking (`main2.py`)
+
+```bash
+python main2.py [options]
+```
+
+### Options
+
+- `--first-model`  
+  Benchmark only the first discovered model (for faster dev iterations).
+
+- `--contexts <lengths>`  
+  Comma-separated context lengths to test in tokens (default: "256,2048,8192").
+
 ### Example
 
 Benchmark all models with auto-detected hardware info:
@@ -71,16 +109,26 @@ Quick dev run on first model, manually specify GPU mem:
 python main.py --first-model --gpu-memory "24.0"
 ```
 
+Test memory usage across specific context lengths:
+```bash
+python main2.py --contexts "512,4096,16384"
+```
+
+Run enhanced benchmarking on first model only:
+```bash
+python main2.py --first-model
+```
+
 ---
 
 ## Output
 
-The script generates a CSV named like:
+Both scripts generate a CSV named like:
 ```
 benchmark_<host>_<cpu>_<gpu_names>_<gpu_memory>.csv
 ```
 
-Columns:
+### `main.py` Columns:
 
 - **Machine info**:
   - `host`: sanitized hostname
@@ -103,6 +151,17 @@ Columns:
   - `total_tokens`
   - `time_to_first_token`
   - `generation_time`
+
+### `main2.py` Additional Columns:
+
+All columns from `main.py` plus:
+
+- **Context & Memory info**:
+  - `context_tokens`: context length used for this test
+  - `ram_loaded_gb`: RAM usage after model loading
+  - `ram_after_query_gb`: RAM usage after inference
+  - `gpu_loaded_gb`: GPU VRAM usage after model loading
+  - `gpu_after_query_gb`: GPU VRAM usage after inference
 
 ---
 
