@@ -2,3 +2,4 @@ requests
 psutil
 GPUtil
 py-cpuinfo
+setuptools
