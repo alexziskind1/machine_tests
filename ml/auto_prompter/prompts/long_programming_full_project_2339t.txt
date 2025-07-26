@@ -1,0 +1,208 @@
+Create a complete, production-ready REST API for a comprehensive library management system using Python and Flask. This system should be capable of handling a medium-sized public library with multiple branches, thousands of books, and hundreds of concurrent users. The API should demonstrate enterprise-level software engineering practices and be ready for deployment in a real-world environment.
+
+COMPREHENSIVE REQUIREMENTS:
+
+1. DATABASE MODELS AND RELATIONSHIPS:
+
+Design a robust relational database schema with the following entities and relationships:
+
+- **Books**: id, title, subtitle, author_id, isbn_13, isbn_10, publication_year, edition, publisher_id, genre_id, language, pages, description, dewey_decimal, availability_status, total_copies, available_copies, digital_copies, cover_image_url, created_at, updated_at
+- **Authors**: id, first_name, last_name, birth_date, death_date, nationality, biography, photo_url, created_at, updated_at
+- **Publishers**: id, name, address, city, state, country, website, contact_email, founded_year, created_at, updated_at
+- **Genres**: id, name, description, parent_genre_id (for hierarchical genres), created_at, updated_at
+- **Users**: id, username, email, password_hash, first_name, last_name, phone, address, city, state, zip_code, membership_date, membership_type, status, date_of_birth, emergency_contact, library_card_number, preferences, created_at, updated_at
+- **Library_Branches**: id, name, address, city, state, zip_code, phone, email, manager_id, hours_of_operation, services_offered, created_at, updated_at
+- **Book_Copies**: id, book_id, branch_id, copy_number, condition, location, acquisition_date, last_maintenance, status, created_at, updated_at
+- **Borrowings**: id, user_id, book_copy_id, borrow_date, due_date, return_date, renewal_count, fine_amount, fine_paid, librarian_id, notes, created_at, updated_at
+- **Reservations**: id, user_id, book_id, reservation_date, expected_availability, status, priority, notification_sent, created_at, updated_at
+- **Fines**: id, user_id, borrowing_id, fine_type, amount, description, date_issued, date_paid, payment_method, status, created_at, updated_at
+- **Staff**: id, user_id, branch_id, role, hire_date, salary, permissions, supervisor_id, created_at, updated_at
+
+2. COMPREHENSIVE API ENDPOINTS:
+
+**Book Management:**
+- GET /api/v1/books - List all books with advanced pagination, filtering (by genre, author, year, availability), sorting, and search capabilities
+- GET /api/v1/books/{id} - Get detailed book information including current availability across all branches
+- GET /api/v1/books/{id}/copies - Get all copies of a specific book across different branches
+- GET /api/v1/books/{id}/reviews - Get user reviews and ratings for a book
+- POST /api/v1/books - Add a new book (librarian/admin only) with validation and duplicate detection
+- PUT /api/v1/books/{id} - Update book information (librarian/admin only) with change tracking
+- DELETE /api/v1/books/{id} - Soft delete a book (admin only) with dependency checking
+- GET /api/v1/books/popular - Get most popular books based on borrowing statistics
+- GET /api/v1/books/new-arrivals - Get recently added books
+- POST /api/v1/books/{id}/reserve - Reserve a book for future borrowing
+
+**User Management:**
+- GET /api/v1/users - List all users with filtering and search (staff only)
+- GET /api/v1/users/{id} - Get specific user details (own profile or staff access)
+- POST /api/v1/users - Register a new user with email verification
+- PUT /api/v1/users/{id} - Update user information with validation
+- DELETE /api/v1/users/{id} - Deactivate user account (admin only)
+- GET /api/v1/users/{id}/borrowings - Get user's current and historical borrowings
+- GET /api/v1/users/{id}/reservations - Get user's active and past reservations
+- GET /api/v1/users/{id}/fines - Get user's fine history and current outstanding fines
+- POST /api/v1/users/{id}/reset-password - Initiate password reset process
+- POST /api/v1/users/{id}/extend-membership - Extend or renew membership
+
+**Borrowing Operations:**
+- POST /api/v1/borrowings - Check out a book to a user
+- PUT /api/v1/borrowings/{id}/return - Return a borrowed book with condition assessment
+- PUT /api/v1/borrowings/{id}/renew - Renew a borrowing if eligible
+- GET /api/v1/borrowings - List all borrowings with filtering by status, user, date range
+- GET /api/v1/borrowings/overdue - Get all overdue books for fine processing
+- POST /api/v1/borrowings/{id}/report-lost - Report a book as lost
+- POST /api/v1/borrowings/{id}/report-damaged - Report book damage
+
+**Search and Discovery:**
+- GET /api/v1/search - Advanced search across books, authors, subjects with auto-complete
+- GET /api/v1/search/suggestions - Get search suggestions and recommendations
+- GET /api/v1/authors - List authors with book counts and biographical information
+- GET /api/v1/authors/{id} - Get detailed author information and their books
+- GET /api/v1/genres - Get genre hierarchy and book counts
+- GET /api/v1/publishers - List publishers with their publication statistics
+
+**Administrative Functions:**
+- GET /api/v1/analytics/dashboard - Library usage statistics and KPIs
+- GET /api/v1/analytics/reports - Generate custom reports (circulation, fines, popular books)
+- GET /api/v1/inventory - Inventory management and book condition tracking
+- POST /api/v1/inventory/audit - Conduct inventory audits
+- GET /api/v1/notifications - System notifications and announcements
+- POST /api/v1/notifications - Send notifications to users
+
+3. ADVANCED FEATURES IMPLEMENTATION:
+
+**Authentication and Authorization:**
+- JWT-based authentication with refresh tokens
+- Role-based access control (User, Librarian, Branch Manager, System Admin)
+- OAuth integration for social login
+- Multi-factor authentication for staff accounts
+- Session management and concurrent login limitations
+- API key authentication for third-party integrations
+
+**Input Validation and Error Handling:**
+- Comprehensive input validation using marshmallow schemas
+- Custom validation rules for ISBN, email, phone numbers
+- Detailed error responses with error codes and user-friendly messages
+- Request/response logging for debugging
+- Graceful handling of database connection failures
+- Circuit breaker pattern for external service calls
+
+**Advanced Business Logic:**
+- Automated fine calculation with configurable rules
+- Late fee escalation and collection procedures
+- Book reservation queue management with priority systems
+- Renewal limits and blackout periods
+- Member privilege levels and borrowing limits
+- Inter-library loan request processing
+- Digital content access and DRM integration
+
+**Performance and Scalability:**
+- Database connection pooling with SQLAlchemy
+- Redis caching for frequently accessed data
+- Asynchronous task processing with Celery
+- Background jobs for maintenance and notifications
+- Database query optimization and indexing strategies
+- API response compression and pagination
+- Rate limiting per user role and endpoint
+
+**Communication Systems:**
+- Email notifications for due dates, overdue items, reservations
+- SMS alerts for urgent notifications
+- Push notifications for mobile app integration
+- Automated reminder system with escalation
+- Newsletter and announcement distribution
+- Integration with library website and social media
+
+4. TESTING STRATEGY:
+
+**Unit Testing:**
+- Test coverage for all business logic and utility functions
+- Mock external dependencies and database operations
+- Parameterized tests for various input scenarios
+- Test data factories for consistent test setup
+
+**Integration Testing:**
+- API endpoint testing with different user roles
+- Database transaction testing and rollback scenarios
+- Third-party service integration testing
+- End-to-end user workflows (registration, borrowing, returning)
+
+**Performance Testing:**
+- Load testing for concurrent user scenarios
+- Database performance testing with large datasets
+- API response time benchmarking
+- Memory usage and leak detection
+
+5. DOCUMENTATION AND DEPLOYMENT:
+
+**API Documentation:**
+- Complete OpenAPI/Swagger specification
+- Interactive API documentation with example requests/responses
+- Authentication guide and SDK examples
+- Rate limiting and error code reference
+- Changelog and versioning strategy
+
+**Project Documentation:**
+- Comprehensive README with setup instructions
+- Architecture decision records (ADRs)
+- Database schema documentation with ER diagrams
+- Development and deployment guides
+- Security considerations and best practices
+
+**Deployment Configuration:**
+- Docker containerization with multi-stage builds
+- Docker Compose for local development environment
+- Kubernetes deployment manifests
+- Environment-specific configuration management
+- Database migration scripts and versioning
+- CI/CD pipeline configuration (GitHub Actions/Jenkins)
+- Monitoring and logging setup (Prometheus, Grafana, ELK stack)
+
+6. SECURITY IMPLEMENTATION:
+
+**Data Protection:**
+- Password hashing with bcrypt and salt
+- Personal data encryption for GDPR compliance
+- Secure session management
+- Input sanitization and SQL injection prevention
+- Cross-site scripting (XSS) protection
+- CORS configuration for web clients
+
+**Access Control:**
+- Principle of least privilege implementation
+- Audit logging for sensitive operations
+- IP whitelisting for administrative functions
+- Automatic account lockout for suspicious activity
+
+7. MONITORING AND MAINTENANCE:
+
+**Health Monitoring:**
+- Health check endpoints for load balancers
+- Application metrics and performance monitoring
+- Database health and connection monitoring
+- Error tracking and alerting systems
+- User activity analytics and reporting
+
+**Operational Features:**
+- Configuration management without code changes
+- Feature flags for gradual rollouts
+- Database backup and recovery procedures
+- Log rotation and retention policies
+- Automated security updates and vulnerability scanning
+
+DELIVERABLES:
+
+Provide the complete implementation including:
+
+1. **Project Structure**: Well-organized directory structure with separation of concerns
+2. **Source Code**: All Python modules with proper imports and dependencies
+3. **Database Schema**: SQLAlchemy models with relationships and migrations
+4. **API Routes**: Flask blueprints with comprehensive endpoint implementations
+5. **Configuration**: Environment-based configuration management
+6. **Testing Suite**: Complete test coverage with fixtures and mocks
+7. **Documentation**: README, API docs, and deployment guides
+8. **Deployment Files**: Docker configurations and deployment scripts
+9. **Sample Data**: Seed data for testing and demonstration
+10. **Performance Optimization**: Caching strategies and query optimization
+
+The solution should demonstrate professional software engineering practices including clean code principles, SOLID design patterns, comprehensive error handling, security best practices, and production-ready deployment considerations. Include detailed code comments explaining complex business logic and architectural decisions.

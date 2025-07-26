@@ -1,0 +1,185 @@
+Review and debug this complex Python class that's supposed to implement a thread-safe cache with LRU eviction policy and TTL (Time-To-Live) support. The code has multiple critical bugs, race conditions, performance issues, and design flaws that could lead to data corruption, memory leaks, and system failures in a production environment. Your task is to conduct a comprehensive code review, identify all problems, and provide a corrected implementation.
+
+BACKGROUND CONTEXT:
+This LRUCache class is intended to be used in a high-performance web application that serves millions of requests per day. The cache needs to:
+- Support concurrent access from multiple threads without data corruption
+- Implement proper LRU eviction when capacity is reached
+- Support TTL for automatic expiration of cached items
+- Provide accurate statistics for monitoring and debugging
+- Handle edge cases gracefully without crashing
+- Maintain optimal performance under high load
+- Clean up expired items efficiently to prevent memory leaks
+
+PROBLEMATIC CODE:
+
+```python
+import threading
+import time
+from collections import OrderedDict
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.cache = OrderedDict()
+        self.lock = threading.Lock()
+        self.stats = {'hits': 0, 'misses': 0}
+    
+    def get(self, key):
+        with self.lock:
+            if key in self.cache:
+                value = self.cache[key]
+                del self.cache[key]
+                self.cache[key] = value
+                self.stats['hits'] += 1
+                return value
+            else:
+                self.stats['misses'] += 1
+                return None
+    
+    def put(self, key, value):
+        if key in self.cache:
+            del self.cache[key]
+        elif len(self.cache) >= self.capacity:
+            self.cache.popitem(last=False)
+        
+        self.cache[key] = value
+    
+    def delete(self, key):
+        with self.lock:
+            if key in self.cache:
+                del self.cache[key]
+                return True
+            return False
+    
+    def size(self):
+        return len(self.cache)
+    
+    def clear(self):
+        with self.lock:
+            self.cache.clear()
+            self.stats = {'hits': 0, 'misses': 0}
+    
+    def get_stats(self):
+        return self.stats.copy()
+    
+    def set_ttl(self, key, value, ttl_seconds):
+        expiry_time = time.time() + ttl_seconds
+        self.put(key, {'value': value, 'expiry': expiry_time})
+    
+    def cleanup_expired(self):
+        current_time = time.time()
+        expired_keys = []
+        for key, value in self.cache.items():
+            if isinstance(value, dict) and 'expiry' in value:
+                if value['expiry'] < current_time:
+                    expired_keys.append(key)
+        
+        for key in expired_keys:
+            del self.cache[key]
+```
+
+COMPREHENSIVE ANALYSIS REQUIREMENTS:
+
+1. THREAD SAFETY ANALYSIS:
+   - Identify all race conditions and thread safety violations
+   - Analyze critical sections that need proper synchronization
+   - Examine inconsistent lock usage patterns
+   - Identify methods that modify shared state without proper protection
+   - Discuss potential deadlock scenarios and prevention strategies
+
+2. CORRECTNESS BUGS:
+   - Find logical errors in the LRU implementation
+   - Identify issues with the TTL functionality
+   - Analyze edge cases that could cause crashes or incorrect behavior
+   - Examine data consistency issues
+   - Look for off-by-one errors and boundary condition problems
+
+3. PERFORMANCE ISSUES:
+   - Identify inefficient operations and algorithmic problems
+   - Analyze unnecessary overhead in critical paths
+   - Find opportunities for optimization
+   - Examine lock contention issues and potential solutions
+   - Discuss scalability limitations
+
+4. MEMORY MANAGEMENT:
+   - Identify potential memory leaks
+   - Analyze cleanup mechanisms for expired items
+   - Examine capacity management and eviction policies
+   - Look for reference counting issues or circular references
+
+5. API DESIGN FLAWS:
+   - Analyze inconsistencies in the public interface
+   - Identify missing error handling and validation
+   - Examine return value inconsistencies
+   - Look for violating principles of least surprise
+
+6. PRODUCTION READINESS ISSUES:
+   - Identify missing monitoring and observability features
+   - Analyze error handling and recovery mechanisms
+   - Examine configuration and tuning capabilities
+   - Look for missing logging and debugging support
+
+CORRECTED IMPLEMENTATION REQUIREMENTS:
+
+Provide a completely rewritten, production-ready version that addresses all identified issues. Your corrected implementation should include:
+
+1. PROPER THREAD SAFETY:
+   - Consistent and correct use of synchronization primitives
+   - Fine-grained locking where beneficial
+   - Reader-writer locks for improved concurrent read performance
+   - Lock-free algorithms where appropriate
+
+2. ROBUST LRU IMPLEMENTATION:
+   - Correct LRU ordering maintenance
+   - Efficient move-to-front operations
+   - Proper capacity management
+   - Atomic operations for consistency
+
+3. COMPREHENSIVE TTL SUPPORT:
+   - Automatic expiration checking
+   - Background cleanup mechanisms
+   - Efficient expiration tracking
+   - Lazy and eager cleanup strategies
+
+4. ERROR HANDLING AND VALIDATION:
+   - Input parameter validation
+   - Graceful error recovery
+   - Comprehensive exception handling
+   - Defensive programming practices
+
+5. PERFORMANCE OPTIMIZATIONS:
+   - Minimized lock contention
+   - Efficient data structures
+   - Optimized hot paths
+   - Reduced memory allocations
+
+6. MONITORING AND OBSERVABILITY:
+   - Comprehensive statistics tracking
+   - Performance metrics collection
+   - Health check capabilities
+   - Debug information access
+
+7. CONFIGURATION AND FLEXIBILITY:
+   - Configurable cleanup intervals
+   - Tunable performance parameters
+   - Pluggable eviction policies
+   - Extensible architecture
+
+8. COMPREHENSIVE TESTING:
+   - Unit tests covering all functionality
+   - Concurrent access stress tests
+   - Performance benchmarks
+   - Edge case validation
+
+ADDITIONAL REQUIREMENTS:
+
+- Provide detailed explanations for each bug found and why your solution fixes it
+- Explain performance implications of your design decisions
+- Include code comments explaining complex algorithms and design choices
+- Suggest additional features that would improve production readiness
+- Provide usage examples demonstrating correct API usage
+- Include benchmarking code to validate performance improvements
+- Discuss alternative implementation approaches and their trade-offs
+- Address scalability considerations for very large caches or high concurrency scenarios
+
+Your analysis should demonstrate deep understanding of concurrent programming, data structures, performance optimization, and production system requirements. The corrected code should be suitable for use in a high-load production environment where reliability, performance, and maintainability are critical.

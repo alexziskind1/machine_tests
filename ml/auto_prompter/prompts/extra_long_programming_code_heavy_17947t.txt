@@ -1,0 +1,2191 @@
+Analyze, debug, and optimize this comprehensive Python web scraping and data processing application that extracts financial data from multiple sources, processes it through a complex pipeline, and stores it in a database. The application has numerous bugs, performance issues, security vulnerabilities, and architectural problems. Provide a complete refactored solution with improvements.
+
+**BACKGROUND CONTEXT:**
+This financial data processing system is part of a high-frequency trading platform that needs to process thousands of financial instruments in real-time. The system integrates with multiple data providers, performs complex technical analysis, manages risk calculations, and provides real-time alerts to traders. The current implementation has critical flaws that cause data corruption, security breaches, performance bottlenecks, and system crashes in production environments.
+
+**PROBLEMATIC CODE:**
+
+```python
+import requests
+import pandas as pd
+import sqlite3
+import json
+import time
+import threading
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+import numpy as np
+from concurrent.futures import ThreadPoolExecutor
+import logging
+import hashlib
+import re
+from urllib.parse import urljoin, urlparse
+import xml.etree.ElementTree as ET
+import socket
+import ssl
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import pickle
+import os
+import sys
+import subprocess
+import asyncio
+import aiohttp
+import websocket
+import redis
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+import configparser
+from flask import Flask, request, jsonify
+import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# Global variables (problematic design)
+DATABASE_PATH = "financial_data.db"
+THREAD_COUNT = 50
+API_KEYS = {
+    "alpha_vantage": "DEMO_API_KEY",
+    "quandl": "DEMO_API_KEY",
+    "finnhub": "DEMO_API_KEY",
+    "polygon": "DEMO_API_KEY",
+    "iex": "DEMO_API_KEY"
+}
+CACHE = {}
+RATE_LIMITS = {}
+WEBSOCKET_CONNECTIONS = []
+ACTIVE_ALERTS = {}
+USER_SESSIONS = {}
+RISK_THRESHOLDS = {
+    "max_position_size": 1000000,
+    "max_daily_loss": 50000,
+    "volatility_threshold": 0.02
+}
+
+# Hardcoded secrets (security vulnerability)
+SECRET_KEY = "super_secret_key_123"
+REDIS_PASSWORD = "redis_password_123"
+EMAIL_PASSWORD = "email_password_123"
+
+Base = declarative_base()
+
+class StockPrice(Base):
+    __tablename__ = 'stock_prices'
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(10), nullable=False)
+    price = Column(Float, nullable=False)
+    volume = Column(Integer)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    source = Column(String(50))
+    bid = Column(Float)
+    ask = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    open_price = Column(Float)
+
+class NewsArticle(Base):
+    __tablename__ = 'news_articles'
+    id = Column(Integer, primary_key=True)
+    title = Column(String(500))
+    content = Column(Text)
+    url = Column(String(1000))
+    publish_date = Column(DateTime)
+    sentiment_score = Column(Float)
+    symbol = Column(String(10))
+    source = Column(String(100))
+    relevance_score = Column(Float)
+
+class TradingSignal(Base):
+    __tablename__ = 'trading_signals'
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(10), nullable=False)
+    signal_type = Column(String(20))  # BUY, SELL, HOLD
+    confidence = Column(Float)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    technical_indicators = Column(Text)  # JSON string
+    price_target = Column(Float)
+    stop_loss = Column(Float)
+    risk_score = Column(Float)
+
+class UserPosition(Base):
+    __tablename__ = 'user_positions'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String(50), nullable=False)
+    symbol = Column(String(10), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    entry_price = Column(Float, nullable=False)
+    current_price = Column(Float)
+    unrealized_pnl = Column(Float)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class FinancialDataScraper:
+    def __init__(self):
+        self.session = requests.Session()
+        self.db_connection = sqlite3.connect(DATABASE_PATH)
+        self.logger = logging.getLogger(__name__)
+        self.processed_urls = set()
+        self.redis_client = None
+        self.websocket_connections = []
+        self.email_client = None
+        self.risk_engine = None
+        
+        # Initialize database engine (problematic connection handling)
+        self.engine = create_engine(f'sqlite:///{DATABASE_PATH}', echo=True)
+        Base.metadata.create_all(self.engine)
+        Session = sessionmaker(bind=self.engine)
+        self.db_session = Session()
+        
+    def setup_database(self):
+        cursor = self.db_connection.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS stocks (
+                id INTEGER PRIMARY KEY,
+                symbol TEXT,
+                price REAL,
+                volume INTEGER,
+                timestamp TEXT,
+                source TEXT,
+                bid REAL,
+                ask REAL,
+                high REAL,
+                low REAL,
+                open_price REAL
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS news (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                content TEXT,
+                url TEXT,
+                publish_date TEXT,
+                sentiment_score REAL,
+                symbol TEXT,
+                source TEXT,
+                relevance_score REAL
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS trading_signals (
+                id INTEGER PRIMARY KEY,
+                symbol TEXT,
+                signal_type TEXT,
+                confidence REAL,
+                timestamp TEXT,
+                technical_indicators TEXT,
+                price_target REAL,
+                stop_loss REAL,
+                risk_score REAL
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_positions (
+                id INTEGER PRIMARY KEY,
+                user_id TEXT,
+                symbol TEXT,
+                quantity INTEGER,
+                entry_price REAL,
+                current_price REAL,
+                unrealized_pnl REAL,
+                timestamp TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS risk_metrics (
+                id INTEGER PRIMARY KEY,
+                symbol TEXT,
+                var_1day REAL,
+                var_5day REAL,
+                beta REAL,
+                correlation_spy REAL,
+                volatility REAL,
+                timestamp TEXT
+            )
+        ''')
+        self.db_connection.commit()
+    
+    def setup_redis_connection(self):
+        try:
+            # Insecure Redis connection
+            self.redis_client = redis.Redis(host='localhost', port=6379, password=REDIS_PASSWORD, decode_responses=True)
+            self.redis_client.ping()
+        except Exception as e:
+            print(f"Redis connection failed: {e}")
+    
+    def fetch_stock_data_alphavantage(self, symbol):
+        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={API_KEYS['alpha_vantage']}"
+        
+        # No rate limiting
+        response = requests.get(url)
+        data = response.json()
+        
+        if "Global Quote" in data:
+            quote = data["Global Quote"]
+            price = float(quote["05. price"])
+            volume = int(quote["06. volume"])
+            high = float(quote["03. high"])
+            low = float(quote["04. low"])
+            open_price = float(quote["02. open"])
+            
+            # SQL injection vulnerability
+            query = f"INSERT INTO stocks (symbol, price, volume, timestamp, source, high, low, open_price) VALUES ('{symbol}', {price}, {volume}, '{datetime.now()}', 'alphavantage', {high}, {low}, {open_price})"
+            cursor = self.db_connection.cursor()
+            cursor.execute(query)
+            self.db_connection.commit()
+            
+            # Cache in Redis without expiration
+            if self.redis_client:
+                self.redis_client.set(f"stock:{symbol}", json.dumps({"price": price, "volume": volume}))
+            
+            return {"symbol": symbol, "price": price, "volume": volume, "high": high, "low": low, "open": open_price}
+        return None
+    
+    def fetch_stock_data_finnhub(self, symbol):
+        url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEYS['finnhub']}"
+        
+        try:
+            response = requests.get(url, timeout=5)
+            data = response.json()
+            
+            if data["c"]:  # Current price
+                price = data["c"]
+                volume = data.get("v", 0)
+                high = data.get("h", 0)
+                low = data.get("l", 0)
+                open_price = data.get("o", 0)
+                
+                # Better parameterized query but still issues
+                query = "INSERT INTO stocks (symbol, price, volume, timestamp, source, high, low, open_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                cursor = self.db_connection.cursor()
+                cursor.execute(query, (symbol, price, volume, str(datetime.now()), "finnhub", high, low, open_price))
+                self.db_connection.commit()  # Committing every insert (inefficient)
+                
+                return {"symbol": symbol, "price": price, "volume": volume, "high": high, "low": low, "open": open_price}
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {e}")
+        
+        return None
+    
+    def fetch_realtime_data_polygon(self, symbol):
+        # WebSocket connection without proper error handling
+        url = f"wss://socket.polygon.io/stocks"
+        
+        def on_message(ws, message):
+            try:
+                data = json.loads(message)
+                if data[0]["ev"] == "T":  # Trade event
+                    trade = data[0]
+                    price = trade["p"]
+                    volume = trade["s"]
+                    
+                    # Direct database insertion in callback (blocking)
+                    cursor = self.db_connection.cursor()
+                    cursor.execute(
+                        "INSERT INTO stocks (symbol, price, volume, timestamp, source) VALUES (?, ?, ?, ?, ?)",
+                        (symbol, price, volume, datetime.now().isoformat(), "polygon_realtime")
+                    )
+                    self.db_connection.commit()
+                    
+                    # Update global cache (thread unsafe)
+                    CACHE[f"realtime_{symbol}"] = {"price": price, "volume": volume, "timestamp": datetime.now()}
+                    
+            except Exception as e:
+                print(f"WebSocket message error: {e}")
+        
+        def on_error(ws, error):
+            print(f"WebSocket error: {error}")
+        
+        def on_close(ws):
+            print("WebSocket connection closed")
+        
+        ws = websocket.WebSocketApp(url, on_message=on_message, on_error=on_error, on_close=on_close)
+        
+        # Subscribe to symbol
+        subscribe_msg = {"action": "auth", "params": API_KEYS["polygon"]}
+        ws.send(json.dumps(subscribe_msg))
+        
+        subscribe_msg = {"action": "subscribe", "params": f"T.{symbol}"}
+        ws.send(json.dumps(subscribe_msg))
+        
+        # Run in separate thread (no proper management)
+        threading.Thread(target=ws.run_forever).start()
+        
+        return ws
+    
+    def scrape_yahoo_finance(self, symbol):
+        url = f"https://finance.yahoo.com/quote/{symbol}"
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        try:
+            # Fragile CSS selectors
+            price_element = soup.find("fin-streamer", {"data-field": "regularMarketPrice"})
+            if price_element:
+                price = float(price_element.get("value"))
+                
+                volume_element = soup.find("fin-streamer", {"data-field": "regularMarketVolume"})
+                volume = int(volume_element.get("value").replace(",", "")) if volume_element else 0
+                
+                # Additional market data
+                high_element = soup.find("fin-streamer", {"data-field": "regularMarketDayHigh"})
+                high = float(high_element.get("value")) if high_element else 0
+                
+                low_element = soup.find("fin-streamer", {"data-field": "regularMarketDayLow"})
+                low = float(low_element.get("value")) if low_element else 0
+                
+                open_element = soup.find("fin-streamer", {"data-field": "regularMarketOpen"})
+                open_price = float(open_element.get("value")) if open_element else 0
+                
+                # Get additional financial metrics
+                pe_ratio_element = soup.find("td", {"data-test": "PE_RATIO-value"})
+                pe_ratio = float(pe_ratio_element.text) if pe_ratio_element and pe_ratio_element.text != "N/A" else None
+                
+                market_cap_element = soup.find("td", {"data-test": "MARKET_CAP-value"})
+                market_cap = market_cap_element.text if market_cap_element else None
+                
+                # Direct database insertion without connection management
+                cursor = self.db_connection.cursor()
+                cursor.execute(
+                    "INSERT INTO stocks (symbol, price, volume, timestamp, source, high, low, open_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (symbol, price, volume, datetime.now().isoformat(), "yahoo", high, low, open_price)
+                )
+                self.db_connection.commit()
+                
+                return {
+                    "symbol": symbol, 
+                    "price": price, 
+                    "volume": volume, 
+                    "high": high, 
+                    "low": low, 
+                    "open": open_price,
+                    "pe_ratio": pe_ratio,
+                    "market_cap": market_cap
+                }
+        except Exception as e:
+            print(f"Error scraping Yahoo Finance for {symbol}: {e}")
+        
+        return None
+    
+    def fetch_options_data(self, symbol):
+        # Fetch options chain data
+        url = f"https://api.polygon.io/v3/reference/options/contracts?underlying_ticker={symbol}&apikey={API_KEYS['polygon']}"
+        
+        try:
+            response = requests.get(url)
+            data = response.json()
+            
+            options_data = []
+            if "results" in data:
+                for option in data["results"][:10]:  # Limit to first 10
+                    option_symbol = option["ticker"]
+                    strike_price = option["strike_price"]
+                    expiration_date = option["expiration_date"]
+                    option_type = option["contract_type"]
+                    
+                    # Get option quote
+                    quote_url = f"https://api.polygon.io/v2/last/trade/{option_symbol}?apikey={API_KEYS['polygon']}"
+                    quote_response = requests.get(quote_url)
+                    quote_data = quote_response.json()
+                    
+                    if "results" in quote_data:
+                        last_price = quote_data["results"][0]["p"]
+                        
+                        options_data.append({
+                            "underlying_symbol": symbol,
+                            "option_symbol": option_symbol,
+                            "strike_price": strike_price,
+                            "expiration_date": expiration_date,
+                            "option_type": option_type,
+                            "last_price": last_price
+                        })
+            
+            return options_data
+        except Exception as e:
+            print(f"Error fetching options data for {symbol}: {e}")
+            return []
+    
+    def fetch_news_data(self, symbol):
+        # Multiple news sources with different APIs
+        news_sources = [
+            f"https://newsapi.org/v2/everything?q={symbol}&apiKey=DEMO_KEY&pageSize=50",
+            f"https://api.marketaux.com/v1/news/all?symbols={symbol}&api_token=DEMO_KEY&limit=50",
+            f"https://api.polygon.io/v2/reference/news?ticker={symbol}&apikey={API_KEYS['polygon']}&limit=50"
+        ]
+        
+        all_news = []
+        for url in news_sources:
+            try:
+                response = requests.get(url, timeout=10)
+                data = response.json()
+                
+                if "articles" in data:
+                    for article in data["articles"]:
+                        news_item = {
+                            "title": article.get("title", ""),
+                            "content": article.get("description", ""),
+                            "url": article.get("url", ""),
+                            "publish_date": article.get("publishedAt", ""),
+                            "source": article.get("source", {}).get("name", "")
+                        }
+                        all_news.append(news_item)
+                elif "data" in data:  # MarketAux format
+                    for article in data["data"]:
+                        news_item = {
+                            "title": article.get("title", ""),
+                            "content": article.get("description", ""),
+                            "url": article.get("url", ""),
+                            "publish_date": article.get("published_at", ""),
+                            "source": article.get("source", "")
+                        }
+                        all_news.append(news_item)
+                elif "results" in data:  # Polygon format
+                    for article in data["results"]:
+                        news_item = {
+                            "title": article.get("title", ""),
+                            "content": article.get("description", ""),
+                            "url": article.get("article_url", ""),
+                            "publish_date": article.get("published_utc", ""),
+                            "source": article.get("publisher", {}).get("name", "")
+                        }
+                        all_news.append(news_item)
+                        
+            except Exception as e:
+                print(f"Error fetching news from {url}: {e}")
+                continue
+        
+        return all_news
+    
+    def advanced_sentiment_analysis(self, text):
+        # More sophisticated but still flawed sentiment analysis
+        if not text:
+            return 0.0
+        
+        # Word lists with weights
+        positive_words = {
+            "excellent": 3, "outstanding": 3, "superb": 3,
+            "good": 2, "great": 2, "positive": 2, "up": 2, "rise": 2, "gain": 2,
+            "buy": 2, "bullish": 2, "growth": 2, "profit": 2,
+            "okay": 1, "fine": 1, "stable": 1
+        }
+        
+        negative_words = {
+            "terrible": -3, "awful": -3, "disaster": -3,
+            "bad": -2, "negative": -2, "down": -2, "fall": -2, "loss": -2, "drop": -2,
+            "sell": -2, "bearish": -2, "decline": -2, "crash": -2,
+            "concerning": -1, "weak": -1, "poor": -1
+        }
+        
+        # Financial-specific terms
+        financial_positive = {
+            "earnings beat": 3, "revenue growth": 2, "dividend increase": 2,
+            "buyback": 2, "merger": 1, "acquisition": 1
+        }
+        
+        financial_negative = {
+            "earnings miss": -3, "revenue decline": -2, "dividend cut": -2,
+            "lawsuit": -2, "investigation": -2, "bankruptcy": -3
+        }
+        
+        text_lower = text.lower()
+        total_score = 0
+        word_count = 0
+        
+        # Check individual words
+        words = re.findall(r'\b\w+\b', text_lower)
+        for word in words:
+            if word in positive_words:
+                total_score += positive_words[word]
+                word_count += 1
+            elif word in negative_words:
+                total_score += negative_words[word]
+                word_count += 1
+        
+        # Check financial phrases
+        for phrase in financial_positive:
+            if phrase in text_lower:
+                total_score += financial_positive[phrase]
+                word_count += 1
+        
+        for phrase in financial_negative:
+            if phrase in text_lower:
+                total_score += financial_negative[phrase]
+                word_count += 1
+        
+        # Normalize score
+        if word_count > 0:
+            return max(-1.0, min(1.0, total_score / word_count))
+        
+        return 0.0
+    
+    def calculate_relevance_score(self, text, symbol):
+        # Calculate how relevant the news is to the specific symbol
+        if not text:
+            return 0.0
+        
+        text_lower = text.lower()
+        symbol_lower = symbol.lower()
+        
+        # Direct symbol mention
+        symbol_mentions = text_lower.count(symbol_lower)
+        
+        # Company name mapping (hardcoded - problematic)
+        company_names = {
+            "AAPL": ["apple", "iphone", "mac", "ipad"],
+            "GOOGL": ["google", "alphabet", "youtube", "android"],
+            "MSFT": ["microsoft", "windows", "office", "azure"],
+            "AMZN": ["amazon", "aws", "prime", "alexa"],
+            "TSLA": ["tesla", "musk", "electric vehicle", "ev"]
+        }
+        
+        company_mentions = 0
+        if symbol in company_names:
+            for name in company_names[symbol]:
+                company_mentions += text_lower.count(name)
+        
+        # Calculate relevance (0-1 scale)
+        total_mentions = symbol_mentions + company_mentions
+        text_length = len(text.split())
+        
+        if text_length == 0:
+            return 0.0
+        
+        relevance = min(1.0, total_mentions / text_length * 10)  # Arbitrary scaling
+        return relevance
+    
+    def process_news_data(self, news_data, symbol):
+        processed_count = 0
+        for item in news_data:
+            sentiment = self.advanced_sentiment_analysis(item["title"] + " " + item["content"])
+            relevance = self.calculate_relevance_score(item["title"] + " " + item["content"], symbol)
+            
+            # Skip irrelevant news
+            if relevance < 0.1:
+                continue
+            
+            # No duplicate checking - could cause duplicates
+            cursor = self.db_connection.cursor()
+            cursor.execute("""
+                INSERT INTO news (title, content, url, publish_date, sentiment_score, symbol, source, relevance_score)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (item["title"], item["content"], item["url"], item["publish_date"], 
+                  sentiment, symbol, item["source"], relevance))
+            self.db_connection.commit()
+            processed_count += 1
+        
+        return processed_count
+    
+    def calculate_technical_indicators(self, symbol, days=20):
+        cursor = self.db_connection.cursor()
+        
+        # Inefficient query with string formatting (SQL injection risk)
+        cursor.execute(f"""
+            SELECT price, volume, high, low, open_price, timestamp FROM stocks 
+            WHERE symbol = '{symbol}' 
+            ORDER BY timestamp DESC 
+            LIMIT {days * 2}
+        """)
+        
+        data = cursor.fetchall()
+        if len(data) < days:
+            return None
+        
+        prices = [row[0] for row in data]
+        volumes = [row[1] for row in data]
+        highs = [row[2] for row in data]
+        lows = [row[3] for row in data]
+        opens = [row[4] for row in data]
+        
+        # Calculate various technical indicators
+        
+        # Simple Moving Average
+        sma_20 = sum(prices[:20]) / 20
+        sma_50 = sum(prices[:50]) / 50 if len(prices) >= 50 else None
+        
+        # Exponential Moving Average
+        ema_12 = self.calculate_ema(prices, 12)
+        ema_26 = self.calculate_ema(prices, 26)
+        
+        # MACD
+        macd_line = ema_12 - ema_26 if ema_12 and ema_26 else None
+        
+        # Bollinger Bands
+        std_20 = np.std(prices[:20])
+        bb_upper = sma_20 + (2 * std_20)
+        bb_lower = sma_20 - (2 * std_20)
+        
+        # RSI (Relative Strength Index)
+        rsi = self.calculate_rsi(prices)
+        
+        # Stochastic Oscillator
+        stoch_k, stoch_d = self.calculate_stochastic(highs, lows, prices)
+        
+        # Average True Range (ATR)
+        atr = self.calculate_atr(highs, lows, prices)
+        
+        # Volume indicators
+        volume_sma = sum(volumes[:20]) / 20
+        volume_ratio = volumes[0] / volume_sma if volume_sma > 0 else 0
+        
+        # Price volatility
+        volatility = np.std(prices[:20]) / sma_20 if sma_20 > 0 else 0
+        
+        indicators = {
+            "symbol": symbol,
+            "sma_20": sma_20,
+            "sma_50": sma_50,
+            "ema_12": ema_12,
+            "ema_26": ema_26,
+            "macd": macd_line,
+            "bb_upper": bb_upper,
+            "bb_lower": bb_lower,
+            "rsi": rsi,
+            "stoch_k": stoch_k,
+            "stoch_d": stoch_d,
+            "atr": atr,
+            "volume_sma": volume_sma,
+            "volume_ratio": volume_ratio,
+            "volatility": volatility,
+            "timestamp": datetime.now()
+        }
+        
+        return indicators
+    
+    def calculate_ema(self, prices, period):
+        if len(prices) < period:
+            return None
+        
+        multiplier = 2 / (period + 1)
+        ema = prices[period - 1]  # Start with SMA
+        
+        for price in prices[period:]:
+            ema = (price * multiplier) + (ema * (1 - multiplier))
+        
+        return ema
+    
+    def calculate_rsi(self, prices, period=14):
+        if len(prices) < period + 1:
+            return None
+        
+        gains = []
+        losses = []
+        
+        for i in range(1, len(prices)):
+            change = prices[i] - prices[i-1]
+            if change > 0:
+                gains.append(change)
+                losses.append(0)
+            else:
+                gains.append(0)
+                losses.append(abs(change))
+        
+        if len(gains) < period:
+            return None
+        
+        avg_gain = sum(gains[:period]) / period
+        avg_loss = sum(losses[:period]) / period
+        
+        if avg_loss == 0:
+            return 100
+        
+        rs = avg_gain / avg_loss
+        rsi = 100 - (100 / (1 + rs))
+        
+        return rsi
+    
+    def calculate_stochastic(self, highs, lows, closes, k_period=14, d_period=3):
+        if len(highs) < k_period:
+            return None, None
+        
+        highest_high = max(highs[:k_period])
+        lowest_low = min(lows[:k_period])
+        current_close = closes[0]
+        
+        if highest_high == lowest_low:
+            k_percent = 50
+        else:
+            k_percent = ((current_close - lowest_low) / (highest_high - lowest_low)) * 100
+        
+        # Simplified %D calculation (should use moving average of %K)
+        d_percent = k_percent  # This is incorrect but demonstrates the bug
+        
+        return k_percent, d_percent
+    
+    def calculate_atr(self, highs, lows, closes, period=14):
+        if len(highs) < period + 1:
+            return None
+        
+        true_ranges = []
+        for i in range(1, min(period + 1, len(highs))):
+            high_low = highs[i] - lows[i]
+            high_close_prev = abs(highs[i] - closes[i-1])
+            low_close_prev = abs(lows[i] - closes[i-1])
+            
+            true_range = max(high_low, high_close_prev, low_close_prev)
+            true_ranges.append(true_range)
+        
+        return sum(true_ranges) / len(true_ranges)
+    
+    def generate_trading_signals(self, symbol, technical_indicators):
+        if not technical_indicators:
+            return None
+        
+        signals = []
+        confidence = 0.0
+        
+        # RSI-based signals
+        rsi = technical_indicators.get("rsi")
+        if rsi:
+            if rsi < 30:  # Oversold
+                signals.append("BUY")
+                confidence += 0.3
+            elif rsi > 70:  # Overbought
+                signals.append("SELL")
+                confidence += 0.3
+        
+        # MACD signals
+        macd = technical_indicators.get("macd")
+        if macd:
+            if macd > 0:
+                signals.append("BUY")
+                confidence += 0.2
+            else:
+                signals.append("SELL")
+                confidence += 0.2
+        
+        # Moving average crossover
+        sma_20 = technical_indicators.get("sma_20")
+        sma_50 = technical_indicators.get("sma_50")
+        if sma_20 and sma_50:
+            if sma_20 > sma_50:
+                signals.append("BUY")
+                confidence += 0.2
+            else:
+                signals.append("SELL")
+                confidence += 0.2
+        
+        # Bollinger Bands
+        current_price = self.get_latest_price(symbol)
+        bb_upper = technical_indicators.get("bb_upper")
+        bb_lower = technical_indicators.get("bb_lower")
+        
+        if current_price and bb_upper and bb_lower:
+            if current_price <= bb_lower:
+                signals.append("BUY")
+                confidence += 0.25
+            elif current_price >= bb_upper:
+                signals.append("SELL")
+                confidence += 0.25
+        
+        # Determine final signal
+        buy_signals = signals.count("BUY")
+        sell_signals = signals.count("SELL")
+        
+        if buy_signals > sell_signals:
+            final_signal = "BUY"
+        elif sell_signals > buy_signals:
+            final_signal = "SELL"
+        else:
+            final_signal = "HOLD"
+        
+        # Calculate price targets (simplified)
+        atr = technical_indicators.get("atr", 0)
+        if current_price and atr:
+            if final_signal == "BUY":
+                price_target = current_price + (atr * 2)
+                stop_loss = current_price - atr
+            elif final_signal == "SELL":
+                price_target = current_price - (atr * 2)
+                stop_loss = current_price + atr
+            else:
+                price_target = current_price
+                stop_loss = current_price
+        else:
+            price_target = current_price or 0
+            stop_loss = current_price or 0
+        
+        # Calculate risk score
+        volatility = technical_indicators.get("volatility", 0)
+        risk_score = min(1.0, volatility * 10)  # Simple risk calculation
+        
+        signal_data = {
+            "symbol": symbol,
+            "signal_type": final_signal,
+            "confidence": min(1.0, confidence),
+            "technical_indicators": json.dumps(technical_indicators, default=str),
+            "price_target": price_target,
+            "stop_loss": stop_loss,
+            "risk_score": risk_score
+        }
+        
+        # Store signal in database
+        cursor = self.db_connection.cursor()
+        cursor.execute("""
+            INSERT INTO trading_signals (symbol, signal_type, confidence, timestamp, 
+                                       technical_indicators, price_target, stop_loss, risk_score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (symbol, final_signal, confidence, datetime.now().isoformat(),
+              json.dumps(technical_indicators, default=str), price_target, stop_loss, risk_score))
+        self.db_connection.commit()
+        
+        return signal_data
+    
+    def get_latest_price(self, symbol):
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT price FROM stocks WHERE symbol = ? ORDER BY timestamp DESC LIMIT 1", (symbol,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+    
+    def calculate_risk_metrics(self, symbol, days=252):
+        # Calculate Value at Risk and other risk metrics
+        cursor = self.db_connection.cursor()
+        cursor.execute(f"""
+            SELECT price FROM stocks 
+            WHERE symbol = '{symbol}' 
+            ORDER BY timestamp DESC 
+            LIMIT {days}
+        """)
+        
+        prices = [row[0] for row in cursor.fetchall()]
+        if len(prices) < 30:
+            return None
+        
+        # Calculate returns
+        returns = []
+        for i in range(1, len(prices)):
+            ret = (prices[i] - prices[i-1]) / prices[i-1]
+            returns.append(ret)
+        
+        # Value at Risk (95% and 99% confidence)
+        returns_sorted = sorted(returns)
+        var_95 = returns_sorted[int(len(returns) * 0.05)]
+        var_99 = returns_sorted[int(len(returns) * 0.01)]
+        
+        # Beta calculation (vs SPY)
+        spy_returns = self.get_spy_returns(days)
+        beta = self.calculate_beta(returns, spy_returns) if spy_returns else 1.0
+        
+        # Correlation with SPY
+        correlation = np.corrcoef(returns[:len(spy_returns)], spy_returns)[0][1] if spy_returns else 0.0
+        
+        # Volatility (annualized)
+        volatility = np.std(returns) * np.sqrt(252)
+        
+        risk_metrics = {
+            "symbol": symbol,
+            "var_95": var_95,
+            "var_99": var_99,
+            "beta": beta,
+            "correlation_spy": correlation,
+            "volatility": volatility,
+            "timestamp": datetime.now()
+        }
+        
+        # Store in database
+        cursor.execute("""
+            INSERT INTO risk_metrics (symbol, var_1day, var_5day, beta, correlation_spy, volatility, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (symbol, var_95, var_99, beta, correlation, volatility, datetime.now().isoformat()))
+        self.db_connection.commit()
+        
+        return risk_metrics
+    
+    def get_spy_returns(self, days):
+        # Get SPY returns for beta calculation
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT price FROM stocks WHERE symbol = 'SPY' ORDER BY timestamp DESC LIMIT ?", (days,))
+        spy_prices = [row[0] for row in cursor.fetchall()]
+        
+        if len(spy_prices) < 30:
+            return None
+        
+        spy_returns = []
+        for i in range(1, len(spy_prices)):
+            ret = (spy_prices[i] - spy_prices[i-1]) / spy_prices[i-1]
+            spy_returns.append(ret)
+        
+        return spy_returns
+    
+    def calculate_beta(self, stock_returns, market_returns):
+        if len(stock_returns) != len(market_returns) or len(stock_returns) < 2:
+            return 1.0
+        
+        # Ensure same length
+        min_length = min(len(stock_returns), len(market_returns))
+        stock_returns = stock_returns[:min_length]
+        market_returns = market_returns[:min_length]
+        
+        covariance = np.cov(stock_returns, market_returns)[0][1]
+        market_variance = np.var(market_returns)
+        
+        if market_variance == 0:
+            return 1.0
+        
+        beta = covariance / market_variance
+        return beta
+    
+    def portfolio_risk_analysis(self, user_id):
+        # Analyze portfolio risk for a user
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT symbol, quantity, entry_price FROM user_positions WHERE user_id = ?", (user_id,))
+        positions = cursor.fetchall()
+        
+        if not positions:
+            return None
+        
+        portfolio_value = 0
+        portfolio_risk = 0
+        position_risks = []
+        
+        for symbol, quantity, entry_price in positions:
+            current_price = self.get_latest_price(symbol)
+            if not current_price:
+                continue
+            
+            position_value = quantity * current_price
+            portfolio_value += position_value
+            
+            # Get risk metrics for this symbol
+            cursor.execute("SELECT var_1day, beta, volatility FROM risk_metrics WHERE symbol = ? ORDER BY timestamp DESC LIMIT 1", (symbol,))
+            risk_data = cursor.fetchone()
+            
+            if risk_data:
+                var_1day, beta, volatility = risk_data
+                position_risk = position_value * abs(var_1day)  # Position VaR
+                portfolio_risk += position_risk
+                
+                position_risks.append({
+                    "symbol": symbol,
+                    "value": position_value,
+                    "risk": position_risk,
+                    "beta": beta,
+                    "volatility": volatility
+                })
+        
+        # Calculate concentration risk
+        max_position_value = max([pos["value"] for pos in position_risks]) if position_risks else 0
+        concentration_risk = max_position_value / portfolio_value if portfolio_value > 0 else 0
+        
+        # Risk-adjusted metrics
+        portfolio_beta = sum([pos["beta"] * (pos["value"] / portfolio_value) for pos in position_risks])
+        portfolio_volatility = np.sqrt(sum([(pos["volatility"] * (pos["value"] / portfolio_value))**2 for pos in position_risks]))
+        
+        return {
+            "user_id": user_id,
+            "portfolio_value": portfolio_value,
+            "portfolio_var": portfolio_risk,
+            "concentration_risk": concentration_risk,
+            "portfolio_beta": portfolio_beta,
+            "portfolio_volatility": portfolio_volatility,
+            "position_count": len(positions),
+            "position_risks": position_risks
+        }
+    
+    def send_risk_alert(self, user_id, alert_type, message):
+        # Send risk alert via email (insecure implementation)
+        try:
+            smtp_server = smtplib.SMTP('smtp.gmail.com', 587)
+            smtp_server.starttls()
+            smtp_server.login("trading_system@example.com", EMAIL_PASSWORD)  # Hardcoded password
+            
+            msg = MIMEMultipart()
+            msg['From'] = "trading_system@example.com"
+            msg['To'] = f"user_{user_id}@example.com"  # Assuming email format
+            msg['Subject'] = f"Risk Alert: {alert_type}"
+            
+            body = f"Risk Alert for User {user_id}:\n\n{message}\n\nTime: {datetime.now()}"
+            msg.attach(MIMEText(body, 'plain'))
+            
+            smtp_server.send_message(msg)
+            smtp_server.quit()
+            
+            return True
+        except Exception as e:
+            print(f"Failed to send email alert: {e}")
+            return False
+    
+    def monitor_positions(self):
+        # Monitor all user positions for risk violations
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT DISTINCT user_id FROM user_positions")
+        user_ids = [row[0] for row in cursor.fetchall()]
+        
+        for user_id in user_ids:
+            portfolio_risk = self.portfolio_risk_analysis(user_id)
+            if not portfolio_risk:
+                continue
+            
+            # Check risk thresholds
+            alerts = []
+            
+            if portfolio_risk["portfolio_value"] > RISK_THRESHOLDS["max_position_size"]:
+                alerts.append(f"Portfolio value exceeds maximum: ${portfolio_risk['portfolio_value']:,.2f}")
+            
+            if portfolio_risk["portfolio_var"] > RISK_THRESHOLDS["max_daily_loss"]:
+                alerts.append(f"Daily VaR exceeds threshold: ${portfolio_risk['portfolio_var']:,.2f}")
+            
+            if portfolio_risk["portfolio_volatility"] > RISK_THRESHOLDS["volatility_threshold"]:
+                alerts.append(f"Portfolio volatility too high: {portfolio_risk['portfolio_volatility']:.2%}")
+            
+            if portfolio_risk["concentration_risk"] > 0.4:  # 40% concentration limit
+                alerts.append(f"Concentration risk too high: {portfolio_risk['concentration_risk']:.2%}")
+            
+            # Send alerts
+            for alert in alerts:
+                self.send_risk_alert(user_id, "RISK_VIOLATION", alert)
+                
+                # Store alert in global dict (thread unsafe)
+                if user_id not in ACTIVE_ALERTS:
+                    ACTIVE_ALERTS[user_id] = []
+                ACTIVE_ALERTS[user_id].append({
+                    "alert": alert,
+                    "timestamp": datetime.now(),
+                    "type": "RISK_VIOLATION"
+                })
+    
+    def parallel_data_collection(self, symbols):
+        def worker(symbol):
+            # Race condition with shared resources
+            print(f"Processing {symbol}")
+            
+            try:
+                # Multiple data sources
+                alpha_data = self.fetch_stock_data_alphavantage(symbol)
+                time.sleep(0.1)  # Crude rate limiting
+                
+                finnhub_data = self.fetch_stock_data_finnhub(symbol)
+                time.sleep(0.1)
+                
+                yahoo_data = self.scrape_yahoo_finance(symbol)
+                time.sleep(0.5)  # Longer delay for scraping
+                
+                # Options data
+                options_data = self.fetch_options_data(symbol)
+                time.sleep(0.2)
+                
+                # News data
+                news_data = self.fetch_news_data(symbol)
+                news_count = self.process_news_data(news_data, symbol)
+                
+                # Technical analysis
+                technical_data = self.calculate_technical_indicators(symbol)
+                
+                # Generate trading signals
+                trading_signal = self.generate_trading_signals(symbol, technical_data)
+                
+                # Risk analysis
+                risk_metrics = self.calculate_risk_metrics(symbol)
+                
+                # Cache results (thread-unsafe)
+                CACHE[symbol] = {
+                    "alpha": alpha_data,
+                    "finnhub": finnhub_data,
+                    "yahoo": yahoo_data,
+                    "options": options_data,
+                    "technical": technical_data,
+                    "trading_signal": trading_signal,
+                    "risk_metrics": risk_metrics,
+                    "news_count": news_count,
+                    "timestamp": datetime.now()
+                }
+                
+                # Update Redis cache
+                if self.redis_client:
+                    try:
+                        self.redis_client.setex(
+                            f"market_data:{symbol}",
+                            3600,  # 1 hour expiration
+                            json.dumps(CACHE[symbol], default=str)
+                        )
+                    except Exception as e:
+                        print(f"Redis cache update failed for {symbol}: {e}")
+                
+                return symbol
+                
+            except Exception as e:
+                print(f"Error processing {symbol}: {e}")
+                return None
+        
+        # Too many threads, no proper error handling
+        results = []
+        failed_symbols = []
+        
+        with ThreadPoolExecutor(max_workers=THREAD_COUNT) as executor:
+            futures = [executor.submit(worker, symbol) for symbol in symbols]
+            
+            for future in futures:
+                try:
+                    result = future.result(timeout=60)
+                    if result:
+                        results.append(result)
+                    else:
+                        failed_symbols.append("unknown")
+                except Exception as e:
+                    print(f"Worker thread error: {e}")
+                    failed_symbols.append("unknown")
+        
+        print(f"Successfully processed {len(results)} symbols")
+        if failed_symbols:
+            print(f"Failed to process {len(failed_symbols)} symbols")
+        
+        return results
+    
+    def export_data_to_csv(self, filename="financial_data.csv"):
+        # Memory-intensive approach
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT * FROM stocks")
+        stock_data = cursor.fetchall()
+        
+        cursor.execute("SELECT * FROM news")
+        news_data = cursor.fetchall()
+        
+        cursor.execute("SELECT * FROM trading_signals")
+        signals_data = cursor.fetchall()
+        
+        cursor.execute("SELECT * FROM user_positions")
+        positions_data = cursor.fetchall()
+        
+        # Create DataFrames
+        stock_df = pd.DataFrame(stock_data, columns=['id', 'symbol', 'price', 'volume', 'timestamp', 'source', 'bid', 'ask', 'high', 'low', 'open_price'])
+        news_df = pd.DataFrame(news_data, columns=['id', 'title', 'content', 'url', 'publish_date', 'sentiment_score', 'symbol', 'source', 'relevance_score'])
+        signals_df = pd.DataFrame(signals_data, columns=['id', 'symbol', 'signal_type', 'confidence', 'timestamp', 'technical_indicators', 'price_target', 'stop_loss', 'risk_score'])
+        positions_df = pd.DataFrame(positions_data, columns=['id', 'user_id', 'symbol', 'quantity', 'entry_price', 'current_price', 'unrealized_pnl', 'timestamp'])
+        
+        # Export without error handling
+        stock_df.to_csv(f"stocks_{filename}", index=False)
+        news_df.to_csv(f"news_{filename}", index=False)
+        signals_df.to_csv(f"signals_{filename}", index=False)
+        positions_df.to_csv(f"positions_{filename}", index=False)
+        
+        print(f"Data exported to multiple CSV files with prefix: {filename}")
+    
+    def batch_update_positions(self, user_id):
+        # Update all positions for a user with current market prices
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT id, symbol, quantity, entry_price FROM user_positions WHERE user_id = ?", (user_id,))
+        positions = cursor.fetchall()
+        
+        for position_id, symbol, quantity, entry_price in positions:
+            current_price = self.get_latest_price(symbol)
+            if current_price:
+                unrealized_pnl = (current_price - entry_price) * quantity
+                
+                # Individual updates (inefficient)
+                cursor.execute("""
+                    UPDATE user_positions 
+                    SET current_price = ?, unrealized_pnl = ? 
+                    WHERE id = ?
+                """, (current_price, unrealized_pnl, position_id))
+                self.db_connection.commit()  # Commit each update separately
+    
+    def real_time_portfolio_tracking(self):
+        # Real-time portfolio tracking using WebSocket
+        def on_price_update(symbol, price):
+            # Update all positions for this symbol
+            cursor = self.db_connection.cursor()
+            cursor.execute("SELECT id, user_id, quantity, entry_price FROM user_positions WHERE symbol = ?", (symbol,))
+            positions = cursor.fetchall()
+            
+            for position_id, user_id, quantity, entry_price in positions:
+                unrealized_pnl = (price - entry_price) * quantity
+                
+                cursor.execute("""
+                    UPDATE user_positions 
+                    SET current_price = ?, unrealized_pnl = ? 
+                    WHERE id = ?
+                """, (price, unrealized_pnl, position_id))
+                self.db_connection.commit()
+                
+                # Check for risk violations in real-time
+                if abs(unrealized_pnl) > RISK_THRESHOLDS["max_daily_loss"]:
+                    self.send_risk_alert(user_id, "POSITION_RISK", 
+                                       f"Position in {symbol} has unrealized P&L of ${unrealized_pnl:,.2f}")
+        
+        # Set up WebSocket connections for real-time data
+        symbols_to_track = self.get_all_position_symbols()
+        for symbol in symbols_to_track:
+            ws = self.fetch_realtime_data_polygon(symbol)
+            self.websocket_connections.append(ws)
+    
+    def get_all_position_symbols(self):
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT DISTINCT symbol FROM user_positions")
+        return [row[0] for row in cursor.fetchall()]
+    
+    def machine_learning_price_prediction(self, symbol):
+        # Naive machine learning implementation with many issues
+        cursor = self.db_connection.cursor()
+        cursor.execute(f"""
+            SELECT price, volume, high, low, timestamp FROM stocks 
+            WHERE symbol = '{symbol}' 
+            ORDER BY timestamp DESC 
+            LIMIT 1000
+        """)
+        
+        data = cursor.fetchall()
+        if len(data) < 100:
+            return None
+        
+        # Prepare features (very basic)
+        features = []
+        targets = []
+        
+        for i in range(len(data) - 1):
+            price, volume, high, low, timestamp = data[i]
+            next_price = data[i + 1][0]
+            
+            # Simple features
+            feature_vector = [
+                price,
+                volume,
+                high,
+                low,
+                (high - low) / price if price > 0 else 0,  # Price range ratio
+                volume / 1000000,  # Volume in millions
+            ]
+            
+            features.append(feature_vector)
+            targets.append(next_price)
+        
+        # Convert to numpy arrays
+        X = np.array(features)
+        y = np.array(targets)
+        
+        # Very basic linear regression (manual implementation)
+        # This is a terrible implementation with no validation
+        X_mean = np.mean(X, axis=0)
+        y_mean = np.mean(y)
+        
+        # Calculate coefficients manually (inefficient and error-prone)
+        numerator = 0
+        denominator = 0
+        
+        for i in range(len(X)):
+            for j in range(len(X[0])):
+                numerator += (X[i][j] - X_mean[j]) * (y[i] - y_mean)
+                denominator += (X[i][j] - X_mean[j]) ** 2
+        
+        if denominator == 0:
+            slope = 0
+        else:
+            slope = numerator / denominator
+        
+        intercept = y_mean - slope * np.mean(X_mean)
+        
+        # Make prediction for next period
+        latest_features = features[0]  # Most recent data
+        predicted_price = intercept + slope * np.mean(latest_features)
+        
+        return {
+            "symbol": symbol,
+            "predicted_price": predicted_price,
+            "current_price": data[0][0],
+            "confidence": 0.5,  # Fake confidence score
+            "model_type": "linear_regression",
+            "timestamp": datetime.now()
+        }
+    
+    def backtesting_engine(self, symbol, strategy="simple_ma"):
+        # Backtesting engine with multiple issues
+        cursor = self.db_connection.cursor()
+        cursor.execute(f"""
+            SELECT price, timestamp FROM stocks 
+            WHERE symbol = '{symbol}' 
+            ORDER BY timestamp ASC 
+            LIMIT 1000
+        """)
+        
+        historical_data = cursor.fetchall()
+        if len(historical_data) < 50:
+            return None
+        
+        # Simple moving average strategy
+        portfolio_value = 10000  # Starting capital
+        position = 0  # Number of shares
+        cash = portfolio_value
+        trades = []
+        
+        prices = [row[0] for row in historical_data]
+        timestamps = [row[1] for row in historical_data]
+        
+        # Calculate moving averages
+        short_ma_period = 10
+        long_ma_period = 30
+        
+        for i in range(long_ma_period, len(prices)):
+            current_price = prices[i]
+            
+            # Calculate moving averages
+            short_ma = sum(prices[i-short_ma_period:i]) / short_ma_period
+            long_ma = sum(prices[i-long_ma_period:i]) / long_ma_period
+            
+            # Trading logic
+            if short_ma > long_ma and position == 0:  # Buy signal
+                shares_to_buy = int(cash / current_price)
+                if shares_to_buy > 0:
+                    cost = shares_to_buy * current_price
+                    cash -= cost
+                    position += shares_to_buy
+                    
+                    trades.append({
+                        "action": "BUY",
+                        "price": current_price,
+                        "shares": shares_to_buy,
+                        "timestamp": timestamps[i],
+                        "portfolio_value": cash + (position * current_price)
+                    })
+            
+            elif short_ma < long_ma and position > 0:  # Sell signal
+                proceeds = position * current_price
+                cash += proceeds
+                
+                trades.append({
+                    "action": "SELL",
+                    "price": current_price,
+                    "shares": position,
+                    "timestamp": timestamps[i],
+                    "portfolio_value": cash
+                })
+                
+                position = 0
+        
+        # Final portfolio value
+        final_value = cash + (position * prices[-1])
+        total_return = (final_value - portfolio_value) / portfolio_value
+        
+        # Calculate some basic metrics (with issues)
+        winning_trades = [t for t in trades if t["action"] == "SELL"]
+        if len(winning_trades) > 1:
+            returns = []
+            for i in range(1, len(winning_trades)):
+                ret = (winning_trades[i]["portfolio_value"] - winning_trades[i-1]["portfolio_value"]) / winning_trades[i-1]["portfolio_value"]
+                returns.append(ret)
+            
+            if returns:
+                sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
+                max_drawdown = min(returns) if returns else 0
+            else:
+                sharpe_ratio = 0
+                max_drawdown = 0
+        else:
+            sharpe_ratio = 0
+            max_drawdown = 0
+        
+        return {
+            "symbol": symbol,
+            "strategy": strategy,
+            "initial_capital": portfolio_value,
+            "final_value": final_value,
+            "total_return": total_return,
+            "number_of_trades": len(trades),
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown": max_drawdown,
+            "trades": trades
+        }
+    
+    def options_pricing_black_scholes(self, symbol, strike_price, expiration_days, option_type="call"):
+        # Black-Scholes option pricing with issues
+        current_price = self.get_latest_price(symbol)
+        if not current_price:
+            return None
+        
+        # Get risk-free rate (hardcoded - should be dynamic)
+        risk_free_rate = 0.05  # 5% annual
+        
+        # Calculate volatility from historical data
+        cursor = self.db_connection.cursor()
+        cursor.execute(f"SELECT price FROM stocks WHERE symbol = '{symbol}' ORDER BY timestamp DESC LIMIT 252")
+        prices = [row[0] for row in cursor.fetchall()]
+        
+        if len(prices) < 30:
+            return None
+        
+        # Calculate historical volatility
+        returns = []
+        for i in range(1, len(prices)):
+            ret = np.log(prices[i] / prices[i-1])
+            returns.append(ret)
+        
+        volatility = np.std(returns) * np.sqrt(252)  # Annualized volatility
+        
+        # Black-Scholes calculation (simplified implementation)
+        T = expiration_days / 365.0  # Time to expiration in years
+        S = current_price  # Current stock price
+        K = strike_price  # Strike price
+        r = risk_free_rate
+        sigma = volatility
+        
+        # Calculate d1 and d2
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+        d2 = d1 - sigma * np.sqrt(T)
+        
+        # Standard normal CDF approximation (very crude)
+        def crude_norm_cdf(x):
+            return 0.5 * (1 + np.tanh(x * np.sqrt(2 / np.pi)))
+        
+        N_d1 = crude_norm_cdf(d1)
+        N_d2 = crude_norm_cdf(d2)
+        
+        if option_type.lower() == "call":
+            option_price = S * N_d1 - K * np.exp(-r * T) * N_d2
+        else:  # put
+            option_price = K * np.exp(-r * T) * crude_norm_cdf(-d2) - S * crude_norm_cdf(-d1)
+        
+        # Calculate Greeks (simplified)
+        delta = N_d1 if option_type.lower() == "call" else N_d1 - 1
+        gamma = np.exp(-0.5 * d1**2) / (S * sigma * np.sqrt(2 * np.pi * T))
+        theta = -(S * np.exp(-0.5 * d1**2) * sigma) / (2 * np.sqrt(2 * np.pi * T)) - r * K * np.exp(-r * T) * N_d2
+        vega = S * np.sqrt(T) * np.exp(-0.5 * d1**2) / np.sqrt(2 * np.pi)
+        
+        return {
+            "symbol": symbol,
+            "option_type": option_type,
+            "strike_price": strike_price,
+            "current_price": current_price,
+            "expiration_days": expiration_days,
+            "option_price": option_price,
+            "delta": delta,
+            "gamma": gamma,
+            "theta": theta,
+            "vega": vega,
+            "implied_volatility": volatility,
+            "timestamp": datetime.now()
+        }
+    
+    def correlation_analysis(self, symbols):
+        # Calculate correlation matrix between symbols
+        if len(symbols) < 2:
+            return None
+        
+        # Get price data for all symbols
+        price_data = {}
+        min_length = float('inf')
+        
+        for symbol in symbols:
+            cursor = self.db_connection.cursor()
+            cursor.execute(f"SELECT price FROM stocks WHERE symbol = '{symbol}' ORDER BY timestamp DESC LIMIT 252")
+            prices = [row[0] for row in cursor.fetchall()]
+            
+            if len(prices) < 30:
+                continue
+            
+            price_data[symbol] = prices
+            min_length = min(min_length, len(prices))
+        
+        # Truncate all series to same length
+        for symbol in price_data:
+            price_data[symbol] = price_data[symbol][:min_length]
+        
+        # Calculate returns
+        returns_data = {}
+        for symbol in price_data:
+            prices = price_data[symbol]
+            returns = []
+            for i in range(1, len(prices)):
+                ret = (prices[i] - prices[i-1]) / prices[i-1]
+                returns.append(ret)
+            returns_data[symbol] = returns
+        
+        # Calculate correlation matrix manually (inefficient)
+        correlation_matrix = {}
+        for symbol1 in returns_data:
+            correlation_matrix[symbol1] = {}
+            for symbol2 in returns_data:
+                if symbol1 == symbol2:
+                    correlation_matrix[symbol1][symbol2] = 1.0
+                else:
+                    # Manual correlation calculation
+                    returns1 = returns_data[symbol1]
+                    returns2 = returns_data[symbol2]
+                    
+                    mean1 = np.mean(returns1)
+                    mean2 = np.mean(returns2)
+                    
+                    numerator = sum([(returns1[i] - mean1) * (returns2[i] - mean2) for i in range(len(returns1))])
+                    denominator1 = sum([(returns1[i] - mean1)**2 for i in range(len(returns1))])
+                    denominator2 = sum([(returns2[i] - mean2)**2 for i in range(len(returns2))])
+                    
+                    if denominator1 == 0 or denominator2 == 0:
+                        correlation = 0
+                    else:
+                        correlation = numerator / np.sqrt(denominator1 * denominator2)
+                    
+                    correlation_matrix[symbol1][symbol2] = correlation
+        
+        return correlation_matrix
+    
+    def portfolio_optimization(self, symbols, target_return=0.12):
+        # Simple portfolio optimization (many issues)
+        correlation_matrix = self.correlation_analysis(symbols)
+        if not correlation_matrix:
+            return None
+        
+        # Get expected returns (using simple historical average)
+        expected_returns = {}
+        volatilities = {}
+        
+        for symbol in symbols:
+            cursor = self.db_connection.cursor()
+            cursor.execute(f"SELECT price FROM stocks WHERE symbol = '{symbol}' ORDER BY timestamp DESC LIMIT 252")
+            prices = [row[0] for row in cursor.fetchall()]
+            
+            if len(prices) < 30:
+                continue
+            
+            # Calculate returns
+            returns = []
+            for i in range(1, len(prices)):
+                ret = (prices[i] - prices[i-1]) / prices[i-1]
+                returns.append(ret)
+            
+            expected_returns[symbol] = np.mean(returns) * 252  # Annualized
+            volatilities[symbol] = np.std(returns) * np.sqrt(252)  # Annualized
+        
+        # Simple equal-weight portfolio (not optimized)
+        n_symbols = len(symbols)
+        weights = {symbol: 1.0 / n_symbols for symbol in symbols}
+        
+        # Calculate portfolio metrics
+        portfolio_return = sum([weights[symbol] * expected_returns[symbol] for symbol in symbols])
+        
+        # Portfolio variance calculation (simplified)
+        portfolio_variance = 0
+        for symbol1 in symbols:
+            for symbol2 in symbols:
+                correlation = correlation_matrix[symbol1][symbol2]
+                portfolio_variance += weights[symbol1] * weights[symbol2] * volatilities[symbol1] * volatilities[symbol2] * correlation
+        
+        portfolio_volatility = np.sqrt(portfolio_variance)
+        sharpe_ratio = portfolio_return / portfolio_volatility if portfolio_volatility > 0 else 0
+        
+        return {
+            "symbols": symbols,
+            "weights": weights,
+            "expected_return": portfolio_return,
+            "volatility": portfolio_volatility,
+            "sharpe_ratio": sharpe_ratio,
+            "correlation_matrix": correlation_matrix,
+            "individual_returns": expected_returns,
+            "individual_volatilities": volatilities
+        }
+    
+    def stress_testing(self, user_id, stress_scenarios):
+        # Portfolio stress testing
+        portfolio_risk = self.portfolio_risk_analysis(user_id)
+        if not portfolio_risk:
+            return None
+        
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT symbol, quantity, entry_price FROM user_positions WHERE user_id = ?", (user_id,))
+        positions = cursor.fetchall()
+        
+        stress_results = {}
+        
+        for scenario_name, scenario in stress_scenarios.items():
+            scenario_pnl = 0
+            
+            for symbol, quantity, entry_price in positions:
+                current_price = self.get_latest_price(symbol)
+                if not current_price:
+                    continue
+                
+                # Apply stress scenario
+                if scenario["type"] == "market_crash":
+                    stressed_price = current_price * (1 + scenario["market_move"])
+                elif scenario["type"] == "volatility_spike":
+                    # Get volatility
+                    cursor.execute("SELECT volatility FROM risk_metrics WHERE symbol = ? ORDER BY timestamp DESC LIMIT 1", (symbol,))
+                    vol_data = cursor.fetchone()
+                    volatility = vol_data[0] if vol_data else 0.2
+                    
+                    # Simulate price move based on volatility spike
+                    stressed_price = current_price * (1 + np.random.normal(0, volatility * scenario["vol_multiplier"]))
+                elif scenario["type"] == "sector_specific":
+                    # Hardcoded sector mapping (problematic)
+                    tech_stocks = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA"]
+                    if symbol in tech_stocks:
+                        stressed_price = current_price * (1 + scenario["sector_move"])
+                    else:
+                        stressed_price = current_price * (1 + scenario["market_move"])
+                else:
+                    stressed_price = current_price
+                
+                position_pnl = (stressed_price - entry_price) * quantity
+                scenario_pnl += position_pnl
+            
+            stress_results[scenario_name] = {
+                "total_pnl": scenario_pnl,
+                "portfolio_impact": scenario_pnl / portfolio_risk["portfolio_value"] if portfolio_risk["portfolio_value"] > 0 else 0
+            }
+        
+        return stress_results
+    
+    def data_quality_check(self):
+        issues = []
+        
+        cursor = self.db_connection.cursor()
+        
+        # Check for duplicate entries
+        cursor.execute("""
+            SELECT symbol, COUNT(*) as count 
+            FROM stocks 
+            GROUP BY symbol, timestamp 
+            HAVING count > 1
+        """)
+        duplicates = cursor.fetchall()
+        if duplicates:
+            issues.append(f"Found {len(duplicates)} duplicate stock entries")
+        
+        # Check for null values
+        cursor.execute("SELECT COUNT(*) FROM stocks WHERE price IS NULL OR price = 0")
+        null_prices = cursor.fetchone()[0]
+        if null_prices > 0:
+            issues.append(f"Found {null_prices} entries with null/zero prices")
+        
+        # Check for outliers (simplified)
+        cursor.execute("SELECT AVG(price), MAX(price), MIN(price) FROM stocks")
+        avg_price, max_price, min_price = cursor.fetchone()
+        
+        if max_price > avg_price * 100:  # Arbitrary threshold
+            issues.append("Potential price outliers detected")
+        
+        # Check for missing data
+        cursor.execute("SELECT DISTINCT symbol FROM stocks")
+        symbols_with_data = [row[0] for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT COUNT(DISTINCT DATE(timestamp)) FROM stocks")
+        trading_days = cursor.fetchone()[0]
+        
+        for symbol in symbols_with_data:
+            cursor.execute("SELECT COUNT(*) FROM stocks WHERE symbol = ?", (symbol,))
+            symbol_count = cursor.fetchone()[0]
+            
+            expected_count = trading_days * 3  # Assuming 3 sources per day
+            if symbol_count < expected_count * 0.8:  # 80% threshold
+                issues.append(f"Symbol {symbol} has insufficient data coverage")
+        
+        # Check for stale data
+        cursor.execute("SELECT MAX(timestamp) FROM stocks")
+        latest_timestamp = cursor.fetchone()[0]
+        
+        if latest_timestamp:
+            latest_time = datetime.fromisoformat(latest_timestamp.replace('Z', '+00:00'))
+            time_diff = datetime.now() - latest_time
+            
+            if time_diff.total_seconds() > 3600:  # 1 hour threshold
+                issues.append(f"Data appears stale. Latest update: {latest_timestamp}")
+        
+        return issues
+    
+    def cleanup_old_data(self, days_to_keep=30):
+        cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+        cursor = self.db_connection.cursor()
+        
+        # Delete old data with transaction
+        try:
+            cursor.execute("BEGIN TRANSACTION")
+            
+            cursor.execute("DELETE FROM stocks WHERE timestamp < ?", (cutoff_date.isoformat(),))
+            deleted_stocks = cursor.rowcount
+            
+            cursor.execute("DELETE FROM news WHERE publish_date < ?", (cutoff_date.isoformat(),))
+            deleted_news = cursor.rowcount
+            
+            cursor.execute("DELETE FROM trading_signals WHERE timestamp < ?", (cutoff_date.isoformat(),))
+            deleted_signals = cursor.rowcount
+            
+            cursor.execute("COMMIT")
+            
+            print(f"Cleaned up {deleted_stocks} stock records, {deleted_news} news articles, {deleted_signals} trading signals")
+            
+        except Exception as e:
+            cursor.execute("ROLLBACK")
+            print(f"Cleanup failed: {e}")
+    
+    def generate_comprehensive_report(self):
+        cursor = self.db_connection.cursor()
+        
+        # Generate summary statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT symbol) as unique_symbols,
+                COUNT(*) as total_records,
+                AVG(price) as avg_price,
+                MAX(timestamp) as latest_update,
+                MIN(timestamp) as earliest_update
+            FROM stocks
+        """)
+        
+        stats = cursor.fetchone()
+        
+        # Get top performing stocks by price change
+        cursor.execute("""
+            SELECT 
+                s1.symbol,
+                s1.price as latest_price,
+                s2.price as earliest_price,
+                ((s1.price - s2.price) / s2.price) * 100 as price_change_pct
+            FROM stocks s1
+            JOIN (
+                SELECT symbol, price, MIN(timestamp) as min_time
+                FROM stocks
+                GROUP BY symbol
+            ) s2 ON s1.symbol = s2.symbol
+            WHERE s1.timestamp = (
+                SELECT MAX(timestamp) FROM stocks WHERE symbol = s1.symbol
+            )
+            ORDER BY price_change_pct DESC
+            LIMIT 10
+        """)
+        
+        top_performers = cursor.fetchall()
+        
+        # News sentiment summary by symbol
+        cursor.execute("""
+            SELECT 
+                symbol,
+                AVG(sentiment_score) as avg_sentiment,
+                COUNT(*) as news_count,
+                AVG(relevance_score) as avg_relevance
+            FROM news
+            WHERE symbol IS NOT NULL
+            GROUP BY symbol
+            ORDER BY avg_sentiment DESC
+            LIMIT 10
+        """)
+        
+        sentiment_by_symbol = cursor.fetchall()
+        
+        # Trading signals summary
+        cursor.execute("""
+            SELECT 
+                signal_type,
+                COUNT(*) as signal_count,
+                AVG(confidence) as avg_confidence
+            FROM trading_signals
+            GROUP BY signal_type
+        """)
+        
+        signals_summary = cursor.fetchall()
+        
+        # Risk metrics summary
+        cursor.execute("""
+            SELECT 
+                symbol,
+                var_1day,
+                beta,
+                volatility
+            FROM risk_metrics
+            WHERE timestamp = (
+                SELECT MAX(timestamp) FROM risk_metrics WHERE symbol = risk_metrics.symbol
+            )
+            ORDER BY volatility DESC
+            LIMIT 10
+        """)
+        
+        high_risk_symbols = cursor.fetchall()
+        
+        # Portfolio summary
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT user_id) as total_users,
+                COUNT(*) as total_positions,
+                SUM(quantity * current_price) as total_market_value,
+                SUM(unrealized_pnl) as total_unrealized_pnl
+            FROM user_positions
+        """)
+        
+        portfolio_summary = cursor.fetchone()
+        
+        report = {
+            "generated_at": datetime.now().isoformat(),
+            "data_summary": {
+                "unique_symbols": stats[0],
+                "total_records": stats[1],
+                "average_price": stats[2],
+                "latest_update": stats[3],
+                "earliest_update": stats[4]
+            },
+            "top_performers": [
+                {
+                    "symbol": row[0],
+                    "latest_price": row[1],
+                    "earliest_price": row[2],
+                    "price_change_pct": row[3]
+                } for row in top_performers
+            ],
+            "sentiment_analysis": [
+                {
+                    "symbol": row[0],
+                    "avg_sentiment": row[1],
+                    "news_count": row[2],
+                    "avg_relevance": row[3]
+                } for row in sentiment_by_symbol
+            ],
+            "trading_signals": [
+                {
+                    "signal_type": row[0],
+                    "count": row[1],
+                    "avg_confidence": row[2]
+                } for row in signals_summary
+            ],
+            "high_risk_symbols": [
+                {
+                    "symbol": row[0],
+                    "var_1day": row[1],
+                    "beta": row[2],
+                    "volatility": row[3]
+                } for row in high_risk_symbols
+            ],
+            "portfolio_overview": {
+                "total_users": portfolio_summary[0] if portfolio_summary[0] else 0,
+                "total_positions": portfolio_summary[1] if portfolio_summary[1] else 0,
+                "total_market_value": portfolio_summary[2] if portfolio_summary[2] else 0,
+                "total_unrealized_pnl": portfolio_summary[3] if portfolio_summary[3] else 0
+            }
+        }
+        
+        # Save report to file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"comprehensive_financial_report_{timestamp}.json"
+        
+        with open(filename, 'w') as f:
+            json.dump(report, f, indent=2, default=str)
+        
+        print(f"Comprehensive report generated: {filename}")
+        return report
+
+# Flask API endpoints (with security issues)
+app = Flask(__name__)
+app.config['SECRET_KEY'] = SECRET_KEY
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    # Insecure login implementation
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    
+    # Hardcoded credentials (major security issue)
+    if username == "admin" and password == "password123":
+        token = jwt.encode({
+            'user': username,
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }, SECRET_KEY, algorithm='HS256')
+        
+        return jsonify({"token": token})
+    
+    return jsonify({"error": "Invalid credentials"}), 401
+
+@app.route('/api/stock/<symbol>', methods=['GET'])
+def get_stock_data(symbol):
+    # No authentication required (security issue)
+    scraper = FinancialDataScraper()
+    
+    # SQL injection vulnerability
+    cursor = scraper.db_connection.cursor()
+    cursor.execute(f"SELECT * FROM stocks WHERE symbol = '{symbol}' ORDER BY timestamp DESC LIMIT 1")
+    stock_data = cursor.fetchone()
+    
+    if stock_data:
+        return jsonify({
+            "symbol": stock_data[1],
+            "price": stock_data[2],
+            "volume": stock_data[3],
+            "timestamp": stock_data[4],
+            "source": stock_data[5]
+        })
+    
+    return jsonify({"error": "Stock not found"}), 404
+
+@app.route('/api/portfolio/<user_id>', methods=['GET'])
+def get_portfolio(user_id):
+    # No authorization check
+    scraper = FinancialDataScraper()
+    portfolio_data = scraper.portfolio_risk_analysis(user_id)
+    
+    if portfolio_data:
+        return jsonify(portfolio_data)
+    
+    return jsonify({"error": "Portfolio not found"}), 404
+
+@app.route('/api/signals/<symbol>', methods=['GET'])
+def get_trading_signals(symbol):
+    scraper = FinancialDataScraper()
+    
+    cursor = scraper.db_connection.cursor()
+    cursor.execute(f"SELECT * FROM trading_signals WHERE symbol = '{symbol}' ORDER BY timestamp DESC LIMIT 10")
+    signals = cursor.fetchall()
+    
+    result = []
+    for signal in signals:
+        result.append({
+            "symbol": signal[1],
+            "signal_type": signal[2],
+            "confidence": signal[3],
+            "timestamp": signal[4],
+            "price_target": signal[6],
+            "stop_loss": signal[7],
+            "risk_score": signal[8]
+        })
+    
+    return jsonify(result)
+
+def main():
+    # List of symbols to process (much larger list)
+    symbols = [
+        # Technology
+        "AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "NFLX", "UBER", "SHOP",
+        "BABA", "TENCENT", "TSM", "ASML", "SAP", "CRM", "ORCL", "ADBE", "INTC", "AMD",
+        "PYPL", "SQ", "ROKU", "ZM", "DOCU", "SNOW", "PLTR", "COIN", "RBLX", "ABNB",
+        
+        # Financial
+        "JPM", "BAC", "WFC", "GS", "MS", "C", "BLK", "SCHW", "AXP", "V", "MA", "COF",
+        
+        # Healthcare
+        "JNJ", "PFE", "UNH", "ABBV", "TMO", "DHR", "BMY", "MRK", "GILD", "AMGN",
+        
+        # Energy
+        "XOM", "CVX", "COP", "EOG", "PSX", "VLO", "MPC", "KMI", "OKE", "WMB",
+        
+        # Consumer
+        "WMT", "PG", "KO", "PEP", "NKE", "COST", "HD", "MCD", "SBUX", "DIS",
+        
+        # Industrial
+        "BA", "CAT", "GE", "MMM", "HON", "UPS", "FDX", "LMT", "RTX", "NOC",
+        
+        # ETFs and Indices
+        "SPY", "QQQ", "IWM", "VTI", "VOO", "VEA", "VWO", "AGG", "TLT", "GLD"
+    ]
+    
+    # Initialize scraper
+    scraper = FinancialDataScraper()
+    scraper.setup_database()
+    scraper.setup_redis_connection()
+    
+    try:
+        # Run parallel data collection
+        print("Starting comprehensive data collection...")
+        start_time = time.time()
+        
+        results = scraper.parallel_data_collection(symbols)
+        
+        end_time = time.time()
+        print(f"Data collection completed in {end_time - start_time:.2f} seconds")
+        
+        # Run machine learning predictions
+        print("Running ML price predictions...")
+        ml_predictions = []
+        for symbol in symbols[:10]:  # Limit to first 10 for demo
+            prediction = scraper.machine_learning_price_prediction(symbol)
+            if prediction:
+                ml_predictions.append(prediction)
+        
+        # Run backtesting
+        print("Running backtesting analysis...")
+        backtest_results = []
+        for symbol in symbols[:5]:  # Limit for performance
+            backtest = scraper.backtesting_engine(symbol)
+            if backtest:
+                backtest_results.append(backtest)
+        
+        # Portfolio optimization
+        print("Running portfolio optimization...")
+        optimization = scraper.portfolio_optimization(symbols[:20])
+        
+        # Correlation analysis
+        print("Calculating correlation matrix...")
+        correlations = scraper.correlation_analysis(symbols[:15])
+        
+        # Options pricing
+        print("Calculating options prices...")
+        options_prices = []
+        for symbol in ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA"]:
+            current_price = scraper.get_latest_price(symbol)
+            if current_price:
+                strike_prices = [current_price * 0.95, current_price, current_price * 1.05]
+                for strike in strike_prices:
+                    call_price = scraper.options_pricing_black_scholes(symbol, strike, 30, "call")
+                    put_price = scraper.options_pricing_black_scholes(symbol, strike, 30, "put")
+                    if call_price:
+                        options_prices.append(call_price)
+                    if put_price:
+                        options_prices.append(put_price)
+        
+        # Stress testing
+        print("Running stress tests...")
+        stress_scenarios = {
+            "market_crash": {"type": "market_crash", "market_move": -0.20},
+            "tech_selloff": {"type": "sector_specific", "sector_move": -0.30, "market_move": -0.10},
+            "volatility_spike": {"type": "volatility_spike", "vol_multiplier": 3.0}
+        }
+        
+        # Assuming user_id "user_001" exists
+        stress_results = scraper.stress_testing("user_001", stress_scenarios)
+        
+        # Data quality check
+        print("Running data quality checks...")
+        issues = scraper.data_quality_check()
+        if issues:
+            print("Data quality issues found:")
+            for issue in issues:
+                print(f"- {issue}")
+        else:
+            print("No data quality issues detected")
+        
+        # Generate comprehensive report
+        print("Generating comprehensive report...")
+        report = scraper.generate_comprehensive_report()
+        print(f"Report generated with {report['data_summary']['total_records']} total records")
+        
+        # Export data
+        print("Exporting data to CSV...")
+        scraper.export_data_to_csv()
+        
+        # Portfolio monitoring
+        print("Starting portfolio monitoring...")
+        scraper.monitor_positions()
+        
+        # Real-time tracking (start in background)
+        print("Starting real-time portfolio tracking...")
+        threading.Thread(target=scraper.real_time_portfolio_tracking, daemon=True).start()
+        
+        # Cleanup old data
+        print("Cleaning up old data...")
+        scraper.cleanup_old_data(days_to_keep=30)
+        
+        # Start Flask API server
+        print("Starting API server...")
+        app.run(host='0.0.0.0', port=5000, debug=True)
+        
+        print("All operations completed successfully!")
+        
+    except Exception as e:
+        print(f"Critical error in main execution: {e}")
+        # No proper logging or error recovery
+    finally:
+        # Resource cleanup (insufficient)
+        if scraper.db_connection:
+            scraper.db_connection.close()
+        
+        # Close WebSocket connections
+        for ws in scraper.websocket_connections:
+            try:
+                ws.close()
+            except:
+                pass
+
+if __name__ == "__main__":
+    main()
+```
+
+**COMPREHENSIVE ANALYSIS REQUIREMENTS:**
+
+Provide a detailed analysis and complete refactored solution addressing all issues found in this extensive codebase:
+
+1. **Security Vulnerabilities**: 
+   - SQL injection attacks in multiple locations
+   - Hardcoded API keys and secrets
+   - No input validation or sanitization
+   - Insecure authentication and authorization
+   - Plain text password storage
+   - No HTTPS enforcement
+   - Session management issues
+   - XSS vulnerabilities in API responses
+
+2. **Architecture Issues**: 
+   - Global state variables causing race conditions
+   - Tight coupling between components
+   - Violation of separation of concerns
+   - No dependency injection
+   - Monolithic design lacking modularity
+   - Missing abstraction layers
+   - No configuration management system
+   - Hard-coded business logic
+
+3. **Performance Problems**: 
+   - Inefficient database queries and N+1 problems
+   - No connection pooling or query optimization
+   - Memory-intensive operations without streaming
+   - Excessive thread creation
+   - Blocking I/O operations in critical paths
+   - No caching strategy or cache invalidation
+   - Inefficient data structures and algorithms
+   - Missing indexes and query optimization
+
+4. **Thread Safety Issues**: 
+   - Race conditions in shared data structures
+   - Non-atomic operations on shared state
+   - Improper synchronization mechanisms
+   - Deadlock potential in database operations
+   - Thread-unsafe cache operations
+   - Concurrent modification of collections
+   - Missing volatile/atomic variables
+   - Improper use of threading primitives
+
+5. **Error Handling Deficiencies**: 
+   - Bare except blocks hiding errors
+   - No retry logic for transient failures
+   - Missing timeout handling
+   - Inadequate logging and monitoring
+   - No graceful degradation strategies
+   - Exception swallowing without proper handling
+   - No circuit breaker patterns
+   - Missing validation and error recovery
+
+6. **Code Quality Issues**: 
+   - Violation of SOLID principles
+   - Deeply nested code and long methods
+   - Code duplication and lack of DRY principle
+   - Missing documentation and type hints
+   - Inconsistent naming conventions
+   - No unit tests or testability
+   - Magic numbers and hardcoded values
+   - Complex cyclomatic complexity
+
+7. **Data Integrity Problems**: 
+   - No data validation or constraints
+   - Missing foreign key relationships
+   - No transaction management
+   - Duplicate data insertion without checks
+   - Inconsistent data formats
+   - No backup or recovery mechanisms
+   - Missing audit trails
+   - No data versioning or migration strategy
+
+8. **Scalability Limitations**: 
+   - Single-threaded bottlenecks
+   - No horizontal scaling support
+   - Resource leaks and memory management
+   - Missing load balancing strategies
+   - No distributed caching
+   - Synchronous processing limitations
+   - Missing pagination and filtering
+   - No rate limiting or throttling
+
+9. **Production Readiness Gaps**: 
+   - No health checks or monitoring
+   - Missing configuration management
+   - No deployment automation
+   - Inadequate logging and metrics
+   - No alerting or notification systems
+   - Missing backup and disaster recovery
+   - No performance benchmarking
+   - Lack of operational documentation
+
+10. **Financial Domain-Specific Issues**: 
+    - Incorrect mathematical calculations
+    - No precision handling for financial data
+    - Missing regulatory compliance features
+    - No audit trails for trades
+    - Inadequate risk management
+    - No market data validation
+    - Missing settlement and clearing logic
+    - No real-time risk monitoring
+
+Your refactored solution should demonstrate enterprise-grade software engineering practices, including proper design patterns, comprehensive testing strategies, security best practices, performance optimization, and production-ready deployment considerations. Include detailed explanations for all architectural decisions and provide code examples showing the corrected implementations.

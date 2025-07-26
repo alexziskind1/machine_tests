@@ -1,0 +1,3009 @@
+<file_map>
+/Users/alex/Code/courses/progress/react/rpstrackerreact_kendo
+└── src
+    └── main.tsx *
+    ├── index.css *
+    ├── config.ts *
+    ├── App.tsx *
+    ├── App.css *
+    ├── core
+    │   ├── constants
+    │   │   └── pt-item-types.ts *
+    │   │   ├── pt-item-statuses.ts *
+    │   │   ├── pt-item-priorities.ts *
+    │   │   ├── index.ts *
+    │   ├── helpers
+    │   │   └── user-avatar-helper.ts *
+    │   │   ├── string-helpers.ts *
+    │   │   ├── index.ts *
+    │   │   ├── date-utils.ts *
+    │   ├── models
+    │   │   ├── core
+    │   │   │   └── log-entry.model.ts *
+    │   │   │   ├── index.ts *
+    │   │   ├── domain
+    │   │   │   └── pt-user.model.ts *
+    │   │   │   ├── pt-task.model.ts *
+    │   │   │   ├── pt-register.model.ts *
+    │   │   │   ├── pt-object-base.model.ts *
+    │   │   │   ├── pt-login.model.ts *
+    │   │   │   ├── pt-item.model.ts *
+    │   │   │   ├── pt-comment.model.ts *
+    │   │   │   ├── pt-auth-token.model.ts *
+    │   │   │   ├── index.ts *
+    │   │   │   ├── enums
+    │   │   │   │   └── item-type-enum.ts *
+    │   │   │   │   ├── item-status.enum.ts *
+    │   │   │   │   ├── item-priority.enum.ts *
+    │   │   │   │   ├── index.ts *
+    │   │   │   ├── types
+    │   │   │   │   └── pt-item-type.ts *
+    │   │   │   │   ├── pt-item-status-type.ts *
+    │   │   │   │   ├── presets-type.ts *
+    │   │   │   │   ├── index.ts *
+    │   │   └── enums
+    │   │       └── logging-level.enum.ts *
+    │   │       ├── index.ts *
+    │   ├── services
+    │   │   └── pt-user-service.ts *
+    │   └── state
+    │       └── app-store.ts *
+    │       ├── app-state.ts *
+    ├── modules
+    │   └── backlog
+    │       ├── components
+    │       │   ├── add-item-modal
+    │       │   │   └── add-item-modal.tsx *
+    │       │   ├── assignee-list-modal
+    │       │   │   └── assignee-list-modal.tsx *
+    │       │   ├── backlog-grid
+    │       │   │   └── backlog-grid.tsx *
+    │       │   ├── backlog-list
+    │       │   │   └── backlog-list.tsx *
+    │       │   ├── backlog-row
+    │       │   │   └── backlog-row.tsx *
+    │       │   ├── item-chitchat
+    │       │   │   └── pt-item-chitchat.tsx *
+    │       │   │   ├── pt-item-chitchat.css *
+    │       │   │   ├── new-comment-form.tsx *
+    │       │   │   ├── comment-display.tsx *
+    │       │   ├── item-details
+    │       │   │   └── pt-item-details.tsx *
+    │       │   ├── item-form
+    │       │   │   └── pt-item-form.tsx *
+    │       │   ├── item-schedule
+    │       │   │   └── scheduler-event.model.ts *
+    │       │   │   ├── pt-item-schedule.tsx *
+    │       │   └── item-tasks
+    │       │       └── pt-task-display.tsx *
+    │       │       ├── pt-item-tasks.tsx *
+    │       │       ├── new-task-form.tsx *
+    │       ├── pages
+    │       │   ├── backlog
+    │       │   │   └── backlog-page.tsx *
+    │       │   │   ├── backlog-page.css *
+    │       │   └── detail
+    │       │       └── detail-page.tsx *
+    │       │       ├── detail-page.css *
+    │       ├── repositories
+    │       │   └── backlog.repository.ts *
+    │       └── services
+    │           └── backlog.service.ts *
+    ├── shared
+    │   ├── components
+    │   │   ├── app-bar
+    │   │   │   └── app-bar.tsx *
+    │   │   ├── main-menu
+    │   │   │   └── main-menu.tsx *
+    │   │   ├── preset-filter
+    │   │   │   └── preset-filter.tsx *
+    │   │   ├── rps-logo
+    │   │   │   └── rps-logo.tsx *
+    │   │   └── side-menu
+    │   │       └── side-menu.tsx *
+    │   ├── helpers
+    │   │   └── priority-styling.ts *
+    │   └── models
+    │       ├── dto
+    │       │   └── pt-task-update.ts *
+    │       │   ├── pt-new-task.ts *
+    │       │   ├── pt-new-item.ts *
+    │       │   ├── pt-new-comment.ts *
+    │       ├── forms
+    │       │   └── pt-item-details-edit-form.ts *
+    │       └── ui
+    │           └── types
+    │               └── detail-screens.ts *
+</file_map>
+
+<file_contents>
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/constants/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './pt-item-priorities';
+  - export * from './pt-item-statuses';
+  - export * from './pt-item-types';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/constants/pt-item-priorities.ts
+Imports:
+  - import { PriorityEnum } from '../../core/models/domain/enums';
+---
+Classes:
+  - pt-item-priorities
+    Properties:
+      - export const PT_ITEM_PRIORITIES = [
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/constants/pt-item-statuses.ts
+Imports:
+  - import { StatusEnum } from '../../core/models/domain/enums';
+---
+Classes:
+  - pt-item-statuses
+    Properties:
+      - export const PT_ITEM_STATUSES = [
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/constants/pt-item-types.ts
+Imports:
+  - import { PtItemType } from '../../core/models/domain/types';
+---
+Classes:
+  - pt-item-types
+    Methods:
+      - public static get Pbi() {
+        return this.itPbi
+      - public static get Bug() {
+        return this.itBug
+      - public static get Chore() {
+        return this.itChore
+      - public static get Impediment() {
+        return this.itImpediment
+      - public static get List() {
+        return [ItemType.Bug, ItemType.Pbi, ItemType.Chore, ItemType.Impediment]
+      - public static indicatorClassFromType(ptItemType: PtItemType): string {
+        switch (ptItemType) {
+            case PT_ITEM_TYPE_PBI:
+                return 'indicator-pbi'
+      - public static imageResFromType(ptItemType: PtItemType): string {
+        switch (ptItemType) {
+            case PT_ITEM_TYPE_PBI:
+                return '/assets/img/icon_pbi.png'
+      - public get PtItemType() {
+        return this.ptItemType
+      - private constructor(private ptItemType: PtItemType)
+      - public static fromString(typeStr: string): ItemType | undefined {
+        return ItemType.List.find((i) => i.PtItemType === typeStr)
+      - public getPtTypeImage(): string {
+        return ItemType.imageResFromType(this.PtItemType)
+      - public getIndicatorClass(): string {
+        return ItemType.indicatorClassFromType(this.PtItemType)
+    Properties:
+      - const PT_ITEM_TYPE_PBI: PtItemType = 'PBI';
+      - const PT_ITEM_TYPE_BUG: PtItemType = 'Bug';
+      - const PT_ITEM_TYPE_CHORE: PtItemType = 'Chore';
+      - const PT_ITEM_TYPE_IMPEDIMENT: PtItemType = 'Impediment';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/core/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './log-entry.model';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/core/log-entry.model.ts
+Imports:
+  - import { LoggingLevelEnum } from '../enums';
+---
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/enums/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './item-priority.enum';
+  - export * from './item-status.enum';
+  - export * from './item-type-enum';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/enums/item-priority.enum.ts
+Imports:
+---
+
+Enums:
+  - PriorityEnum
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/enums/item-status.enum.ts
+Imports:
+---
+
+Enums:
+  - StatusEnum
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/enums/item-type-enum.ts
+Imports:
+---
+
+Enums:
+  - ItemTypeEnum
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/types/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './pt-item-status-type';
+  - export * from './pt-item-type';
+  - export * from './presets-type';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/types/presets-type.ts
+Imports:
+---
+
+Literal-union aliases:
+  - export type PresetType = 'my' | 'open' | 'closed';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/types/pt-item-status-type.ts
+Imports:
+---
+
+Literal-union aliases:
+  - export type PtItemStatusType = 'Submitted' | 'Open' | 'Closed' | 'ReOpened';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/types/pt-item-type.ts
+Imports:
+---
+
+Literal-union aliases:
+  - export type PtItemType = 'PBI' | 'Bug' | 'Chore' | 'Impediment';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './pt-auth-token.model';
+  - export * from './pt-comment.model';
+  - export * from './pt-item.model';
+  - export * from './pt-login.model';
+  - export * from './pt-object-base.model';
+  - export * from './pt-task.model';
+  - export * from './pt-user.model';
+  - export * from './pt-register.model';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-auth-token.model.ts
+Imports:
+---
+
+Type-aliases:
+  - PtAuthToken
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-comment.model.ts
+Imports:
+  - import { PtObjectBase, PtObjectBaseServer, PtUser, PtUserServer, ptUserServerToPtUser } from './';
+---
+Classes:
+  - pt-comment.model
+    Methods:
+      - export function ptCommentServerToPtComment(comment: PtCommentServer): PtComment {
+    return {
+        ...comment,
+        dateCreated: new Date(comment.dateCreated),
+        dateModified: new Date(comment.dateModified),
+        dateDeleted: comment.dateDeleted ? new Date(comment.dateDeleted) : undefined,
+        user: comment.user ? ptUserServerToPtUser(comment.user) : undefined
+    }
+      - export function ptCommentsServerToPtComments(comments: PtCommentServer[]): PtComment[] {
+    return comments.map(ptCommentServerToPtComment)
+
+Type-aliases:
+  - PtComment
+  - PtCommentServer
+  - PtCommentToBe
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-item.model.ts
+Imports:
+  - import { PtObjectBase, PtObjectBaseServer, PtTask, PtComment, PtUser, PtUserServer, PtCommentServer, PtTaskServer, ptUserServerToPtUser, ptCommentsServerToPtComments, ptTasksServerToPtTasks } from './';
+  - import { PriorityEnum, StatusEnum } from './enums';
+  - import { PtItemType } from '../domain/types';
+---
+Classes:
+  - pt-item.model
+    Methods:
+      - export function ptItemServerToPtItem(item: PtItemServer): PtItem {
+    return {
+        ...item,
+        estimate: item.estimate ? parseInt(item.estimate, 10) : 0,
+        dateCreated: new Date(item.dateCreated),
+        dateModified: new Date(item.dateModified),
+        dateDeleted: item.dateDeleted ? new Date(item.dateDeleted) : undefined,
+        assignee: ptUserServerToPtUser(item.assignee),
+        comments: item.comments ? ptCommentsServerToPtComments(item.comments) : [],
+        tasks: item.tasks ? ptTasksServerToPtTasks(item.tasks) : []
+    }
+      - export function ptItemsServerToPtItems(items: PtItemServer[]): PtItem[] {
+    return items.map(ptItemServerToPtItem)
+    Properties:
+      - const b: PtItemServer =
+      - const c: PtItem =
+
+Type-aliases:
+  - PtItemCommon
+  - PtItemWithAssignee
+  - PtItemWithAssigneeServer
+  - PtItemWithComments
+  - PtItemWithCommentsServer
+  - PtItemWithTasks
+  - PtItemWithTasksServer
+  - PtItemWithEstimate
+  - PtItemWithEstimateServer
+  - PtItem
+  - PtItemServer
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-login.model.ts
+Imports:
+---
+
+Type-aliases:
+  - PtLoginModel
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-object-base.model.ts
+Imports:
+---
+
+Type-aliases:
+  - PtObjectBase
+
+Literal-union aliases:
+  - export type PtObjectBaseServer = Omit<PtObjectBase, 'dateCreated' | 'dateModified' | 'dateDeleted'> &
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-register.model.ts
+Imports:
+---
+
+Type-aliases:
+  - PtRegisterModel
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-task.model.ts
+Imports:
+  - import { PtObjectBase, PtObjectBaseServer } from './';
+---
+Classes:
+  - pt-task.model
+    Methods:
+      - export function ptTaskServerToPtTask(task: PtTaskServer): PtTask {
+    return {
+        ...task,
+        dateCreated: new Date(task.dateCreated),
+        dateModified: new Date(task.dateModified),
+        dateDeleted: task.dateDeleted ? new Date(task.dateDeleted) : undefined,
+        dateStart: task.dateStart ? new Date(task.dateStart) : undefined,
+        dateEnd: task.dateEnd ? new Date(task.dateEnd) : undefined
+    }
+      - export function ptTasksServerToPtTasks(tasks: PtTaskServer[]): PtTask[] {
+    return tasks.map(ptTaskServerToPtTask)
+
+Type-aliases:
+  - PtTaskCommon
+  - PtTask
+  - PtTaskServer
+  - PtTaskToBe
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/domain/pt-user.model.ts
+Imports:
+  - import { PtObjectBase, PtObjectBaseServer } from './';
+---
+Classes:
+  - pt-user.model
+    Methods:
+      - export function ptUserServerToPtUser(user: PtUserServer): PtUser {
+    return {
+        ...user,
+        dateCreated: new Date(user.dateCreated),
+        dateModified: new Date(user.dateModified),
+        dateDeleted: user.dateDeleted ? new Date(user.dateDeleted) : undefined
+    }
+      - export function ptUsersServerToPtUsers(users: PtUserServer[]): PtUser[] {
+    return users.map(ptUserServerToPtUser)
+
+Type-aliases:
+  - PtUserCommon
+  - PtUser
+  - PtUserServer
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/enums/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './logging-level.enum';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/models/enums/logging-level.enum.ts
+Imports:
+---
+
+Enums:
+  - LoggingLevelEnum
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/state/app-state.ts
+Imports:
+  - import { PtItem, PtUser } from '../models/domain';
+  - import { PresetType } from '../models/domain/types';
+---
+Classes:
+  - app-state
+    Properties:
+      - export const INITIAL_STATE: State =
+
+Literal-union aliases:
+  - export type StateKey = 'backlogItems' | 'users' | 'currentUser' | 'currentSelectedItem' | 'selectedPreset';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/state/app-store.ts
+Imports:
+  - import { BehaviorSubject, Observable } from 'rxjs';
+  - import { distinctUntilChanged, pluck } from 'rxjs/operators';
+  - import { State, INITIAL_STATE, StateKey } from './app-state';
+---
+Classes:
+  - app-store
+    Methods:
+      - public get value() {
+        return this.subj.value
+      - public select<T>(name: StateKey): Observable<T> {
+        return this.subj.pipe(
+            pluck<State, T>(name),
+            distinctUntilChanged<T>()
+        )
+      - public set<T>(name: StateKey, state: T) {
+        this.subj.next({
+            ...this.value, [name]: state
+        })
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/App.css
+```css
+html, body {
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/assets/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
+  src: url('/assets/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/assets/fonts/Roboto/Roboto-Bold.ttf') format('truetype');
+  font-weight: 700;  
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/assets/fonts/Roboto/Roboto-Medium.ttf') format('truetype');
+  font-weight: 500; 
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/assets/fonts/Roboto/Roboto-Light.ttf') format('truetype');
+  font-weight: 300;  
+  font-style: normal;
+}
+
+
+.frame13 {
+  width: 500px;
+}
+
+.page .container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  color: #3D3D3D;
+  font-size: 40px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+}
+
+.nav-item > .app-bar-nav-link {
+  text-align: center;
+  color: #068597 !important;
+  font-size: 16px;
+  font-family: Roboto;
+  font-weight: 500;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.li-avatar {
+  background-color: #eeeeee;
+  width: 40px;
+  height: 40px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+
+.li-estimate {
+  font-size: 10px;
+  font-weight: bold;
+  color: #555a97;
+}
+
+.li-date {
+  font-size: 12px;
+  color: #555a97;
+  margin-left: 10px;
+}
+
+.indicator-pbi {
+  background-color: #527FD7;
+}
+
+.indicator-bug {
+  background-color: #D75252;
+}
+
+.indicator-chore {
+  background-color: #666666;
+}
+
+.indicator-impediment {
+  background-color: #D7C152;
+}
+
+.priority-critical {
+  color: #fff;
+  background-color: #820101;
+}
+
+.priority-high {
+  color: #fff;
+  background-color: #b27100;
+}
+
+.priority-medium {
+  color: #fff;
+  background-color: #0c6d00;
+}
+
+.priority-low {
+  color: #fff;
+  background-color: #002b6d;
+}
+
+.modal-body {
+  max-height: 400px;
+  overflow: scroll;
+}
+
+.rps-text-area {
+  width: 100%;
+  height: 60px;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+/*
+ * Sidebar
+ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 67px 0 0; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-sticky {
+  position: relative;
+  top: 0;
+  height: calc(100vh - 67px);
+  padding-top: .5rem;
+  overflow-x: hidden;
+  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+
+@supports ((position: -webkit-sticky) or (position: sticky)) {
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+.sidebar .nav-link {
+  font-weight: 500;
+  color: #333;
+}
+
+.sidebar .nav-link .feather {
+  margin-right: 4px;
+  color: #999;
+}
+
+.sidebar .nav-link.active {
+  color: #007bff;
+}
+
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+  color: inherit;
+}
+
+.sidebar-heading {
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+/*
+ * Content
+ */
+
+[role="main"] {
+  padding-top: 133px; /* Space for fixed navbar */
+}
+
+@media (min-width: 768px) {
+  [role="main"] {
+    padding-top: 67px; /* Space for fixed navbar */
+  }
+}
+
+/*
+ * Navbar
+ */
+
+.navbar-brand {
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+  font-size: 1rem;
+}
+
+.navbar .form-control {
+  padding: .75rem 1rem;
+  border-width: 0;
+  border-radius: 0;
+}
+
+.form-control-dark {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .1);
+}
+
+.form-control-dark:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+.li-avatar {
+  background-color: #eeeeee;
+  width: 40px;
+  height: 40px;
+}
+
+.li-estimate {
+font-size: 10px;
+font-weight: bold;
+color: #555a97;
+}
+
+.li-date {
+font-size: 12px;
+color: #555a97;
+margin-left: 10px;
+}
+
+.indicator-pbi {
+background-color: #527FD7;
+}
+
+.indicator-bug {
+background-color: #D75252;
+}
+
+.indicator-chore {
+background-color: #666666;
+}
+
+.indicator-impediment {
+background-color: #D7C152;
+}
+
+.priority-critical {
+color: #fff;
+background-color: #820101;
+}
+
+.priority-high {
+color: #fff;
+background-color: #b27100;
+}
+
+.priority-medium {
+color: #fff;
+background-color: #0c6d00;
+}
+
+.priority-low {
+color: #fff;
+background-color: #002b6d;
+}
+
+.modal-body {
+max-height: 400px;
+overflow: scroll;
+}
+
+.logo {
+  width: 100px;
+}
+
+/* Kendo overrides */
+.k-animation-container-relative {
+  display: block !important;
+}
+
+/* Extracted styles from App.tsx */
+.page {
+width: 100%;
+}
+
+.backlog-container {
+width: 100%;
+flex-direction: column;
+justify-content: flex-start;
+align-items: flex-start;
+display: inline-flex;
+}
+
+.app-header {
+background: rgba(3.84, 86.84, 98.16, 0.06);
+box-shadow: 0px 6px 13px rgba(0, 0, 0, 0.12);
+width: 100%;
+}
+
+.main-content-wrapper {
+width: 1440px;
+justify-content: flex-start;
+align-items: flex-start;
+display: inline-flex;
+}
+
+.content-container {
+flex: 1 1 0;
+align-self: stretch;
+padding-bottom: 20px;
+padding-left: 20px;
+padding-right: 20px;
+flex-direction: column;
+justify-content: flex-start;
+align-items: normal;
+gap: 24px;
+display: inline-flex;
+}
+```
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/App.tsx
+Imports:
+  - import React, { createContext } from 'react';
+  - import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+  - import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+  - import { BacklogPage } from './modules/backlog/pages/backlog/backlog-page';
+  - import { DashboardPage } from './modules/dashboard/pages/dashboard/dashboard-page';
+  - import { DetailPage } from './modules/backlog/pages/detail/detail-page';
+  - import { Store } from './core/state/app-store';
+  - import { BacklogRepository } from './modules/backlog/repositories/backlog.repository';
+  - import { BacklogService } from './modules/backlog/services/backlog.service';
+  - import { DashboardRepository } from './modules/dashboard/repositories/dashboard.repository';
+  - import { DashboardService } from './modules/dashboard/services/dashboard.service';
+  - import { PtUserService } from './core/services/pt-user-service';
+  - import MainMenu from './shared/components/main-menu/main-menu';
+  - import AppBar from './shared/components/app-bar/app-bar';
+  - import '@progress/kendo-theme-bootstrap/dist/all.css';
+  - import './App.css';
+---
+Classes:
+  - App
+    Methods:
+      - function App() {
+    return (
+      <PtStoreContext.Provider value={store}>
+      <PtUserServiceContext.Provider value={userService}>
+      <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <React.Fragment>
+        <div className="page">
+          <div className="backlog-container">
+            <div className="app-header">
+              <AppBar/>
+            </div>
+            
+            <div className="main-content-wrapper">
+              <MainMenu />
+              <div className="content-container">
+                <Routes>
+                  <Route path="dashboard" element={
+                    <PtDashboardServiceContext.Provider value={dashboardService}>
+                      <DashboardPage/>
+                    </PtDashboardServiceContext.Provider>
+                  } />
+                  <Route path="/" element={<Navigate replace to="/dashboard" />} />
+                  <Route path="/backlog/:preset" element={
+                    <PtBacklogServiceContext.Provider value={backlogService}>
+                      <BacklogPage/>
+                    </PtBacklogServiceContext.Provider>
+                  } />
+                  <Route path="backlog" element={<Navigate replace to="/backlog/open" />}/>
+                  <Route path="/detail/:id" element={
+                    <PtBacklogServiceContext.Provider value={backlogService}>
+                      <DetailPage/>
+                    </PtBacklogServiceContext.Provider>
+                  } />
+                  <Route path="/detail/:id/tasks" element={
+                    <PtBacklogServiceContext.Provider value={backlogService}>
+                      <DetailPage/>
+                    </PtBacklogServiceContext.Provider>
+                  } />
+                  <Route path="/detail/:id/schedule" element={
+                    <PtBacklogServiceContext.Provider value={backlogService}>
+                      <DetailPage/>
+                    </PtBacklogServiceContext.Provider>
+                  } />
+                  <Route path="/detail/:id/chitchat" element={
+                    <PtBacklogServiceContext.Provider value={backlogService}>
+                      <DetailPage/>
+                    </PtBacklogServiceContext.Provider>
+                  } />
+                </Routes>
+              </div>
+            </div>
+          </div>
+        </div>
+        </React.Fragment>
+      </BrowserRouter>
+      </QueryClientProvider>
+      </PtUserServiceContext.Provider>
+      </PtStoreContext.Provider>
+    )
+    Properties:
+      - const queryClient = new QueryClient();
+      - const store: Store = new Store();
+      - const backlogRepo: BacklogRepository = new BacklogRepository();
+      - const backlogService: BacklogService = new BacklogService(backlogRepo, store);
+      - const dashboardRepo: DashboardRepository = new DashboardRepository();
+      - const dashboardService: DashboardService = new DashboardService(dashboardRepo);
+      - const userService: PtUserService = new PtUserService(store);
+      - export const PtStoreContext = createContext(store);
+      - export const PtBacklogServiceContext = createContext(backlogService);
+      - export const PtDashboardServiceContext = createContext(dashboardService);
+      - export const PtUserServiceContext = createContext(userService);
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/config.ts
+Imports:
+---
+Classes:
+  - config
+    Properties:
+      - export const CONFIG =
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/index.css
+```css
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+```
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/main.tsx
+Imports:
+  - import { StrictMode } from 'react'
+  - import { createRoot } from 'react-dom/client'
+  - import './index.css'
+  - import 'bootstrap/dist/css/bootstrap.css';
+  - import App from './App';
+---
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/helpers/date-utils.ts
+Imports:
+  - import { PtTask, PtItem, PtComment } from '../models/domain';
+---
+Classes:
+  - date-utils
+    Methods:
+      - export function datesForTask(t: PtTask) {
+    t.dateCreated = new Date(t.dateCreated)
+      - export function datesForComment(t: PtComment) {
+    t.dateCreated = new Date(t.dateCreated)
+      - export function formatDateEnUs(date: Date) {
+    return Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+    }).format(date)
+      - export function datesForPtItem(i: PtItem) {
+    i.dateCreated = new Date(i.dateCreated)
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/helpers/index.ts
+Imports:
+---
+
+Exports:
+  - export * from './string-helpers';
+  - export * from './user-avatar-helper';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/helpers/string-helpers.ts
+Imports:
+---
+Classes:
+  - string-helpers
+    Properties:
+      - export const EMPTY_STRING = '';
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/helpers/user-avatar-helper.ts
+Imports:
+---
+Classes:
+  - user-avatar-helper
+    Methods:
+      - export function getUserAvatarUrl(apiEndPoint: string, userId: number) {
+    return `${apiEndPoint}/photo/${userId}`
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/core/services/pt-user-service.ts
+Imports:
+  - import { CONFIG } from "../../config";
+  - import { Store } from "../state/app-store";
+  - import { PtUser } from "../models/domain";
+---
+Classes:
+  - pt-user-service
+    Methods:
+      - private getUsersUrl(nameFilter?: string): string {
+        let url = `${CONFIG.apiEndpoint}/users`
+      - constructor(
+        private store: Store
+    )
+      - public fetchUsers() {
+        fetch(this.getUsersUrl())
+            .then(response => response.json())
+            .then((data: PtUser[]) => {
+                data.forEach(u => {
+                    u.avatar = `${CONFIG.apiEndpoint}/photo/${u.id}`
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/add-item-modal/add-item-modal.tsx
+Imports:
+  - import { useState } from "react";
+  - import { ItemType } from "../../../../core/constants";
+  - import { EMPTY_STRING } from "../../../../core/helpers";
+  - import { PtItem } from "../../../../core/models/domain";
+  - import { PtNewItem } from "../../../../shared/models/dto/pt-new-item";
+  - import { Button } from '@progress/kendo-react-buttons';
+  - import { FormElement } from '@progress/kendo-react-form';
+  - import { Label } from '@progress/kendo-react-labels';
+  - import { Input, TextArea } from '@progress/kendo-react-inputs';
+  - import { DropDownList } from '@progress/kendo-react-dropdowns';
+  - import { Dialog, DialogActionsBar } from '@progress/kendo-react-dialogs';
+---
+Classes:
+  - add-item-modal
+    Methods:
+      - const initModalNewItem = (): PtNewItem =>  {
+    return {
+        title: EMPTY_STRING,
+        description: EMPTY_STRING,
+        typeStr: 'PBI'
+    }
+      - export function AddItemModal(props: AddItemModalProps) {
+
+    const [newItem, setNewItem] = useState(initModalNewItem())
+      - function onFieldChange(e: any, formFieldName: string) {
+        if (!newItem) {
+            return
+      - async function onAddSave() {
+        const createdItem = await props.onNewItemSave(newItem)
+    Properties:
+      - modalShowing: boolean;
+      - onNewItemSave: (newItem: PtNewItem) => Promise<PtItem | undefined>;
+      - setIsAddModalShowing: React.Dispatch<React.SetStateAction<boolean>>;
+      - const modalShowing = props.modalShowing;
+      - const setShowModal = props.setIsAddModalShowing;
+      - const itemTypesProvider = ItemType.List.map((t) => t.PtItemType);
+      - const createdItem = await props.onNewItemSave(newItem);
+
+Type-aliases:
+  - AddItemModalProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/assignee-list-modal/assignee-list-modal.tsx
+Imports:
+  - import { PtUser } from "../../../../core/models/domain";
+  - import { Dialog } from '@progress/kendo-react-dialogs';
+---
+Classes:
+  - assignee-list-modal
+    Methods:
+      - export function AssigneeListModal(props: AssigneeListModalProps) {
+
+    const { modalIsShowing, setModalIsShowing, users, selectAssignee } = props
+    Properties:
+      - modalIsShowing: boolean;
+      - setModalIsShowing: React.Dispatch<React.SetStateAction<boolean>>;
+      - users: PtUser[];
+      - selectAssignee: (user: PtUser) => void;
+
+Type-aliases:
+  - AssigneeListModalProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/backlog-grid/backlog-grid.tsx
+Imports:
+  - import { useState } from "react";
+  - import { useNavigate } from "react-router-dom";
+  - import { process, State } from "@progress/kendo-data-query";
+  - import { Grid, GridColumn, GridDataStateChangeEvent, GridRowClickEvent } from "@progress/kendo-react-grid";
+  - import { ItemType } from "../../../../core/constants";
+  - import { PtItem } from "../../../../core/models/domain";
+  - import { getIndicatorClass } from "../../../../shared/helpers/priority-styling";
+---
+Classes:
+  - backlog-grid
+    Methods:
+      - export function BacklogGrid(props: BacklogGridProps) {
+
+    const navigate = useNavigate()
+      - function onDataStateChange(e: GridDataStateChangeEvent) {
+        setGridState(e.dataState)
+      - function onSelectionChange(args: GridRowClickEvent) {
+        const selItem = args.dataItem as PtItem
+      - function getIndicatorImage(item: PtItem) {
+        return ItemType.imageResFromType(item.type)
+      - function getPriorityClass(item: PtItem): string {
+        const indicatorClass = getIndicatorClass(item.priority)
+    Properties:
+      - items: PtItem[];
+      - const navigate = useNavigate();
+      - const selItem = args.dataItem as PtItem;
+      - const indicatorClass = getIndicatorClass(item.priority);
+      - const gridData = process(props.items, gridState);
+
+Type-aliases:
+  - BacklogGridProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/backlog-list/backlog-list.tsx
+Imports:
+  - import { PtItem } from "../../../../core/models/domain";
+  - import { BacklogRow } from "../backlog-row/backlog-row";
+---
+Classes:
+  - backlog-list
+    Methods:
+      - export function BacklogList(props: BacklogListProps) {
+
+    const rows = props.items.map(i => {
+        return (
+            <BacklogRow key={i.id} item={i} />
+        )
+    Properties:
+      - items: PtItem[];
+      - const rows = props.items.map(i =>
+
+Type-aliases:
+  - BacklogListProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/backlog-row/backlog-row.tsx
+Imports:
+  - import { useNavigate } from "react-router-dom";
+  - import { ItemType } from "../../../../core/constants";
+  - import { PtItem } from "../../../../core/models/domain";
+  - import { getIndicatorClass } from "../../../../shared/helpers/priority-styling";
+---
+Classes:
+  - backlog-row
+    Methods:
+      - export function BacklogRow(props: BacklogRowProps) {
+    
+    const { item: i } = props
+      - function getIndicatorImage(item: PtItem) {
+        return ItemType.imageResFromType(item.type)
+      - function getPriorityClass(item: PtItem): string {
+        const indicatorClass = getIndicatorClass(item.priority)
+      - function listItemTap(item: PtItem) {
+        // navigate to detail page
+        navigate(`/detail/${item.id}`)
+    Properties:
+      - item: PtItem;
+      - const navigate = useNavigate();
+      - const indicatorClass = getIndicatorClass(item.priority);
+
+Type-aliases:
+  - BacklogRowProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-chitchat/comment-display.tsx
+Imports:
+  - import { PtComment } from "../../../../core/models/domain";
+  - import { Typography } from '@progress/kendo-react-common';
+---
+Classes:
+  - comment-display
+    Methods:
+      - export function PtCommentDisplayComponent(props: PtCommentDisplayComponentProps) {
+
+    const { comment } = props
+    Properties:
+      - comment: PtComment;
+      - const dateStr = comment.dateCreated.toDateString();
+
+Type-aliases:
+  - PtCommentDisplayComponentProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-chitchat/new-comment-form.tsx
+Imports:
+  - import { useState } from "react";
+  - import { EMPTY_STRING } from "../../../../core/helpers";
+  - import { PtUser } from "../../../../core/models/domain";
+  - import { Button } from "@progress/kendo-react-buttons";
+  - import './pt-item-chitchat.css';
+---
+Classes:
+  - new-comment-form
+    Methods:
+      - export function NewCommentForm(props: CommentFormProps) {
+
+    const [newCommentText, setNewCommentText] = useState<string>(EMPTY_STRING)
+      - function onNewCommentChanged(e: any) {
+        setNewCommentText(e.target.value)
+      - function onAddTapped() {
+        const newTitle = newCommentText.trim()
+      - const handleSubmit = (e: any) => {
+        e.preventDefault()
+    Properties:
+      - addComment: (text: string) => void;
+      - currentUser: PtUser;
+      - const newTitle = newCommentText.trim();
+
+Type-aliases:
+  - CommentFormProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-chitchat/pt-item-chitchat.css
+```css
+.chitchat-item {
+    margin-bottom: 30px;
+    width:600px;
+}
+
+.chitchat-text {
+    color: #495057;
+    font-size: .9em;
+}
+
+.new-comment-form {
+    width:600px;
+}
+
+.comment-input-container, .comment-item-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.comment-textarea {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    background-color: white;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.comment-textarea::placeholder {
+    color: #6c757d;
+}
+
+.comment-button-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 12px;
+    padding-left: 52px; /* Account for avatar width + gap */
+}
+
+.comment-date {
+    color: #555a97;
+    margin-left: 10px;
+}
+```
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-chitchat/pt-item-chitchat.tsx
+Imports:
+  - import { useState } from "react";
+  - import { PtComment, PtUser } from "../../../../core/models/domain";
+  - import { PtNewComment } from "../../../../shared/models/dto/pt-new-comment";
+  - import './pt-item-chitchat.css';
+  - import { NewCommentForm } from "./new-comment-form";
+  - import { UseMutationResult } from "@tanstack/react-query";
+  - import { PtCommentDisplayComponent } from "./comment-display";
+---
+Classes:
+  - pt-item-chitchat
+    Methods:
+      - export function PtItemChitchatComponent(props: PtItemChitchatComponentProps) {
+
+    const [comments, setComments] = useState<PtComment[]>(props.comments)
+      - const addComment = (text: string) => {
+        const newComment: PtNewComment = { title: text }
+      - onSuccess(createdTask) {
+                const newComments = [createdTask, ...comments]
+    Properties:
+      - comments: PtComment[];
+      - currentUser: PtUser;
+      - addCommentMutation: UseMutationResult<PtComment, unknown, PtNewComment, unknown>;
+      - const newComment: PtNewComment = { title: text }
+      - const newComments = [createdTask, ...comments];
+
+Type-aliases:
+  - PtItemChitchatComponentProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-details/pt-item-details.tsx
+Imports:
+  - import React, { useEffect, useState } from "react";
+  - import { Observable } from "rxjs";
+  - import { Input,  Slider, TextArea } from '@progress/kendo-react-inputs';
+  - import { DropDownList, ListItemProps } from '@progress/kendo-react-dropdowns';
+  - import { PtItem, PtUser } from "../../../../core/models/domain";
+  - import { PtItemDetailsEditFormModel, ptItemToFormModel } from "../../../../shared/models/forms/pt-item-details-edit-form";
+  - import { ItemType, PT_ITEM_STATUSES, PT_ITEM_PRIORITIES } from "../../../../core/constants";
+  - import { AssigneeListModal } from "../assignee-list-modal/assignee-list-modal";
+  - import { getIndicatorClass } from "../../../../shared/helpers/priority-styling";
+  - import { Button } from "@progress/kendo-react-buttons";
+---
+Classes:
+  - pt-item-details
+    Methods:
+      - export function PtItemDetailsComponent(props: PtItemDetailsComponentProps) {
+
+    const statusesProvider = PT_ITEM_STATUSES
+      - function onFieldChange(e: any, formFieldName: string) {
+        if (!itemForm) {
+            return
+      - function onNonTextFieldChange(e: any, formFieldName: string) {
+        onFieldChange(e, formFieldName)
+      - function onBlurTextField() {
+        notifyUpdateItem()
+      - function notifyUpdateItem() {
+        if (!itemForm) {
+            return
+      - function getUpdatedItem(item: PtItem, itemForm: PtItemDetailsEditFormModel, assignee: PtUser): PtItem {
+        const updatedItem = Object.assign({}, item, {
+            title: itemForm.title,
+            description: itemForm.description,
+            type: itemForm.typeStr,
+            status: itemForm.statusStr,
+            priority: itemForm.priorityStr,
+            estimate: itemForm.estimate,
+            assignee: assignee
+        })
+      - function assigneePickerOpen() {
+        props.users$.subscribe((users: PtUser[]) => {
+            if (users.length > 0) {
+                setUsers(users)
+      - function selectAssignee(u: PtUser) {
+        setSelectedAssignee(u)
+      - function itemTypeRender(li: any, itemProps: any) {
+        const dataItem = itemProps.dataItem
+      - function priorityRender(li: any, itemProps: ListItemProps) {
+        const dataItem = itemProps.dataItem
+    Properties:
+      - item: PtItem;
+      - itemSaved: (item: PtItem) => void;
+      - usersRequested: () => void;
+      - users$: Observable<PtUser[]>;
+      - const statusesProvider = PT_ITEM_STATUSES;
+      - const prioritiesProvider = PT_ITEM_PRIORITIES;
+      - const itemTypesProvider = ItemType.List.map((t) => t.PtItemType);
+      - const updatedItem = getUpdatedItem(props.item, itemForm, selectedAssignee!);
+      - const updatedItem = Object.assign(
+      - const dataItem = itemProps.dataItem;
+      - const itemTypeRow = (
+      - const dataItem = itemProps.dataItem;
+      - const priorityRow = (
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-form/pt-item-form.tsx
+Imports:
+  - import React, { useEffect, useState } from "react";
+  - import { Observable } from "rxjs";
+  - import { PtItem, PtUser } from "../../../../core/models/domain";
+  - import { PtItemDetailsEditFormModel, ptItemToFormModel } from "../../../../shared/models/forms/pt-item-details-edit-form";
+  - import { ItemType, PT_ITEM_STATUSES, PT_ITEM_PRIORITIES } from "../../../../core/constants";
+  - import { AssigneeListModal } from "../assignee-list-modal/assignee-list-modal";
+  - import { getIndicatorClass } from "../../../../shared/helpers/priority-styling";
+  - import { Button } from "@progress/kendo-react-buttons";
+  - import { Input, Slider, TextArea } from '@progress/kendo-react-inputs';
+  - import { DropDownList, ListItemProps } from '@progress/kendo-react-dropdowns';
+---
+Classes:
+  - pt-item-form
+    Methods:
+      - export function PtItemFormComponent(props: PtItemFormComponentProps) {
+
+    const statusesProvider = PT_ITEM_STATUSES
+      - function onFieldChange(e: any, formFieldName: string) {
+        if (!itemForm) {
+            return
+      - function onNonTextFieldChange(e: any, formFieldName: string) {
+        onFieldChange(e, formFieldName)
+      - function onBlurTextField() {
+        notifyUpdateItem()
+      - function notifyUpdateItem() {
+        if (!itemForm) {
+            return
+      - function getUpdatedItem(item: PtItem, itemForm: PtItemDetailsEditFormModel, assignee: PtUser): PtItem {
+        const updatedItem = Object.assign({}, item, {
+            title: itemForm.title,
+            description: itemForm.description,
+            type: itemForm.typeStr,
+            status: itemForm.statusStr,
+            priority: itemForm.priorityStr,
+            estimate: itemForm.estimate,
+            assignee: assignee
+        })
+      - function assigneePickerOpen() {
+        props.users$.subscribe((users: PtUser[]) => {
+            if (users.length > 0) {
+                setUsers(users)
+      - function selectAssignee(u: PtUser) {
+        setSelectedAssignee(u)
+      - function itemTypeRender(li: any, itemProps: any) {
+        const dataItem = itemProps.dataItem
+      - function priorityRender(li: any, itemProps: ListItemProps) {
+        const dataItem = itemProps.dataItem
+    Properties:
+      - item: PtItem;
+      - itemSaved: (item: PtItem) => void;
+      - usersRequested: () => void;
+      - users$: Observable<PtUser[]>;
+      - const statusesProvider = PT_ITEM_STATUSES;
+      - const prioritiesProvider = PT_ITEM_PRIORITIES;
+      - const itemTypesProvider = ItemType.List.map((t) => t.PtItemType);
+      - const updatedItem = getUpdatedItem(props.item, itemForm, selectedAssignee!);
+      - const updatedItem = Object.assign(
+      - const dataItem = itemProps.dataItem;
+      - const itemTypeRow = (
+      - const dataItem = itemProps.dataItem;
+      - const priorityRow = (
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-schedule/pt-item-schedule.tsx
+Imports:
+  - import { useState, useCallback } from "react";
+  - import { PtTask } from "../../../../core/models/domain";
+  - import { PtTaskAllUpdate, PtTaskTitleUpdate } from "../../../../shared/models/dto/pt-task-update";
+  - import { PtNewTask } from "../../../../shared/models/dto/pt-new-task";
+  - import { UseMutationResult } from "@tanstack/react-query";
+  - import { AgendaView, DayView, MonthView, Scheduler, SchedulerDataChangeEvent, SchedulerDateChangeEvent, TimelineView, WeekView } from "@progress/kendo-react-scheduler";
+  - import { SchedulerEvent, validEventsFromTasks } from "./scheduler-event.model";
+---
+Classes:
+  - pt-item-schedule
+    Methods:
+      - export function PtItemScheduleComponent(props: PtItemScheduleComponentProps) {
+
+    const [events, setEvents] = useState<SchedulerEvent[]>(validEventsFromTasks(props.tasks))
+      - const addTask = (schedEvent: SchedulerEvent) => {
+        const newTask: PtNewTask = {
+                title: schedEvent.title,
+                completed: false,
+                dateStart: schedEvent.start,
+                dateEnd: schedEvent.end
+        }
+      - onSuccess(createdTask) {
+                const newTaskEntries = [createdTask, ...props.tasks]
+      - const updateTask = (schedEvent: SchedulerEvent) => {
+        const index = props.tasks.findIndex(t => t.id === schedEvent.id)
+      - onSuccess(updatedTask) {
+                const newTaskEntries = [...props.tasks]
+      - const removeTask = (schedEvent: SchedulerEvent) => {
+        const index = props.tasks.findIndex(t => t.id === schedEvent.id)
+      - onSuccess(deleted) {
+                if (deleted) {
+                    const newTaskEntries = [...props.tasks]
+      - const handleDataChange = ({
+        created,
+        updated,
+        deleted,
+      }: SchedulerDataChangeEvent) => {
+        created.forEach((schedEvent: SchedulerEvent) => {
+            addTask(schedEvent)
+    Properties:
+      - tasks: PtTask[];
+      - addTaskMutation: UseMutationResult<PtTask, unknown, PtNewTask, unknown>;
+      - deleteTaskMutation: UseMutationResult<boolean, unknown, PtTask, unknown>;
+      - updateTaskMutation: UseMutationResult<PtTask, unknown, PtTaskTitleUpdate, unknown>;
+      - const displayDate = new Date(Math.min.apply(null, events.map((e) => new Date(e.start).valueOf())));
+      - const startTime = '07:00';
+      - const newTask: PtNewTask =
+      - const newTaskEntries = [createdTask, ...props.tasks];
+      - const index = props.tasks.findIndex(t => t.id === schedEvent.id);
+      - const theTask = props.tasks[index];
+      - const taskUpdate: PtTaskAllUpdate =
+      - const newTaskEntries = [...props.tasks];
+      - const index = props.tasks.findIndex(t => t.id === schedEvent.id);
+      - const theTask = props.tasks[index];
+      - const newTaskEntries = [...props.tasks];
+      - const handleDateChange = useCallback(
+
+Type-aliases:
+  - PtItemScheduleComponentProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-schedule/scheduler-event.model.ts
+Imports:
+  - import { PtTask } from "../../../../core/models/domain";
+  - import { PtNewTask } from "../../../../shared/models/dto/pt-new-task";
+---
+Classes:
+  - scheduler-event.model
+    Methods:
+      - export function ptTaskToSchedulerEvent(ptTask: PtTask): SchedulerEvent {
+    const evt: SchedulerEvent = {
+        id: ptTask.id,
+        title: ptTask.title ? ptTask.title : '',
+        start: ptTask.dateStart ? ptTask.dateStart : new Date(),
+        end: ptTask.dateEnd ? ptTask.dateEnd : new Date(),
+        isAllDay: false
+    }
+      - export function validEventsFromTasks(ptTasks: PtTask[]): SchedulerEvent[] {
+    return ptTasks.filter(t => t.dateStart && t.dateEnd).map(ptTaskToSchedulerEvent)
+
+Type-aliases:
+  - SchedulerEvent
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-tasks/new-task-form.tsx
+Imports:
+  - import { useState } from "react";
+  - import { EMPTY_STRING } from "../../../../core/helpers";
+  - import { Button } from '@progress/kendo-react-buttons';
+  - import { Input } from '@progress/kendo-react-inputs';
+---
+Classes:
+  - new-task-form
+    Methods:
+      - export function NewTaskForm(props: TaskFormProps) {
+
+    const [newTaskTitle, setNewTaskTitle] = useState<string>(EMPTY_STRING)
+      - function onNewTaskTitleChanged(e: any) {
+        setNewTaskTitle(e.target.value)
+      - function onAddTapped() {
+        const newTitle = newTaskTitle.trim()
+      - const handleSubmit = (e: any) => {
+        e.preventDefault()
+    Properties:
+      - addTask: (text: string) => void;
+      - const newTitle = newTaskTitle.trim();
+
+Type-aliases:
+  - TaskFormProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-tasks/pt-item-tasks.tsx
+Imports:
+  - import { useState } from "react";
+  - import { UseMutationResult } from "@tanstack/react-query";
+  - import { PtTask } from "../../../../core/models/domain";
+  - import { EMPTY_STRING } from "../../../../core/helpers";
+  - import { PtTaskTitleUpdate } from "../../../../shared/models/dto/pt-task-update";
+  - import { PtNewTask } from "../../../../shared/models/dto/pt-new-task";
+  - import { NewTaskForm } from "./new-task-form";
+  - import { PtTaskDisplayComponent } from "./pt-task-display";
+---
+Classes:
+  - pt-item-tasks
+    Methods:
+      - export function PtItemTasksComponent(props: PtItemTasksComponentProps) {
+
+    const [tasks, setTasks] = useState<PtTask[]>(props.tasks)
+      - const addTask = (text: string) => {
+        const newTask: PtNewTask = { title: text, completed: false }
+      - onSuccess(createdTask) {
+                const newTasks = [createdTask, ...tasks]
+      - const toggleTaskCompletion = (index: number) => {
+        const theTask = tasks[index]
+      - onSuccess(toggledTask) {
+                const newTasks = [...tasks]
+      - function toggleTapped(task: PtTask) {
+        const index = tasks.findIndex(t => t.id === task.id)
+      - function taskTitleChange(task: PtTask, newTitle: string) {
+        if (task.title === newTitle) {
+            return
+      - function onTaskFocused(task: PtTask) {
+        setLastUpdatedTitle(task.title ? task.title : EMPTY_STRING)
+      - function updateTask(task: PtTask, newTitle: string) {
+        const index = tasks.findIndex(t => t.id === task.id)
+      - onSuccess(updatedTask) {
+                const newTasks = [...tasks]
+      - function onTaskBlurred(task: PtTask, newTitle: string) {
+        if (task.title === newTitle) {
+            return
+      - const removeTask = (index: number) => {
+        const theTask = tasks[index]
+      - onSuccess(deleted) {
+                if (deleted) {
+                    const newTasks = [...tasks]
+      - function deleteTapped(task: PtTask) {
+        const index = tasks.findIndex(t => t.id === task.id)
+    Properties:
+      - tasks: PtTask[];
+      - addTaskMutation: UseMutationResult<PtTask, unknown, PtNewTask, unknown>;
+      - deleteTaskMutation: UseMutationResult<boolean, unknown, PtTask, unknown>;
+      - toggleTaskCompletionMutation: UseMutationResult<PtTask, unknown, PtTask, unknown>;
+      - updateTaskMutation: UseMutationResult<PtTask, unknown, PtTaskTitleUpdate, unknown>;
+      - const newTask: PtNewTask = { title: text, completed: false }
+      - const newTasks = [createdTask, ...tasks];
+      - const theTask = tasks[index];
+      - const newTasks = [...tasks];
+      - const index = tasks.findIndex(t => t.id === task.id);
+      - const index = tasks.findIndex(t => t.id === task.id);
+      - const taskUpdate: PtTaskTitleUpdate =
+      - const newTasks = [...tasks];
+      - const theTask = tasks[index];
+      - const newTasks = [...tasks];
+      - const index = tasks.findIndex(t => t.id === task.id);
+
+Type-aliases:
+  - PtItemTasksComponentProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/components/item-tasks/pt-task-display.tsx
+Imports:
+  - import React, { useState, useEffect } from "react";
+  - import { PtTask } from "../../../../core/models/domain";
+  - import { Button } from '@progress/kendo-react-buttons';
+  - import { Checkbox, Input } from "@progress/kendo-react-inputs";
+---
+Classes:
+  - pt-task-display
+    Methods:
+      - export function PtTaskDisplayComponent(props: PtTaskDisplayComponentProps) {
+
+    const { task, onToggleTaskCompletion, onDeleteTask } = props
+      - function toggleTapped() {
+        onToggleTaskCompletion(task)
+      - function deleteTapped() {
+        onDeleteTask(task)
+      - function onFocused() {
+        props.onTaskFocused(task)
+      - function onBlurred() {
+        // If the user changed text, call parent's 'taskTitleChange' and then 'onTaskBlurred'
+        if (titleLocal !== task.title) {
+            props.taskTitleChange(task, titleLocal || "")
+      - function onTitleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setTitleLocal(e.target.value)
+    Properties:
+      - task: PtTask;
+      - onToggleTaskCompletion: (task: PtTask) => void;
+      - onDeleteTask: (task: PtTask) => void;
+      - onTaskFocused: (task: PtTask) => void;
+      - onTaskBlurred: (task: PtTask, newTitle: string) => void;
+      - taskTitleChange: (task: PtTask, newTitle: string) => void;
+
+Type-aliases:
+  - PtTaskDisplayComponentProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/pages/backlog/backlog-page.css
+```css
+.backlog-icon {
+    height: 20px;
+}
+
+.li-indicator {
+    height: 58px;
+    width: 10px;
+    text-align: left;
+}
+
+.li-indicator div {
+    width: 5px;
+    height: 58px;
+
+}
+
+.li-info-wrapper {
+    margin-left: 5px;
+}
+
+.li-title {
+    font-size: 14px;
+    color: #4b5833;
+}
+
+.pt-table-row {
+    cursor: pointer;
+}
+
+
+
+
+```
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/pages/backlog/backlog-page.tsx
+Imports:
+  - import React, { useContext, useEffect, useState } from "react";
+  - import { useNavigate, useParams } from "react-router-dom"
+  - import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";;
+  - import "./backlog-page.css";
+  - import { PresetType } from "../../../../core/models/domain/types";
+  - import { PtItem } from "../../../../core/models/domain";
+  - import { AppPresetFilter } from "../../../../shared/components/preset-filter/preset-filter";
+  - import { PtNewItem } from "../../../../shared/models/dto/pt-new-item";
+  - import { AddItemModal } from "../../components/add-item-modal/add-item-modal";
+  - import { PtBacklogServiceContext, PtStoreContext } from "../../../../App";
+  - import { BacklogGrid } from "../../components/backlog-grid/backlog-grid";
+  - import { Button, ButtonGroup } from "@progress/kendo-react-buttons";
+---
+Classes:
+  - backlog-page
+    Methods:
+      - export function BacklogPage() {
+  const store = useContext(PtStoreContext)
+      - const useItems = (...params: Parameters<typeof backlogService.getItems>) => {
+        return useQuery<PtItem[], Error>({ queryKey: getQueryKey(), queryFn: () => backlogService.getItems(...params) })
+      - function getQueryKey() {
+    return ["items", currentPreset]
+      - function onSelectPresetTap(preset: PresetType) {
+    setCurrentPreset(preset)
+      - function toggleModal() {
+    setIsAddModalShowing(!isAddModalShowing)
+      - function onNewItemSave(newItem: PtNewItem) {
+    return addItemMutation.mutateAsync(newItem, {
+        onSuccess(createdItem, variables, context) {
+                queryClient.invalidateQueries({ queryKey: getQueryKey() })
+      - onSuccess(createdItem, variables, context) {
+                queryClient.invalidateQueries({ queryKey: getQueryKey() })
+    Properties:
+      - const store = useContext(PtStoreContext);
+      - const backlogService = useContext(PtBacklogServiceContext);
+      - const queryClient = useQueryClient();
+      - const navigate = useNavigate();
+      - const { preset } = useParams() as { preset: PresetType }
+      - const queryResult = useItems(currentPreset);
+      - const items = queryResult.data;
+      - const addItemMutation = useMutation<PtItem, Error, PtNewItem>(
+      - const createdItem = await backlogService.addNewPtItem(newItem, store.value.currentUser);
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/pages/detail/detail-page.css
+```css
+.frame-details {
+    width:700px;
+}
+```
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/pages/detail/detail-page.tsx
+Imports:
+  - import { useContext, useState, useEffect } from "react";
+  - import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+  - import { useLocation, useNavigate, useParams } from "react-router-dom";
+  - import { Observable } from "rxjs";
+  - import "./detail-page.css";
+  - import { PtItem, PtUser, PtTask } from "../../../../core/models/domain";
+  - import { DetailScreenType } from "../../../../shared/models/ui/types/detail-screens";
+  - import { PtItemFormComponent } from "../../components/item-form/pt-item-form";
+  - import { PtItemTasksComponent } from "../../components/item-tasks/pt-item-tasks";
+  - import { PtNewTask } from "../../../../shared/models/dto/pt-new-task";
+  - import { PtTaskAllUpdate, PtTaskTitleUpdate } from "../../../../shared/models/dto/pt-task-update";
+  - import { PtItemChitchatComponent } from "../../components/item-chitchat/pt-item-chitchat";
+  - import { PtNewComment } from "../../../../shared/models/dto/pt-new-comment";
+  - import { PtBacklogServiceContext, PtStoreContext, PtUserServiceContext } from "../../../../App";
+  - import { PtItemScheduleComponent } from "../../components/item-schedule/pt-item-schedule";
+  - import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+---
+Classes:
+  - detail-page
+    Methods:
+      - export function DetailPage() {
+
+  const store = useContext(PtStoreContext)
+      - const useItem = (...params: Parameters<typeof backlogService.getPtItem>) => {
+        return useQuery<PtItem, Error>({
+            queryKey: [queryTag, ...params],
+            queryFn: () => backlogService.getPtItem(...params)
+        })
+      - function onScreenSelected(screen: DetailScreenType) {
+    if (screen === 'form') {
+        navigate(`/detail/${itemId}`)
+      - function onTabSelect(e: any) {
+    const newScreen = screenPositionMap[e.selected] as DetailScreenType
+      - function getSelectedTabNum() {
+    return screenPositionMap[selectedDetailsScreen] as number
+      - function onItemSaved(item: PtItem) {
+    updateItemMutation.mutate(item, {
+      onSuccess: (updatedItem) => {
+                queryClient.setQueryData([queryTag, parseInt(itemId)], updatedItem)
+      - function onUsersRequested() {
+    userService.fetchUsers()
+    Properties:
+      - const queryTag = "item";
+      - const screenPositionMap:
+      - const store = useContext(PtStoreContext);
+      - const backlogService = useContext(PtBacklogServiceContext);
+      - const userService = useContext(PtUserServiceContext);
+      - const currentUser = store.value.currentUser;
+      - const users$: Observable<PtUser[]> = store.select<PtUser[]>("users");
+      - id: string;
+      - screen?: DetailScreenType;
+      - const location = useLocation();
+      - const queryClient = useQueryClient();
+      - const navigate = useNavigate();
+      - const queryResult = useQuery<PtItem, Error>(
+      - const item = queryResult.data;
+      - const updateItemMutation = useMutation<PtItem, Error, PtItem>(
+      - const updatedItem = await backlogService.updatePtItem(itemToUpdate);
+      - const addTaskMutation = useMutation<PtTask, Error, PtNewTask>(
+      - const createdTask = await backlogService.addNewPtTask(newTaskItem, item!);
+      - const toggleTaskCompletionMutation = useMutation<PtTask, Error, PtTask>(
+      - const updatedTask = await backlogService.updatePtTask(item!, task, true);
+      - const updateTaskTitleMutation = useMutation<PtTask, Error, PtTaskTitleUpdate>(
+      - const updatedTask = await backlogService.updatePtTask(item!, taskUpdate.task, taskUpdate.task.completed, taskUpdate.newTitle);
+      - const updateTaskMutation = useMutation<PtTask, Error, PtTaskAllUpdate>(
+      - const updatedTask = await backlogService.updatePtTask(item!, taskUpdate.task, taskUpdate.task.completed, taskUpdate.newTitle);
+      - const deleteTaskMutation = useMutation<boolean, Error, PtTask>(
+      - const ok = await backlogService.deletePtTask(item!, task);
+      - const addCommentMutation = useMutation<any, Error, PtNewComment>(
+      - const createdComment = await backlogService.addNewPtComment(newCommentItem, item!);
+      - const newScreen = screenPositionMap[e.selected] as DetailScreenType;
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/repositories/backlog.repository.ts
+Imports:
+  - import { PtTask, PtItem, PtComment, PtCommentToBe, PtTaskToBe, PtItemServer, PtTaskServer, PtCommentServer } from '../../../core/models/domain';
+  - import { CONFIG } from '../../../config';
+  - import { PresetType } from '../../../core/models/domain/types';
+---
+Classes:
+  - backlog.repository
+    Methods:
+      - private getFilteredBacklogUrl(currentPreset: PresetType, currentUserId?: number) {
+        switch (currentPreset) {
+            case 'my':
+                if (currentUserId) {
+                    return `${CONFIG.apiEndpoint}/myItems?userId=${currentUserId}`
+      - private getPtItemUrl(itemId: number) {
+        return `${CONFIG.apiEndpoint}/item/${itemId}`
+      - private postPtItemUrl() {
+        return `${CONFIG.apiEndpoint}/item`
+      - private putPtItemUrl(itemId: number) {
+        return `${CONFIG.apiEndpoint}/item/${itemId}`
+      - private deletePtItemUrl(itemId: number) {
+        return `${CONFIG.apiEndpoint}/item/${itemId}`
+      - private postPtTaskUrl() {
+        return `${CONFIG.apiEndpoint}/task`
+      - private putPtTaskUrl(taskId: number) {
+        return `${CONFIG.apiEndpoint}/task/${taskId}`
+      - private deletePtTaskUrl(itemId: number, taskId: number) {
+        return `${CONFIG.apiEndpoint}/task/${itemId}/${taskId}`
+      - private postPtCommentUrl() {
+        return `${CONFIG.apiEndpoint}/comment`
+      - private deletePtCommentUrl(commentId: number) {
+        return `${CONFIG.apiEndpoint}/comment/${commentId}`
+      - public getPtItems(
+        currentPreset: PresetType,
+        currentUserId: number | undefined
+    ): Promise<PtItemServer[]> {
+        return fetch(this.getFilteredBacklogUrl(currentPreset, currentUserId))
+            .then((response: Response) => response.json())
+      - public getPtItem(
+        ptItemId: number,
+    ): Promise<PtItemServer> {
+        return fetch(this.getPtItemUrl(ptItemId))
+            .then((response: Response) => response.json())
+      - public insertPtItem(
+        item: PtItem
+    ): Promise<PtItemServer> {
+        return fetch(this.postPtItemUrl(),
+            {
+                method: 'POST',
+                body: JSON.stringify({ item: item }),
+                headers: this.getJSONHeader()
+            })
+            .then((response: Response) => response.json())
+      - public updatePtItem(
+        item: PtItem,
+    ): Promise<PtItemServer> {
+        return fetch(this.putPtItemUrl(item.id),
+            {
+                method: 'PUT',
+                body: JSON.stringify({ item: item }),
+                headers: this.getJSONHeader()
+            })
+            .then((response: Response) => response.json())
+      - public insertPtTask(
+        taskToBe: PtTaskToBe,
+        ptItemId: number
+    ): Promise<PtTaskServer> {
+        return fetch(this.postPtTaskUrl(), {
+            method: 'POST',
+            body: JSON.stringify({ task: taskToBe, itemId: ptItemId }),
+            headers: this.getJSONHeader()
+        })
+            .then(response => response.json())
+      - public updatePtTask(
+        task: PtTask,
+        ptItemId: number
+    ): Promise<PtTaskServer> {
+        return fetch(this.putPtTaskUrl(task.id), {
+            method: 'PUT',
+            body: JSON.stringify({ task: task, itemId: ptItemId }),
+            headers: this.getJSONHeader()
+        })
+            .then(response => response.json())
+      - public deletePtTask(
+        task: PtTask,
+        ptItemId: number
+    ): Promise<boolean> {
+        return fetch(this.deletePtTaskUrl(ptItemId, task.id), {
+            method: 'POST'
+        })
+            .then(response => response.json())
+      - public insertPtComment(
+        commentToBe: PtCommentToBe,
+        ptItemId: number
+    ): Promise<PtCommentServer> {
+        return fetch(this.postPtCommentUrl(), {
+            method: 'POST',
+            body: JSON.stringify({ comment: commentToBe, itemId: ptItemId }),
+            headers: this.getJSONHeader()
+        })
+            .then(response => response.json())
+      - private getJSONHeader()
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/modules/backlog/services/backlog.service.ts
+Imports:
+  - import { Store } from '../../../core/state/app-store';
+  - import { BacklogRepository } from '../repositories/backlog.repository';
+  - import { PtItem, PtUser, PtTask, PtComment, PtCommentToBe, PtTaskToBe, PtItemServer, ptItemsServerToPtItems, ptItemServerToPtItem, PtTaskServer, ptTaskServerToPtTask, PtCommentServer, ptCommentServerToPtComment } from '../../../core/models/domain';
+  - import { PriorityEnum, StatusEnum } from '../../../core/models/domain/enums';
+  - import { getUserAvatarUrl } from '../../../core/helpers/user-avatar-helper';
+  - import { CONFIG } from '../../../config';
+  - import { PresetType } from '../../../core/models/domain/types';
+  - import { PtNewItem } from '../../../shared/models/dto/pt-new-item';
+  - import { PtNewTask } from '../../../shared/models/dto/pt-new-task';
+  - import { PtNewComment } from '../../../shared/models/dto/pt-new-comment';
+---
+Classes:
+  - backlog.service
+    Methods:
+      - private get currentPreset() {
+        return this.store.value.selectedPreset
+      - private get currentUserId() {
+        if (this.store.value.currentUser) {
+            return this.store.value.currentUser.id
+      - constructor(
+        private repo: BacklogRepository,
+        private store: Store
+    ) {
+        this.store.value.currentUser = tempCurrentUser
+      - public getItems(preset: PresetType): Promise<PtItem[]> {
+        return this.repo.getPtItems(preset, this.currentUserId)
+            .then((ptItemsServer: PtItemServer[]) => {
+                const ptItems = ptItemsServerToPtItems(ptItemsServer)
+      - public getPtItem(id: number): Promise<PtItem> {
+        return this.repo.getPtItem(id)
+            .then((ptItemServer: PtItemServer) => {
+                const ptItem = ptItemServerToPtItem(ptItemServer)
+      - public addNewPtItem(newItem: PtNewItem, assignee: PtUser): Promise<PtItem> {
+        const item: PtItem = {
+            id: 0,
+            title: newItem.title,
+            description: newItem.description,
+            type: newItem.typeStr,
+            estimate: 0,
+            priority: PriorityEnum.Medium,
+            status: StatusEnum.Open,
+            assignee: assignee,
+            tasks: [],
+            comments: [],
+            dateCreated: new Date(),
+            dateModified: new Date()
+        }
+      - public updatePtItem(item: PtItem): Promise<PtItem> {
+        return new Promise<PtItem>((resolve, reject) => {
+            this.repo.updatePtItem(item)
+                .then((updatedItemServer: PtItemServer) => {
+                    const updatedItem = ptItemServerToPtItem(updatedItemServer)
+      - public addNewPtTask(newTask: PtNewTask, currentItem: PtItem): Promise<PtTask> {
+        const taskToBe: PtTaskToBe = {
+            title: newTask.title,
+            completed: false,
+            dateCreated: new Date(),
+            dateModified: new Date(),
+            dateStart: newTask.dateStart ? newTask.dateStart : undefined,
+            dateEnd: newTask.dateEnd ? newTask.dateEnd : undefined
+        }
+      - public updatePtTask(currentItem: PtItem, task: PtTask, toggle: boolean, newTitle?: string): Promise<PtTask> {
+        const taskToUpdate: PtTask = {
+            id: task.id,
+            title: newTitle ? newTitle : task.title,
+            completed: toggle ? !task.completed : task.completed,
+            dateCreated: task.dateCreated,
+            dateModified: new Date(),
+            dateStart: task.dateStart ? task.dateStart : undefined,
+            dateEnd: task.dateEnd ? task.dateEnd : undefined
+        }
+      - public deletePtTask(currentItem: PtItem, task: PtTask): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            this.repo.deletePtTask(task, currentItem.id)
+                .then((ok: boolean) => {
+                    const updatedTasks = currentItem.tasks.filter(t => {
+                        if (t.id !== task.id) {
+                            return t
+      - public addNewPtComment(newComment: PtNewComment, currentItem: PtItem): Promise<PtComment> {
+        const commentToBe: PtCommentToBe = {
+            title: newComment.title,
+            user: this.store.value.currentUser,
+            dateCreated: new Date(),
+            dateModified: new Date()
+        }
+      - private setUserAvatarUrl(user: PtUser | undefined) {
+        if (user) {
+            user.avatar = `${CONFIG.apiEndpoint}/photo/${user.id}`
+      - private setUserAvatar(user: PtUser) {
+        user.avatar = getUserAvatarUrl(CONFIG.apiEndpoint, user.id)
+    Properties:
+      - export const tempCurrentUser =
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/components/app-bar/app-bar.tsx
+Imports:
+  - import React from "react";
+  - import RpsLogo from "../rps-logo/rps-logo";
+---
+Classes:
+  - app-bar
+    Methods:
+      - const AppBar = () => {
+  return (
+    <nav className="navbar navbar-expand-lg navbar-light">
+      <div className="container-fluid">
+        <div className="navbar-brand">
+          <RpsLogo />
+        </div>
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav me-auto ms-5 mb-2 mb-lg-0">
+            <li className="nav-item">
+              <a className="nav-link app-bar-nav-link" href="/dashboard">
+                Dashboard
+              </a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link app-bar-nav-link" href="/backlog">
+                Backlog
+              </a>
+            </li>
+          </ul>
+          <div className="d-flex">
+            <div className="avatar">
+              <img
+                className="img-fluid rounded-circle"
+                style={{ width: "30px", height: "30px", position: "relative" }}
+                src="/assets/img/me/me.png"
+                alt="User Avatar"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/components/main-menu/main-menu.tsx
+Imports:
+  - import React from "react";
+---
+Classes:
+  - main-menu
+    Methods:
+      - const MainMenuDefault = () => {
+  return (
+    <div
+      className="DrawerDefault"
+      style={{
+        alignSelf: "stretch",
+        borderRight: "1px rgba(0, 0, 0, 0.08) solid",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        display: "inline-flex",
+      }}
+    >
+      {/* Dashboard (Selected) */}
+      <a
+        className="DrawerItemSelected"
+        href="/dashboard"
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "#068597",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M14 2V5H9.5V2H14ZM6.5 2.00187V8.00187H2V2.00187H6.5ZM14 8V14H9.5V8H14ZM6.5 11V14H2V11H6.5ZM14 1H9.5C8.94781 1 8.5 1.44781 8.5 2V5C8.5 5.55219 8.94781 6 9.5 6H14C14.5522 6 15 5.55219 15 5V2C15 1.44781 14.5522 1 14 1ZM6.5 1.00188H2C1.44781 1.00188 1 1.44969 1 2.00187V8.00187C1 8.55406 1.44781 9.00187 2 9.00187H6.5C7.05219 9.00187 7.5 8.55406 7.5 8.00187V2.00187C7.5 1.44969 7.05219 1.00188 6.5 1.00188ZM14 7H9.5C8.94781 7 8.5 7.44781 8.5 8V14C8.5 14.5522 8.94781 15 9.5 15H14C14.5522 15 15 14.5522 15 14V8C15 7.44781 14.5522 7 14 7ZM6.5 10H2C1.44781 10 1 10.4478 1 11V14C1 14.5522 1.44781 15 2 15H6.5C7.05219 15 7.5 14.5522 7.5 14V11C7.5 10.4478 7.05219 10 6.5 10Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "white",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Dashboard
+        </div>
+      </a>
+
+      {/* Backlog */}
+      <a
+        className="DrawerItem"
+        href="/backlog"
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.5875 4L6.5875 3H3V12H13V6H4V5H13C13.5531 5 14 5.44688 14 6V12C14 12.5531 13.5531 13 13 13H3C2.44687 13 2 12.5531 2 12V3C2 2.44687 2.44687 2 3 2H7L9 4"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Backlog
+        </div>
+      </a>
+
+      {/* Open Items (Hover style) */}
+      <a
+        className="DrawerItemHover"
+        href="/backlog/open"
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "rgba(5.90, 133.20, 150.56, 0.08)",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M14 2H6C5.45 2 5 2.45 5 3V8C5 8.55 5.45 9 6 9H14C14.55 9 15 8.55 15 8V3C15 2.45 14.55 2 14 2ZM3 5C3 4.44688 3.44688 4 4 4V10H13C13 10 13 11 12 11H4C3.44688 11 3 10.5531 3 10V5ZM1 7C1 6.44688 1.44687 6 2 6V12H11C11 12 11 13 10 13H2C1.44687 13 1 12.5531 1 12V7ZM6.00313 8L6 7.99687V3.00312L6.00313 3H14L14.0031 3.00312V7.99687L6.00313 8Z"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "19.20px",
+            wordWrap: "break-word",
+          }}
+        >
+          Open Items
+        </div>
+      </a>
+
+      {/* Goals */}
+      <a
+        className="DrawerItem"
+        href="/backlog" // or another href if needed
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9.97188 5.875L15 6.325L11.1875 9.81563L12.3375 15L8 12.2344L3.6625 15L4.8125 9.81563L1 6.325L6.02812 5.875L8 1L9.97188 5.875ZM5.16249 12.8594L7.99999 11.05L10.8406 12.8594L10.0875 9.46875L12.6531 7.11875L9.27499 6.81563L7.99999 3.66563L6.72499 6.81563L3.34686 7.11875L5.91249 9.46875L5.16249 12.8594Z"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Goals
+        </div>
+      </a>
+
+      {/* Reports with IconAfter */}
+      <a
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15 14V15H1V1H2V14H15ZM7 9.125L11 11.125L15 8.125V7L11 10L7 8L3 11V12.125L7 9.125ZM7 4.125L11 7L15 5.125V4L11 5.875L7 3L3 5V6.125L7 4.125Z"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Reports
+        </div>
+        <div
+          className="IconAfter"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.9393 4.93945L7.99997 8.87883L4.06056 4.93945L3 6.00011L7.99997 11.0001L13 6.00011L11.9393 4.93945Z"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+      </a>
+
+      {/* Indented Items */}
+      <div
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          paddingLeft: "48px",
+          paddingRight: "16px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Current Month
+        </div>
+      </div>
+
+      <div
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          paddingLeft: "48px",
+          paddingRight: "16px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Last Quarter
+        </div>
+      </div>
+
+      <div
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          paddingLeft: "48px",
+          paddingRight: "16px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Social Engagement
+        </div>
+      </div>
+
+      <div
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          paddingLeft: "48px",
+          paddingRight: "16px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Year-end Sale
+        </div>
+      </div>
+
+      {/* Users */}
+      <a
+        className="DrawerItem"
+        data-bs-toggle="popover"
+        title="Inactive Link"
+        data-bs-content="This link is currently inactive."
+        style={{
+          width: "240px",
+          height: "40px",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          background: "white",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "16px",
+          display: "inline-flex",
+        }}
+      >
+        <div
+          className="IconBefore"
+          style={{
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M8 2C9.10281 2 10 2.89719 10 4C10 5.10281 9.10281 6 8 6C6.89719 6 6 5.10281 6 4C6 2.89719 6.89719 2 8 2ZM8 1C6.34375 1 5 2.34375 5 4C5 5.65625 6.34375 7 8 7C9.65625 7 11 5.65625 11 4C11 2.34375 9.65625 1 8 1ZM8 9C9.335 9 10.5903 9.52031 11.535 10.465C12.4797 11.4097 13 12.665 13 14H3C3 12.665 3.52031 11.4097 4.465 10.465C5.40969 9.52031 6.665 9 8 9ZM8 8C4.6875 8 2 10.6875 2 14C2 14.5531 2.44687 15 3 15H13C13.5531 15 14 14.5531 14 14C14 10.6875 11.3125 8 8 8Z"
+              fill="#3D3D3D"
+            />
+          </svg>
+        </div>
+        <div
+          className="Label"
+          style={{
+            flex: "1 1 0",
+            color: "#3D3D3D",
+            fontSize: "16px",
+            fontFamily: "Roboto",
+            fontWeight: 400,
+            lineHeight: "24px",
+            wordWrap: "break-word",
+          }}
+        >
+          Users
+        </div>
+      </a>
+    </div>
+  )
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/components/preset-filter/preset-filter.tsx
+Imports:
+  - import { PresetType } from "../../../core/models/domain/types";
+---
+Classes:
+  - preset-filter
+    Methods:
+      - export function AppPresetFilter(props: AppPresetFilterProps) {
+    return (
+        <div className="btn-group me-2">
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={(e) => props.onSelectPresetTap('my')}>My Items</button>
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={(e) => props.onSelectPresetTap('open')} > Open Items</button >
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={(e) => props.onSelectPresetTap('closed')} > Done Items</button >
+        </div >
+    )
+    Properties:
+      - selectedPreset: PresetType;
+      - onSelectPresetTap: (preset: PresetType) => void;
+
+Type-aliases:
+  - AppPresetFilterProps
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/components/rps-logo/rps-logo.tsx
+Imports:
+  - import React from "react";
+---
+Classes:
+  - rps-logo
+    Methods:
+      - const RpsLogo = () => {
+  return (
+    <div>
+      <svg
+        width="166"
+        height="26"
+        viewBox="0 0 166 26"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <mask
+          id="mask0_248_12314"
+          style={{ maskType: "luminance" }}
+          maskUnits="userSpaceOnUse"
+          x="0"
+          y="0"
+          width="30"
+          height="26"
+        >
+          <path d="M29.7142 0H0V26H29.7142V0Z" fill="white" />
+        </mask>
+        <g mask="url(#mask0_248_12314)">
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M22.2862 24.1428V26H13.0004C9.55262 26 6.24605 24.6303 3.80811 22.1924C1.37017 19.7544 0.000549317 16.4477 0.000549317 13C0.000531026 11.2928 0.336769 9.60236 0.990065 8.02513C1.64336 6.4479 2.60092 5.01479 3.80808 3.80762C5.01522 2.60046 6.44832 1.64288 8.02554 0.989568C9.60278 0.336256 11.2932 0 13.0004 0H22.2862V1.85716C22.2862 2.1011 22.2382 2.34264 22.1448 2.56799C22.0514 2.79335 21.9146 2.9981 21.7421 3.17058C21.5696 3.34303 21.3647 3.47982 21.1394 3.57312C20.914 3.66641 20.6724 3.7144 20.4285 3.71433H13C11.7806 3.71431 10.5731 3.95447 9.44648 4.42112C8.31987 4.88776 7.29621 5.57172 6.43394 6.43398C5.57167 7.29625 4.88768 8.31989 4.42102 9.4465C3.95436 10.5731 3.71417 11.7806 3.71417 13C3.71422 15.4628 4.69255 17.8245 6.43397 19.566C8.1754 21.3074 10.5373 22.2857 13 22.2857H20.4291C20.6729 22.2857 20.9144 22.3337 21.1398 22.427C21.365 22.5204 21.5698 22.6571 21.7423 22.8296C21.9148 23.0021 22.0515 23.2069 22.1448 23.4321C22.2382 23.6574 22.2862 23.899 22.2862 24.1428ZM9.06031 16.9394C8.0155 15.8947 7.42853 14.4776 7.42853 13C7.4285 12.2683 7.57259 11.5438 7.85257 10.8678C8.13255 10.1919 8.54294 9.57765 9.06031 9.06028C9.57766 8.54292 10.1919 8.13252 10.8679 7.85254C11.5438 7.57256 12.2683 7.42847 13 7.42851H22.2862C23.2712 7.42836 24.2158 7.03698 24.9122 6.34045C25.6086 5.64393 25.9999 4.69929 25.9999 3.71433V0H29.7148V3.71433C29.7148 5.68449 28.9321 7.57396 27.5391 8.96707C26.1458 10.3602 24.2564 11.1428 22.2862 11.1428H13C12.5075 11.1428 12.0351 11.3385 11.6868 11.6868C11.3385 12.0351 11.1429 12.5074 11.1429 13C11.1429 13.4926 11.3385 13.9649 11.6868 14.3133C12.0351 14.6615 12.5075 14.8572 13 14.8572H22.2862C24.2564 14.8572 26.1458 15.6398 27.5391 17.0329C28.9321 18.4261 29.7148 20.3156 29.7148 22.2857V25.9999H26.0004V22.2855C26.0004 21.3004 25.6091 20.3557 24.9125 19.6591C24.216 18.9626 23.2714 18.5712 22.2862 18.5712H12.9997C11.5222 18.5712 10.1051 17.9843 9.06031 16.9394Z"
+            fill="url(#paint0_linear_248_12314)"
+          />
+        </g>
+        <path
+          d="M33.7108 1.96094H41.93C43.6152 1.96094 45.0633 2.21322 46.2742 2.71777C47.4953 3.22233 48.4337 3.96908 49.0897 4.95801C49.7456 5.94694 50.0735 7.16292 50.0735 8.60596C50.0735 9.78662 49.8717 10.8008 49.4681 11.6484C49.0745 12.486 48.5145 13.1873 47.7879 13.7524C47.0714 14.3075 46.2288 14.7515 45.2601 15.0845L43.8221 15.8413H36.6776L36.6473 12.2993H41.9603C42.7575 12.2993 43.4184 12.158 43.9432 11.8755C44.4679 11.5929 44.8615 11.1994 45.1238 10.6948C45.3963 10.1903 45.5325 9.60498 45.5325 8.93896C45.5325 8.23258 45.4013 7.62207 45.139 7.10742C44.8766 6.59277 44.478 6.19922 43.9432 5.92676C43.4083 5.6543 42.7373 5.51807 41.93 5.51807H38.2518V24H33.7108V1.96094ZM46.032 24L41.0067 14.1763L45.805 14.146L50.8909 23.7881V24H46.032ZM62.1526 16.144H56.5369V12.6021H62.1526C63.0205 12.6021 63.7269 12.4608 64.2718 12.1782C64.8167 11.8856 65.2153 11.4819 65.4676 10.9673C65.7199 10.4526 65.846 9.8724 65.846 9.22656C65.846 8.57064 65.7199 7.96012 65.4676 7.39502C65.2153 6.82992 64.8167 6.37581 64.2718 6.03271C63.7269 5.68962 63.0205 5.51807 62.1526 5.51807H58.1111V24H53.5701V1.96094H62.1526C63.8782 1.96094 65.3566 2.27376 66.5877 2.89941C67.8289 3.51497 68.7775 4.36768 69.4334 5.45752C70.0893 6.54736 70.4173 7.79362 70.4173 9.19629C70.4173 10.6191 70.0893 11.8503 69.4334 12.8896C68.7775 13.929 67.8289 14.7313 66.5877 15.2964C65.3566 15.8615 63.8782 16.144 62.1526 16.144ZM85.0242 18.2329C85.0242 17.8394 84.9637 17.4862 84.8426 17.1733C84.7316 16.8504 84.5197 16.5578 84.2068 16.2954C83.894 16.0229 83.4551 15.7555 82.89 15.4932C82.3248 15.2308 81.5932 14.9583 80.6951 14.6758C79.6961 14.3529 78.7475 13.9896 77.8494 13.5859C76.9614 13.1823 76.1743 12.7131 75.4881 12.1782C74.812 11.6333 74.2772 11.0026 73.8836 10.2861C73.5001 9.56966 73.3084 8.73714 73.3084 7.78857C73.3084 6.87028 73.5102 6.03776 73.9139 5.29102C74.3175 4.53418 74.8826 3.88835 75.6092 3.35352C76.3358 2.80859 77.1935 2.38981 78.1824 2.09717C79.1815 1.80452 80.2763 1.6582 81.4671 1.6582C83.0918 1.6582 84.5096 1.95085 85.7205 2.53613C86.9315 3.12142 87.8699 3.92367 88.5359 4.94287C89.2121 5.96208 89.5501 7.1276 89.5501 8.43945H85.0394C85.0394 7.79362 84.9031 7.22852 84.6307 6.74414C84.3683 6.24967 83.9647 5.86117 83.4197 5.57861C82.8849 5.29606 82.2088 5.15479 81.3914 5.15479C80.6043 5.15479 79.9484 5.27588 79.4236 5.51807C78.8989 5.75016 78.5054 6.06803 78.243 6.47168C77.9806 6.86523 77.8494 7.30924 77.8494 7.80371C77.8494 8.17708 77.9402 8.51514 78.1219 8.81787C78.3136 9.12061 78.5962 9.40316 78.9695 9.66553C79.3429 9.9279 79.8021 10.1751 80.347 10.4072C80.8919 10.6393 81.5226 10.8664 82.2391 11.0884C83.4399 11.4517 84.4944 11.8604 85.4026 12.3145C86.3209 12.7686 87.0879 13.2782 87.7034 13.8433C88.319 14.4084 88.7832 15.0492 89.096 15.7656C89.4088 16.4821 89.5652 17.2944 89.5652 18.2026C89.5652 19.1613 89.3786 20.019 89.0052 20.7759C88.6318 21.5327 88.0919 22.1735 87.3856 22.6982C86.6792 23.223 85.8366 23.6216 84.8577 23.894C83.8789 24.1665 82.784 24.3027 81.5731 24.3027C80.4832 24.3027 79.4085 24.1615 78.3489 23.8789C77.2894 23.5863 76.3257 23.1473 75.4578 22.562C74.6001 21.9767 73.9139 21.23 73.3992 20.3218C72.8846 19.4136 72.6273 18.3389 72.6273 17.0977H77.1834C77.1834 17.7839 77.2894 18.3641 77.5013 18.8384C77.7132 19.3127 78.0109 19.6961 78.3943 19.9888C78.7879 20.2814 79.2521 20.4933 79.7869 20.6245C80.3318 20.7557 80.9272 20.8213 81.5731 20.8213C82.3602 20.8213 83.006 20.7103 83.5106 20.4883C84.0252 20.2663 84.4036 19.9585 84.6458 19.5649C84.8981 19.1714 85.0242 18.7274 85.0242 18.2329Z"
+            fill="#068597"
+          />
+        <path
+          d="M96.8509 7.6543H94.5716V6.73438H96.8509C97.2923 6.73438 97.6497 6.66406 97.9232 6.52344C98.1966 6.38281 98.3958 6.1875 98.5208 5.9375C98.6497 5.6875 98.7142 5.40234 98.7142 5.08203C98.7142 4.78906 98.6497 4.51367 98.5208 4.25586C98.3958 3.99805 98.1966 3.79102 97.9232 3.63477C97.6497 3.47461 97.2923 3.39453 96.8509 3.39453H94.8353V11H93.7044V2.46875H96.8509C97.4954 2.46875 98.0403 2.58008 98.4857 2.80273C98.931 3.02539 99.2689 3.33398 99.4993 3.72852C99.7298 4.11914 99.845 4.56641 99.845 5.07031C99.845 5.61719 99.7298 6.08398 99.4993 6.4707C99.2689 6.85742 98.931 7.15234 98.4857 7.35547C98.0403 7.55469 97.4954 7.6543 96.8509 7.6543ZM101.275 2.46875H104.099C104.74 2.46875 105.281 2.56641 105.722 2.76172C106.167 2.95703 106.505 3.24609 106.736 3.62891C106.97 4.00781 107.087 4.47461 107.087 5.0293C107.087 5.41992 107.007 5.77734 106.847 6.10156C106.691 6.42188 106.464 6.69531 106.167 6.92188C105.874 7.14453 105.523 7.31055 105.113 7.41992L104.796 7.54297H102.142L102.13 6.62305H104.134C104.54 6.62305 104.878 6.55273 105.148 6.41211C105.417 6.26758 105.62 6.07422 105.757 5.83203C105.894 5.58984 105.962 5.32227 105.962 5.0293C105.962 4.70117 105.898 4.41406 105.769 4.16797C105.64 3.92188 105.437 3.73242 105.159 3.59961C104.886 3.46289 104.533 3.39453 104.099 3.39453H102.406V11H101.275V2.46875ZM106.261 11L104.187 7.13281L105.365 7.12695L107.468 10.9297V11H106.261ZM115.238 6.46484V7.00391C115.238 7.64453 115.158 8.21875 114.997 8.72656C114.837 9.23438 114.607 9.66602 114.306 10.0215C114.005 10.377 113.644 10.6484 113.222 10.8359C112.804 11.0234 112.335 11.1172 111.816 11.1172C111.312 11.1172 110.849 11.0234 110.427 10.8359C110.009 10.6484 109.646 10.377 109.337 10.0215C109.033 9.66602 108.796 9.23438 108.628 8.72656C108.46 8.21875 108.376 7.64453 108.376 7.00391V6.46484C108.376 5.82422 108.458 5.25195 108.622 4.74805C108.79 4.24023 109.027 3.80859 109.331 3.45312C109.636 3.09375 109.997 2.82031 110.415 2.63281C110.837 2.44531 111.3 2.35156 111.804 2.35156C112.324 2.35156 112.792 2.44531 113.21 2.63281C113.632 2.82031 113.993 3.09375 114.294 3.45312C114.599 3.80859 114.831 4.24023 114.992 4.74805C115.156 5.25195 115.238 5.82422 115.238 6.46484ZM114.118 7.00391V6.45312C114.118 5.94531 114.066 5.49609 113.96 5.10547C113.859 4.71484 113.708 4.38672 113.509 4.12109C113.31 3.85547 113.066 3.6543 112.777 3.51758C112.492 3.38086 112.167 3.3125 111.804 3.3125C111.452 3.3125 111.134 3.38086 110.849 3.51758C110.568 3.6543 110.326 3.85547 110.122 4.12109C109.923 4.38672 109.769 4.71484 109.659 5.10547C109.55 5.49609 109.495 5.94531 109.495 6.45312V7.00391C109.495 7.51562 109.55 7.96875 109.659 8.36328C109.769 8.75391 109.925 9.08398 110.128 9.35352C110.335 9.61914 110.579 9.82031 110.861 9.95703C111.146 10.0938 111.464 10.1621 111.816 10.1621C112.183 10.1621 112.509 10.0938 112.794 9.95703C113.079 9.82031 113.32 9.61914 113.515 9.35352C113.714 9.08398 113.865 8.75391 113.966 8.36328C114.068 7.96875 114.118 7.51562 114.118 7.00391ZM120.511 8.50977V2.46875H121.636V8.50977C121.636 9.07227 121.521 9.54688 121.29 9.93359C121.06 10.3203 120.742 10.6152 120.335 10.8184C119.933 11.0176 119.47 11.1172 118.947 11.1172C118.423 11.1172 117.958 11.0273 117.552 10.8477C117.146 10.668 116.827 10.3945 116.597 10.0273C116.367 9.66016 116.251 9.19727 116.251 8.63867H117.382C117.382 8.99805 117.449 9.29297 117.581 9.52344C117.714 9.75391 117.898 9.92383 118.132 10.0332C118.37 10.1426 118.642 10.1973 118.947 10.1973C119.243 10.1973 119.509 10.1348 119.743 10.0098C119.982 9.88086 120.169 9.69141 120.306 9.44141C120.443 9.1875 120.511 8.87695 120.511 8.50977ZM128.972 10.0801V11H124.454V10.0801H128.972ZM124.683 2.46875V11H123.552V2.46875H124.683ZM128.374 6.13672V7.05664H124.454V6.13672H128.374ZM128.913 2.46875V3.39453H124.454V2.46875H128.913ZM135.523 8.28711H136.648C136.589 8.82617 136.435 9.30859 136.185 9.73438C135.935 10.1602 135.581 10.498 135.124 10.748C134.667 10.9941 134.097 11.1172 133.413 11.1172C132.913 11.1172 132.458 11.0234 132.048 10.8359C131.642 10.6484 131.292 10.3828 130.999 10.0391C130.706 9.69141 130.48 9.27539 130.32 8.79102C130.163 8.30273 130.085 7.75977 130.085 7.16211V6.3125C130.085 5.71484 130.163 5.17383 130.32 4.68945C130.48 4.20117 130.708 3.7832 131.005 3.43555C131.306 3.08789 131.667 2.82031 132.089 2.63281C132.511 2.44531 132.986 2.35156 133.513 2.35156C134.158 2.35156 134.702 2.47266 135.148 2.71484C135.593 2.95703 135.939 3.29297 136.185 3.72266C136.435 4.14844 136.589 4.64258 136.648 5.20508H135.523C135.468 4.80664 135.367 4.46484 135.218 4.17969C135.07 3.89063 134.859 3.66797 134.585 3.51172C134.312 3.35547 133.954 3.27734 133.513 3.27734C133.134 3.27734 132.8 3.34961 132.511 3.49414C132.226 3.63867 131.986 3.84375 131.79 4.10938C131.599 4.375 131.454 4.69336 131.357 5.06445C131.259 5.43555 131.21 5.84766 131.21 6.30078V7.16211C131.21 7.58008 131.253 7.97266 131.339 8.33984C131.429 8.70703 131.564 9.0293 131.743 9.30664C131.923 9.58398 132.152 9.80273 132.429 9.96289C132.706 10.1191 133.034 10.1973 133.413 10.1973C133.894 10.1973 134.277 10.1211 134.562 9.96875C134.847 9.81641 135.062 9.59766 135.206 9.3125C135.355 9.02734 135.46 8.68555 135.523 8.28711ZM141.165 2.46875V11H140.052V2.46875H141.165ZM143.908 2.46875V3.39453H137.316V2.46875H143.908ZM96.8568 15.4688V24H95.7435V15.4688H96.8568ZM99.5989 15.4688V16.3945H93.0071V15.4688H99.5989ZM100.865 15.4688H103.689C104.329 15.4688 104.87 15.5664 105.312 15.7617C105.757 15.957 106.095 16.2461 106.326 16.6289C106.56 17.0078 106.677 17.4746 106.677 18.0293C106.677 18.4199 106.597 18.7773 106.437 19.1016C106.281 19.4219 106.054 19.6953 105.757 19.9219C105.464 20.1445 105.113 20.3105 104.702 20.4199L104.386 20.543H101.732L101.72 19.623H103.724C104.13 19.623 104.468 19.5527 104.738 19.4121C105.007 19.2676 105.21 19.0742 105.347 18.832C105.484 18.5898 105.552 18.3223 105.552 18.0293C105.552 17.7012 105.488 17.4141 105.359 17.168C105.23 16.9219 105.027 16.7324 104.749 16.5996C104.476 16.4629 104.122 16.3945 103.689 16.3945H101.995V24H100.865V15.4688ZM105.851 24L103.777 20.1328L104.954 20.127L107.058 23.9297V24H105.851ZM111.417 16.2246L108.593 24H107.439L110.691 15.4688H111.435L111.417 16.2246ZM113.784 24L110.954 16.2246L110.937 15.4688H111.681L114.945 24H113.784ZM113.638 20.8418V21.7676H108.845V20.8418H113.638ZM121.167 21.2871H122.292C122.234 21.8262 122.079 22.3086 121.829 22.7344C121.579 23.1602 121.226 23.498 120.769 23.748C120.312 23.9941 119.742 24.1172 119.058 24.1172C118.558 24.1172 118.103 24.0234 117.693 23.8359C117.286 23.6484 116.937 23.3828 116.644 23.0391C116.351 22.6914 116.124 22.2754 115.964 21.791C115.808 21.3027 115.73 20.7598 115.73 20.1621V19.3125C115.73 18.7148 115.808 18.1738 115.964 17.6895C116.124 17.2012 116.353 16.7832 116.65 16.4355C116.951 16.0879 117.312 15.8203 117.734 15.6328C118.156 15.4453 118.63 15.3516 119.158 15.3516C119.802 15.3516 120.347 15.4727 120.792 15.7148C121.238 15.957 121.583 16.293 121.829 16.7227C122.079 17.1484 122.234 17.6426 122.292 18.2051H121.167C121.113 17.8066 121.011 17.4648 120.863 17.1797C120.714 16.8906 120.503 16.668 120.23 16.5117C119.956 16.3555 119.599 16.2773 119.158 16.2773C118.779 16.2773 118.445 16.3496 118.156 16.4941C117.87 16.6387 117.63 16.8438 117.435 17.1094C117.243 17.375 117.099 17.6934 117.001 18.0645C116.904 18.4355 116.855 18.8477 116.855 19.3008V20.1621C116.855 20.5801 116.898 20.9727 116.984 21.3398C117.074 21.707 117.208 22.0293 117.388 22.3066C117.568 22.584 117.796 22.8027 118.074 22.9629C118.351 23.1191 118.679 23.1973 119.058 23.1973C119.538 23.1973 119.921 23.1211 120.206 22.9688C120.492 22.8164 120.706 22.5977 120.851 22.3125C120.999 22.0273 121.105 21.6855 121.167 21.2871ZM124.964 15.4688V24H123.833V15.4688H124.964ZM130.115 15.4688L126.57 19.4473L124.577 21.5156L124.39 20.3086L125.89 18.6562L128.755 15.4688H130.115ZM129.025 24L125.867 19.8398L126.54 18.9434L130.372 24H129.025ZM136.788 23.0801V24H132.271V23.0801H136.788ZM132.499 15.4688V24H131.368V15.4688H132.499ZM136.191 19.1367V20.0566H132.271V19.1367H136.191ZM136.73 15.4688V16.3945H132.271V15.4688H136.73ZM138.189 15.4688H141.013C141.654 15.4688 142.195 15.5664 142.636 15.7617C143.081 15.957 143.419 16.2461 143.65 16.6289C143.884 17.0078 144.001 17.4746 144.001 18.0293C144.001 18.4199 143.921 18.7773 143.761 19.1016C143.605 19.4219 143.378 19.6953 143.081 19.9219C142.788 20.1445 142.437 20.3105 142.027 20.4199L141.71 20.543H139.056L139.044 19.623H141.048C141.454 19.623 141.792 19.5527 142.062 19.4121C142.331 19.2676 142.534 19.0742 142.671 18.832C142.808 18.5898 142.876 18.3223 142.876 18.0293C142.876 17.7012 142.812 17.4141 142.683 17.168C142.554 16.9219 142.351 16.7324 142.074 16.5996C141.8 16.4629 141.447 16.3945 141.013 16.3945H139.32V24H138.189V15.4688ZM143.175 24L141.101 20.1328L142.279 20.127L144.382 23.9297V24H143.175Z"
+          fill="#424546"
+        />
+        <path
+          d="M153.992 22.6816V24H148.156V22.875L150.915 19.916C151.193 19.6074 151.411 19.3359 151.572 19.1016C151.732 18.8633 151.847 18.6504 151.917 18.4629C151.992 18.2715 152.029 18.0898 152.029 17.918C152.029 17.6602 151.986 17.4395 151.9 17.2559C151.814 17.0684 151.687 16.9238 151.519 16.8223C151.355 16.7207 151.152 16.6699 150.909 16.6699C150.652 16.6699 150.429 16.7324 150.242 16.8574C150.058 16.9824 149.917 17.1562 149.82 17.3789C149.726 17.6016 149.679 17.8535 149.679 18.1348H147.986C147.986 17.627 148.107 17.1621 148.349 16.7402C148.591 16.3145 148.933 15.9766 149.374 15.7266C149.816 15.4727 150.339 15.3457 150.945 15.3457C151.542 15.3457 152.046 15.4434 152.456 15.6387C152.87 15.8301 153.183 16.1074 153.394 16.4707C153.609 16.8301 153.716 17.2598 153.716 17.7598C153.716 18.041 153.671 18.3164 153.581 18.5859C153.492 18.8516 153.363 19.1172 153.195 19.3828C153.031 19.6445 152.831 19.9102 152.597 20.1797C152.363 20.4492 152.103 20.7285 151.818 21.0176L150.335 22.6816H153.992ZM155.199 23.1855C155.199 22.9355 155.284 22.7266 155.456 22.5586C155.632 22.3906 155.865 22.3066 156.154 22.3066C156.443 22.3066 156.673 22.3906 156.845 22.5586C157.021 22.7266 157.109 22.9355 157.109 23.1855C157.109 23.4355 157.021 23.6445 156.845 23.8125C156.673 23.9805 156.443 24.0645 156.154 24.0645C155.865 24.0645 155.632 23.9805 155.456 23.8125C155.284 23.6445 155.199 23.4355 155.199 23.1855ZM164.269 18.9844V20.4609C164.269 21.1016 164.201 21.6543 164.064 22.1191C163.927 22.5801 163.73 22.959 163.472 23.2559C163.218 23.5488 162.915 23.7656 162.564 23.9062C162.212 24.0469 161.822 24.1172 161.392 24.1172C161.048 24.1172 160.728 24.0742 160.431 23.9883C160.134 23.8984 159.867 23.7598 159.628 23.5723C159.394 23.3848 159.191 23.1484 159.019 22.8633C158.851 22.5742 158.722 22.2305 158.632 21.832C158.542 21.4336 158.497 20.9766 158.497 20.4609V18.9844C158.497 18.3438 158.566 17.7949 158.702 17.3379C158.843 16.877 159.04 16.5 159.294 16.207C159.552 15.9141 159.857 15.6992 160.208 15.5625C160.56 15.4219 160.951 15.3516 161.38 15.3516C161.724 15.3516 162.042 15.3965 162.335 15.4863C162.632 15.5723 162.9 15.707 163.138 15.8906C163.376 16.0742 163.579 16.3105 163.747 16.5996C163.915 16.8848 164.044 17.2266 164.134 17.625C164.224 18.0195 164.269 18.4727 164.269 18.9844ZM162.576 20.6836V18.7559C162.576 18.4473 162.558 18.1777 162.523 17.9473C162.492 17.7168 162.443 17.5215 162.376 17.3613C162.31 17.1973 162.228 17.0645 162.13 16.9629C162.033 16.8613 161.921 16.7871 161.796 16.7402C161.671 16.6934 161.533 16.6699 161.38 16.6699C161.189 16.6699 161.019 16.707 160.87 16.7812C160.726 16.8555 160.603 16.9746 160.501 17.1387C160.4 17.2988 160.322 17.5137 160.267 17.7832C160.216 18.0488 160.191 18.373 160.191 18.7559V20.6836C160.191 20.9922 160.206 21.2637 160.238 21.498C160.273 21.7324 160.324 21.9336 160.39 22.1016C160.46 22.2656 160.542 22.4004 160.636 22.5059C160.734 22.6074 160.845 22.6816 160.97 22.7285C161.099 22.7754 161.24 22.7988 161.392 22.7988C161.579 22.7988 161.745 22.7617 161.89 22.6875C162.038 22.6094 162.163 22.4883 162.265 22.3242C162.37 22.1562 162.449 21.9375 162.499 21.668C162.55 21.3984 162.576 21.0703 162.576 20.6836Z"
+          fill="#0D6EFD"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_248_12314"
+            x1="3.35015"
+            y1="12.9999"
+            x2="31.9657"
+            y2="12.9999"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#0D6EFD" />
+            <stop offset="1" stopColor="#3C99A7" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  )
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/components/side-menu/side-menu.tsx
+Imports:
+  - import { Link } from "react-router-dom";
+---
+Classes:
+  - side-menu
+    Methods:
+      - export function SideMenu() {
+    return (
+        <nav className="col-md-2 d-none d-md-block bg-light sidebar">
+            <div className="sidebar-sticky">
+                <ul className="nav flex-column">
+                    <li className="nav-item">
+                        <Link className="nav-link active" to="/dashboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-home">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            Dashboard <span className="sr-only">(current)</span>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/backlog/my">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                            My Items
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/backlog/open">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-file">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                <polyline points="13 2 13 9 20 9"></polyline>
+                            </svg>
+                            Open Items
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/backlog/closed">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-shopping-cart">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                            Done Items
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-users">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            Users
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-bar-chart-2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            Reports
+                </Link>
+                    </li>
+
+                </ul>
+
+                <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Saved reports</span>
+                    <Link className="d-flex align-items-center text-muted" to="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-plus-circle">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </Link>
+                </h6>
+                <ul className="nav flex-column mb-2">
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-file-text">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Current month
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-file-text">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Last quarter
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-file-text">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Social engagement
+                </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-file-text">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Year-end sale
+                </Link>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+    )
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/helpers/priority-styling.ts
+Imports:
+  - import { PriorityEnum } from "../../core/models/domain/enums";
+---
+Classes:
+  - priority-styling
+    Methods:
+      - export function getIndicatorClass(priority: PriorityEnum): string {
+    switch (priority) {
+        case PriorityEnum.Critical:
+            return 'priority-critical'
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/dto/pt-new-comment.ts
+Imports:
+---
+
+Type-aliases:
+  - PtNewComment
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/dto/pt-new-item.ts
+Imports:
+  - import { PtItemType } from '../../../core/models/domain/types';
+---
+
+Type-aliases:
+  - PtNewItem
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/dto/pt-new-task.ts
+Imports:
+---
+
+Type-aliases:
+  - PtNewTask
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/dto/pt-task-update.ts
+Imports:
+  - import { PtTask } from '../../../core/models/domain';
+---
+
+Type-aliases:
+  - PtTaskCommonUpdate
+  - PtTaskTitleUpdate
+  - PtTaskDatesUpdate
+  - PtTaskAllUpdate
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/forms/pt-item-details-edit-form.ts
+Imports:
+  - import { PtItem } from '../../../core/models/domain';
+---
+Classes:
+  - pt-item-details-edit-form
+    Methods:
+      - export function ptItemToFormModel(item: PtItem): PtItemDetailsEditFormModel {
+    return {
+        title: item.title ? item.title : '',
+        description: item.description ? item.description : '',
+        typeStr: item.type,
+        statusStr: item.status,
+        estimate: item.estimate,
+        priorityStr: item.priority,
+        assigneeName: item.assignee ? item.assignee.fullName : 'unassigned'
+    }
+
+Type-aliases:
+  - PtItemDetailsEditFormModel
+---
+
+
+File: /Users/alex/Code/courses/progress/react/rpstrackerreact_kendo/src/shared/models/ui/types/detail-screens.ts
+Imports:
+---
+
+Literal-union aliases:
+  - export type DetailScreenType = 'form' | 'tasks' | 'schedule' | 'chitchat';
+---
+
+</file_contents>
+<user_instructions>
+Analyze this web application code base and refactor it to make it more memory efficient. 
+</user_instructions>

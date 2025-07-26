@@ -1,0 +1,104 @@
+You are tasked with writing a comprehensive analysis of climate change impacts on global agriculture over the next 50 years. This analysis will be used by international policymakers, agricultural organizations, and government agencies to inform critical decisions about food security, economic policy, and climate adaptation strategies. Your analysis should demonstrate deep understanding of the interconnected relationships between climate systems, agricultural practices, economic markets, and social implications.
+
+SCOPE AND REQUIREMENTS:
+
+1. EXECUTIVE SUMMARY: Provide a concise overview of the main findings, key risks, opportunities, and urgent action items. This summary should be accessible to non-technical stakeholders while maintaining scientific accuracy. Include quantitative projections where possible and highlight the most critical findings that require immediate attention.
+
+2. REGIONAL IMPACT ASSESSMENT: Conduct detailed analysis for at least 7 different geographic regions including North America, Europe, Sub-Saharan Africa, South Asia, East Asia, South America, and Australia/Oceania. For each region, address:
+   - Current agricultural production and food security status
+   - Projected temperature and precipitation changes with confidence intervals
+   - Specific crop vulnerabilities and adaptation potential
+   - Water resource availability and irrigation system impacts
+   - Soil health and erosion projections
+   - Extreme weather event frequency and intensity changes
+   - Socioeconomic factors affecting adaptation capacity
+   - Regional cooperation opportunities and challenges
+
+3. CROP-SPECIFIC ANALYSIS: Examine impacts on major food categories including:
+   - Staple grains (wheat, rice, corn, barley) with yield projections and quality changes
+   - Protein sources (soybeans, pulses, livestock feed crops)
+   - Fruits and vegetables including nutritional content changes
+   - Tree crops and perennial agriculture systems
+   - Emerging alternative protein sources and novel crops
+   - Impact on crop genetic diversity and seed systems
+   - Changes in pest and disease pressure affecting different crop categories
+
+4. ECONOMIC IMPLICATIONS: Provide comprehensive economic analysis including:
+   - Global food price volatility projections and market stability analysis
+   - Supply chain disruption risks and adaptation costs
+   - International trade pattern shifts and food import/export dependencies
+   - Agricultural insurance and risk management evolution
+   - Investment requirements for adaptation infrastructure
+   - Economic opportunities in climate-resilient agriculture technologies
+   - Impact on smallholder farmers versus large-scale agricultural operations
+   - Food waste and loss implications in changing climate conditions
+
+5. TECHNOLOGICAL SOLUTIONS AND INNOVATIONS: Analyze adaptation technologies including:
+   - Climate-resilient crop varieties and genetic engineering potential
+   - Precision agriculture and smart farming technologies
+   - Water management innovations including drip irrigation and rainwater harvesting
+   - Soil health improvement technologies and regenerative agriculture practices
+   - Vertical farming and controlled environment agriculture scalability
+   - Carbon sequestration technologies and their agricultural integration
+   - Early warning systems and climate prediction tools for farmers
+   - Biotechnology applications including gene editing and synthetic biology
+
+6. POLICY RECOMMENDATIONS: Develop actionable policy frameworks for:
+   - International cooperation mechanisms and technology transfer programs
+   - Climate adaptation funding and financial mechanisms
+   - Research and development investment priorities
+   - Trade policy adjustments to ensure food security
+   - Support systems for vulnerable farming communities
+   - Integration of climate considerations into agricultural subsidies
+   - Regulatory frameworks for new agricultural technologies
+   - Education and extension service modernization
+
+7. TIMELINE AND CRITICAL DECISION POINTS: Establish a detailed timeline including:
+   - Near-term actions required (2025-2030) with specific milestones
+   - Medium-term adaptation phases (2030-2040) and infrastructure requirements
+   - Long-term transformation goals (2040-2075) and systemic changes needed
+   - Critical decision points where delayed action significantly increases costs or risks
+   - Windows of opportunity for implementing specific adaptation measures
+   - Irreversible threshold identification and prevention strategies
+
+8. RISK ASSESSMENT AND UNCERTAINTY ANALYSIS: Provide comprehensive risk evaluation including:
+   - Probabilistic analysis of different climate scenarios and their agricultural impacts
+   - Cascade failure analysis of interconnected agricultural and food systems
+   - Uncertainty quantification in climate models and agricultural projections
+   - Worst-case scenario planning and emergency response preparation
+   - Identification of tipping points in agricultural systems
+   - Risk communication strategies for different stakeholder groups
+
+9. CASE STUDIES: Include detailed analysis of at least 5 countries/regions that are successfully implementing adaptation strategies:
+   - Netherlands: advanced water management and precision agriculture
+   - Israel: dryland agriculture and water efficiency innovations
+   - Bangladesh: flood-resistant agriculture and early warning systems
+   - Kenya: drought-resistant crops and climate-smart agriculture
+   - Denmark: sustainable intensification and organic farming integration
+   - For each case study, include implementation challenges, success factors, scalability potential, and lessons learned
+
+10. IMPLEMENTATION ROADMAP: Develop actionable next steps including:
+    - Priority actions for different stakeholder groups (governments, farmers, researchers, private sector)
+    - Funding mechanisms and investment requirements with cost-benefit analysis
+    - Monitoring and evaluation frameworks to track progress
+    - Adaptive management approaches to adjust strategies based on new information
+    - Capacity building requirements and knowledge transfer systems
+    - International coordination mechanisms and governance structures
+
+METHODOLOGY AND STANDARDS:
+- Base analysis on peer-reviewed scientific research from the past 5 years, with emphasis on IPCC reports, Nature Climate Change, and other high-impact journals
+- Include quantitative projections with confidence intervals and uncertainty ranges
+- Use standardized climate scenarios (RCP 4.5, RCP 8.5) for consistency
+- Incorporate both biophysical and socioeconomic modeling results
+- Address equity considerations and vulnerable population impacts throughout the analysis
+- Ensure recommendations are evidence-based and financially feasible
+
+FORMATTING AND PRESENTATION:
+- Structure with clear headings, subheadings, and executive summary bullets
+- Include specific data points, statistics, and quantitative projections where available
+- Use professional tone suitable for policy makers and international organizations
+- Provide actionable recommendations with implementation timelines
+- Target length of 2000-2500 words with comprehensive coverage of all required sections
+- Include strategic recommendations that balance urgency with practical implementation constraints
+
+The analysis should demonstrate understanding of the complex interdependencies between climate change, agriculture, economics, and social systems while providing practical, evidence-based guidance for decision-makers facing these unprecedented challenges.

@@ -1,0 +1,11 @@
+# Core dependencies for LLM performance testing
+tiktoken>=0.5.0  # For accurate token counting
+
+# Required packages for data visualization:
+pandas>=1.3.0
+plotly>=5.0.0
+
+# Optional packages for additional data analysis:
+# matplotlib>=3.5.0
+# seaborn>=0.11.0
+# numpy>=1.20.0
