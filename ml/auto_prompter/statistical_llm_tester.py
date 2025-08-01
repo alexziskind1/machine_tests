@@ -175,6 +175,7 @@ class StatisticalLLMTester:
                 curl_cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 timeout=self.config["request_timeout"],
             )
 

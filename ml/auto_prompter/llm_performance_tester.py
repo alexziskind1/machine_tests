@@ -95,13 +95,19 @@ class LLMPerformanceTester:
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
         }
-        
+
         # Add response length control parameters if specified in config
         if "max_tokens" in self.config:
             payload["max_tokens"] = self.config["max_tokens"]
-        
+
         # Add other generation parameters if specified
-        generation_params = ["temperature", "top_p", "top_k", "frequency_penalty", "presence_penalty"]
+        generation_params = [
+            "temperature",
+            "top_p",
+            "top_k",
+            "frequency_penalty",
+            "presence_penalty",
+        ]
         for param in generation_params:
             if param in self.config:
                 payload[param] = self.config[param]
@@ -130,6 +136,7 @@ class LLMPerformanceTester:
                 curl_cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 timeout=self.config["request_timeout"],
             )
 
