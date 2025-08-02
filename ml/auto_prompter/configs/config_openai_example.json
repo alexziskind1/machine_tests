@@ -1,11 +1,15 @@
 {
-  "llm_url": "http://127.0.0.1:11434/v1/chat/completions",
-  "model": "gemma3:4b-it-q4_K_M",
+  "llm_url": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-3.5-turbo",
   "headers": {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_OPENAI_API_KEY_HERE"
   },
-  "request_timeout": 300,
-  "output_csv": "ollama_performance_results.csv",
+  "request_timeout": 60,
+  "output_csv": "openai_performance_results.csv",
+  
+  "_comment_results_organization": "Results are automatically organized in nested folders: /results/<model>/<quantization>/<hardware>/",
+  "_comment_hardware_override": "Use --hardware argument to specify hardware manually, e.g., --hardware m3max",
   
   "_comment_generation_params": "Parameters to control response generation for consistent benchmarking",
   "max_tokens": 512,

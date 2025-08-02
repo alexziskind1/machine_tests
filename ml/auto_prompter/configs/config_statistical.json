@@ -1,11 +1,14 @@
 {
-  "llm_url": "http://127.0.0.1:8000/v1/chat/completions",
-  "model": "hi",
+  "llm_url": "http://127.0.0.1:11434/v1/chat/completions",
+  "model": "your_model_name",
   "headers": {
     "Content-Type": "application/json"
   },
   "request_timeout": 300,
-  "output_csv": "mlc_performance_results.csv",
+  "output_csv": "performance_results.csv",
+  
+  "_comment_results_organization": "Results are automatically organized in nested folders: /results/<model>/<quantization>/<hardware>/",
+  "_comment_hardware_override": "Use --hardware argument to specify hardware manually, e.g., --hardware m3max",
   
   "_comment_generation_params": "Parameters to control response generation for consistent benchmarking",
   "max_tokens": 512,
