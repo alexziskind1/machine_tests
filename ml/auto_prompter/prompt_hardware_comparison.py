@@ -119,6 +119,38 @@ def load_statistical_results():
     print(f"📊 Loaded {len(combined_df)} test results from {len(csv_files)} files")
     return combined_df
 
+def load_detailed_results():
+    """Load detailed results CSV files for prompt processing time calculation."""
+    results_dir = Path("results")
+    
+    # Look for detailed files in main directory and subdirectories
+    csv_files = []
+    csv_files.extend(list(results_dir.glob("*detailed*.csv")))
+    csv_files.extend(list(results_dir.glob("**/*detailed*.csv")))
+    
+    if not csv_files:
+        print("❌ No detailed CSV files found in results directory")
+        print(f"Searched in: {results_dir.absolute()}")
+        return None
+    
+    all_data = []
+    for csv_file in csv_files:
+        try:
+            df = pd.read_csv(csv_file)
+            # Add file source for tracking
+            df['source_file'] = str(csv_file)
+            all_data.append(df)
+            print(f"✅ Loaded {len(df)} detailed rows from {csv_file.name}")
+        except Exception as e:
+            print(f"⚠️  Error reading {csv_file}: {e}")
+    
+    if not all_data:
+        return None
+    
+    combined_df = pd.concat(all_data, ignore_index=True)
+    print(f"📊 Loaded {len(combined_df)} detailed test results from {len(csv_files)} files")
+    return combined_df
+
 def clean_hardware_config(config):
     """Clean and standardize hardware configuration names using mapping file."""
     if pd.isna(config):
@@ -488,6 +520,212 @@ def create_prompt_hardware_chart(df, metric='tokens_per_second_mean', show_chart
     
     return fig, grouped
 
+def create_prompt_processing_chart(df, show_chart=True, filter_model=None, filter_quantization=None):
+    """Create column chart comparing estimated prompt processing time by prompt type."""
+    
+    # Clean the data and filter out failed tests
+    df = df.copy()
+    df = df[df['success'] == True]  # Only include successful tests
+    
+    # Calculate estimated prompt processing time
+    # Formula: Prompt Processing Time = Total Response Time - (Response Tokens ÷ Tokens Per Second)
+    df['generation_time'] = df['response_token_count'] / df['tokens_per_second']
+    df['estimated_prompt_processing_time'] = df['response_time'] - df['generation_time']
+    
+    # Filter out negative values (unrealistic estimates)
+    df = df[df['estimated_prompt_processing_time'] >= 0]
+    
+    # Extract hardware config, prompt type, quantization, and model info
+    df['hardware_config'] = df['source_file'].apply(extract_hardware_config)
+    df['prompt_type'] = df['filename'].apply(extract_prompt_info)
+    df['quantization'] = df['source_file'].apply(extract_quantization_level)
+    df['model_name'] = df['source_file'].apply(extract_model_info)
+    
+    # Clean hardware names
+    df['hardware_config'] = df['hardware_config'].apply(clean_hardware_config)
+    
+    # Filter out only Unknown hardware (keep all valid hardware configurations)
+    df = df[df['hardware_config'] != 'Unknown']
+    
+    # Apply model filter if specified
+    if filter_model:
+        resolved_model = resolve_filter_value(filter_model, df['model_name'].unique(), 
+                                            HARDWARE_MAPPINGS, 'model_mappings')
+        if resolved_model:
+            df = df[df['model_name'] == resolved_model]
+            print(f"🔍 Filtered to model: {filter_model} → {resolved_model}")
+        else:
+            print(f"❌ Model '{filter_model}' not found. Available: {list(df['model_name'].unique())}")
+            return None, None
+    
+    # Apply quantization filter if specified
+    if filter_quantization:
+        resolved_quant = resolve_filter_value(filter_quantization, df['quantization'].unique(),
+                                            HARDWARE_MAPPINGS, 'quantization_mappings')
+        if resolved_quant:
+            df = df[df['quantization'] == resolved_quant]
+            print(f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}")
+        else:
+            print(f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}")
+            return None, None
+    
+    if df.empty:
+        print("❌ No data remaining after filtering")
+        return None, None
+    
+    # Group by prompt type and hardware, calculate averages for prompt processing time
+    grouped = df.groupby(['prompt_type', 'hardware_config'])['estimated_prompt_processing_time'].agg(['mean', 'count', 'std']).reset_index()
+    grouped.columns = ['prompt_type', 'hardware_config', 'avg_prompt_processing_time', 'count', 'std_dev']
+    
+    # Remove groups with too few samples
+    grouped = grouped[grouped['count'] >= 2]  # Need at least 2 samples for meaningful statistics
+    
+    # Create the chart
+    fig = go.Figure()
+    
+    # Get unique prompt types and hardware configs
+    prompt_types = sorted(grouped['prompt_type'].unique())
+    hardware_configs = sorted(grouped['hardware_config'].unique())
+    
+    print(f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs")
+    
+    # Generate dynamic color scheme for all hardware configurations
+    hardware_colors = generate_hardware_colors(hardware_configs)
+    
+    # Add bars for each hardware config
+    for hardware in hardware_configs:
+        hardware_data = grouped[grouped['hardware_config'] == hardware]
+        
+        x_values = []
+        y_values = []
+        error_values = []
+        hover_text = []
+        
+        for prompt_type in prompt_types:
+            prompt_data = hardware_data[hardware_data['prompt_type'] == prompt_type]
+            if not prompt_data.empty:
+                x_values.append(prompt_type)
+                avg_pp_time = prompt_data['avg_prompt_processing_time'].iloc[0]
+                y_values.append(avg_pp_time)
+                std_dev = prompt_data['std_dev'].iloc[0] if not pd.isna(prompt_data['std_dev'].iloc[0]) else 0
+                error_values.append(std_dev)
+                hover_text.append(
+                    f"<b>{hardware}</b><br>"
+                    f"Prompt: {prompt_type}<br>"
+                    f"Avg Prompt Processing: {avg_pp_time:.2f} seconds<br>"
+                    f"Tests: {prompt_data['count'].iloc[0]}<br>"
+                    f"Std Dev: {std_dev:.2f}s"
+                )
+        
+        if x_values:  # Only add trace if there's data
+            color = hardware_colors.get(hardware, '#95A5A6')
+            
+            fig.add_trace(go.Bar(
+                name=hardware,
+                x=x_values,
+                y=y_values,
+                error_y=dict(type='data', array=error_values, visible=True),
+                marker_color=color,
+                hovertemplate='%{customdata}<extra></extra>',
+                customdata=hover_text,
+                opacity=0.8
+            ))
+    
+    # Create title with filter information
+    title_parts = ['Estimated Prompt Processing Time Comparison by Hardware']
+    if filter_model:
+        title_parts.append(f'Model: {filter_model}')
+    if filter_quantization:
+        title_parts.append(f'Quantization: {filter_quantization}')
+    
+    title_text = '<br>'.join(title_parts)
+    title_text += '<br><sub>Calculated: Total Time - (Response Tokens ÷ Generation Speed)</sub>'
+    
+    # Update layout
+    fig.update_layout(
+        title={
+            'text': title_text,
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 18},
+            'y': 0.95,
+            'yanchor': 'top'
+        },
+        xaxis_title='Prompt Type',
+        yaxis_title='Average Prompt Processing Time (seconds)',
+        barmode='group',
+        bargap=0.2,
+        bargroupgap=0.1,
+        height=800,
+        width=1400,
+        template='plotly_white',
+        font={'size': 12},
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.08,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(
+            t=150,
+            b=120,
+            l=80,
+            r=80
+        )
+    )
+    
+    # Rotate x-axis labels for better readability
+    fig.update_xaxes(tickangle=45)
+    
+    # Fix y-axis formatting to show proper decimal numbers
+    fig.update_yaxes(
+        tickformat='.2f',  # Force 2 decimal places
+        tickmode='linear',
+        showticklabels=True
+    )
+    
+    if show_chart:
+        fig.show()
+    
+    return fig, grouped
+
+def create_prompt_processing_summary_stats(grouped_data):
+    """Create summary statistics for the prompt processing time comparison."""
+    print("\n📊 PROMPT PROCESSING TIME SUMMARY")
+    print("=" * 60)
+    
+    # Best (lowest processing time) performing combinations
+    best_combinations = grouped_data.nsmallest(10, 'avg_prompt_processing_time')
+    print("\n🏆 TOP 10 FASTEST PROMPT PROCESSING COMBINATIONS:")
+    for i, (idx, row) in enumerate(best_combinations.iterrows(), 1):
+        print(f"{i:2d}. {row['hardware_config']} - {row['prompt_type']}: "
+              f"{row['avg_prompt_processing_time']:.2f}s ({row['count']} tests)")
+    
+    # Worst (highest processing time) performing combinations
+    worst_combinations = grouped_data.nlargest(10, 'avg_prompt_processing_time')
+    print("\n🐌 TOP 10 SLOWEST PROMPT PROCESSING COMBINATIONS:")
+    for i, (idx, row) in enumerate(worst_combinations.iterrows(), 1):
+        print(f"{i:2d}. {row['hardware_config']} - {row['prompt_type']}: "
+              f"{row['avg_prompt_processing_time']:.2f}s ({row['count']} tests)")
+    
+    # Best hardware by prompt type (lowest processing time)
+    print("\n🎯 FASTEST PROMPT PROCESSING BY PROMPT TYPE:")
+    for prompt_type in sorted(grouped_data['prompt_type'].unique()):
+        prompt_data = grouped_data[grouped_data['prompt_type'] == prompt_type]
+        best = prompt_data.loc[prompt_data['avg_prompt_processing_time'].idxmin()]
+        print(f"   {prompt_type}: {best['hardware_config']} ({best['avg_prompt_processing_time']:.2f}s)")
+    
+    # Hardware rankings (lower processing time is better)
+    print("\n🏅 OVERALL HARDWARE RANKINGS (By Prompt Processing Speed):")
+    hardware_avg = grouped_data.groupby('hardware_config')['avg_prompt_processing_time'].mean().sort_values(ascending=True)
+    for i, (hardware, avg_time) in enumerate(hardware_avg.items(), 1):
+        test_count = grouped_data[grouped_data['hardware_config'] == hardware]['count'].sum()
+        print(f"{i:2d}. {hardware}: {avg_time:.2f}s avg processing time ({test_count} total tests)")
+    
+    print("\n💡 Note: Prompt processing times are estimated using the formula:")
+    print("   Prompt Processing Time = Total Response Time - (Response Tokens ÷ Generation Speed)")
+
 def create_prompt_processing_delay_chart(df, show_chart=True, filter_model=None, filter_quantization=None):
     """Create column chart comparing prompt processing delay (response time) by prompt type."""
     
@@ -752,15 +990,26 @@ def main():
                        help='List available models and quantization levels')
     parser.add_argument('--delay-chart', action='store_true',
                        help='Create prompt processing delay chart instead of performance chart')
+    parser.add_argument('--pp', action='store_true',
+                       help='Create estimated prompt processing time chart (requires detailed data)')
     parser.add_argument('--show-hardware-names', action='store_true',
                        help='Show detected hardware names to help with mapping file creation')
     
     args = parser.parse_args()
     
-    # Load data
-    df = load_statistical_results()
-    if df is None:
-        return
+    # Load data based on chart type
+    if args.pp:
+        # Load detailed data for prompt processing time calculation
+        df = load_detailed_results()
+        if df is None:
+            print("❌ No detailed data available for prompt processing time calculation")
+            print("   The --pp flag requires detailed CSV files with response_token_count data")
+            return
+    else:
+        # Load statistical data for other charts
+        df = load_statistical_results()
+        if df is None:
+            return
     
     # Add metadata columns
     df['hardware_config'] = df['source_file'].apply(extract_hardware_config)
@@ -810,7 +1059,15 @@ def main():
         return
     
     # Create appropriate chart based on request
-    if args.delay_chart:
+    if args.pp:
+        # Create prompt processing time chart
+        fig, grouped_data = create_prompt_processing_chart(
+            df, not args.no_chart, args.model, args.quantization)
+        
+        if grouped_data is not None:
+            create_prompt_processing_summary_stats(grouped_data)
+            chart_type = "prompt_processing"
+    elif args.delay_chart:
         # Create delay chart
         fig, grouped_data = create_prompt_processing_delay_chart(
             df, not args.no_chart, args.model, args.quantization)
@@ -838,8 +1095,8 @@ def main():
             save_path = charts_dir / args.save
             fig.write_html(save_path)
             print(f"\n💾 Chart saved to: {save_path}")
-        elif args.model or args.quantization or args.delay_chart:
-            # Auto-save with descriptive filename if model/quantization specified
+        elif args.model or args.quantization or args.delay_chart or args.pp:
+            # Auto-save with descriptive filename if model/quantization specified or special chart type
             charts_dir = Path("charts")
             charts_dir.mkdir(exist_ok=True)
             
@@ -848,7 +1105,7 @@ def main():
                 filename_parts.append(args.model)
             if args.quantization:
                 filename_parts.append(args.quantization.replace("-", ""))
-            if not args.delay_chart:
+            if not args.delay_chart and not args.pp:
                 filename_parts.append(args.metric)
             
             filename = "_".join(filename_parts) + ".html"
