@@ -1,0 +1,77 @@
+{
+  "hardware_mappings": {
+    "rtx5090": "RTX 5090 + RTX 5060Ti",
+    "rtx_5090": "RTX 5090 + RTX 5060Ti",
+    "m4max": "M4 Max",
+    "m4_max": "M4 Max",
+    "m4pro": "M4 Pro", 
+    "m4_pro": "M4 Pro",
+    "m4": "M4", 
+
+    "m3ultra": "M3 Ultra",
+    "m3_ultra": "M3 Ultra",
+    "m3max": "M3 Max",
+    "m3_max": "M3 Max",
+
+    "m3pro": "M3 Pro",
+    "m3_pro": "M3 Pro",
+    "m3mba": "M3 MacBook Air",
+    "m3_mba": "M3 MacBook Air",
+    "m2max": "M2 Max",
+    "m2_max": "M2 Max", 
+    "m2mba": "M2 MacBook Air",
+    "m2_mba": "M2 MacBook Air",
+    "m1pro": "M1 Pro",
+    "m1_pro": "M1 Pro",
+    "m1mba": "M1 MacBook Air",
+    "m1_mba": "M1 MacBook Air",
+    "fw_ryzen": "Framework Ryzen AI 395",
+    "framework": "Framework Laptop",
+    "ryzen_ai": "AMD Ryzen AI 395",
+    "xelite": "Snapdragon X Elite",
+    "xplus": "Snapdragon X Plus",
+    "surface_laptop7": "Surface Laptop 7",
+    "surface_laptop6": "Surface Laptop 6",
+    "galaxybook4edge": "Galaxy Book4 Edge",
+    "vivobooks15": "Vivobook S 15",
+    "xps13": "Dell XPS 13",
+    "ollama": "Ollama Performance",
+    "lm_studio": "LM Studio",
+    "lmstudio": "LM Studio",
+    "corei5": "Intel Core i5",
+    "corei9": "Intel Core i9",
+    "coreU7": "Intel Core Ultra 7"
+  },
+  "fallback_patterns": {
+    "rtx": "NVIDIA RTX",
+    "gtx": "NVIDIA GTX", 
+
+    "intel": "Intel",
+    "amd": "AMD",
+    "ryzen": "AMD Ryzen",
+    "surface": "Microsoft Surface",
+    "macbook": "MacBook",
+    "mbp": "MacBook Pro",
+    "mba": "MacBook Air",
+    "xps": "Dell XPS",
+    "framework": "Framework Laptop"
+  },
+  "model_mappings": {
+    "qwen3_coder_30b": "Qwen 3 Coder 30B",
+    "llama_3.3_70b": "Llama 3.3 70B",
+    "qwen3_235b": "Qwen 3 235B",
+    "gemma": "Google Gemma"
+  },
+  "quantization_mappings": {
+    "q4": "4-bit",
+    "4bit": "4-bit",
+    "mlx4bit": "MLX 4-bit",
+    "q8": "8-bit", 
+    "8bit": "8-bit",
+    "q3": "3-bit",
+    "3bit": "3-bit",
+    "fp16": "FP16",
+    "f16": "FP16",
+    "mlx": "MLX"
+  }
+}

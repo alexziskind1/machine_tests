@@ -15,17 +15,77 @@ import os
 import glob
 from pathlib import Path
 import argparse
+import hashlib
+import json
+import re
 
-# Color scheme for hardware configurations
-HARDWARE_COLORS = {
-    'RTX 5090+RTX 5060Ti': '#FF6B6B',  # Red
-    'M4 Max 128GB': '#4ECDC4',         # Teal
-    'M4 Pro 64GB': '#45B7D1',          # Blue
-    'Framework Ryzen AI 395': '#96CEB4', # Green
-    'Ollama Performance': '#FFEAA7',    # Yellow
-    'LM Studio': '#DDA0DD',            # Plum
-    'Unknown': '#95A5A6'               # Gray
-}
+def generate_hardware_colors(hardware_configs):
+    """
+    Generate a consistent color scheme for hardware configurations.
+    
+    This function dynamically creates colors for any hardware configuration,
+    eliminating the need to hardcode hardware names and colors.
+    """
+    # Use plotly's qualitative color sequences for good visual distinction
+    color_sequences = [
+        px.colors.qualitative.Set1,
+        px.colors.qualitative.Set2,
+        px.colors.qualitative.Set3,
+        px.colors.qualitative.Pastel1,
+        px.colors.qualitative.Pastel2,
+        px.colors.qualitative.Dark24
+    ]
+    
+    # Flatten all color sequences
+    all_colors = []
+    for seq in color_sequences:
+        all_colors.extend(seq)
+    
+    # Sort hardware configs for consistent assignment
+    sorted_configs = sorted(hardware_configs)
+    
+    color_map = {}
+    for i, config in enumerate(sorted_configs):
+        # Use modulo to cycle through colors if we have more hardware than colors
+        color_idx = i % len(all_colors)
+        color_map[config] = all_colors[color_idx]
+    
+    # Always assign gray to 'Unknown'
+    if 'Unknown' in color_map:
+        color_map['Unknown'] = '#95A5A6'
+    
+    return color_map
+
+def load_hardware_mappings():
+    """Load hardware name mappings from JSON file."""
+    mapping_file = Path("hardware_mapping.json")
+    
+    if not mapping_file.exists():
+        print(f"⚠️  Hardware mapping file not found: {mapping_file}")
+        print("   Using raw hardware names from file paths")
+        return {
+            "hardware_mappings": {},
+            "fallback_patterns": {},
+            "model_mappings": {},
+            "quantization_mappings": {}
+        }
+    
+    try:
+        with open(mapping_file, 'r') as f:
+            mappings = json.load(f)
+        print(f"✅ Loaded hardware mappings from {mapping_file}")
+        return mappings
+    except Exception as e:
+        print(f"⚠️  Error loading hardware mappings: {e}")
+        return {
+            "hardware_mappings": {},
+            "fallback_patterns": {},
+            "model_mappings": {},
+            "quantization_mappings": {}
+        }
+
+# Load mappings at module level
+HARDWARE_MAPPINGS = load_hardware_mappings()
 
 def load_statistical_results():
     """Load all statistical results CSV files."""
@@ -60,27 +120,29 @@ def load_statistical_results():
     return combined_df
 
 def clean_hardware_config(config):
-    """Clean and standardize hardware configuration names."""
+    """Clean and standardize hardware configuration names using mapping file."""
     if pd.isna(config):
         return 'Unknown'
     
-    config_str = str(config).strip()
+    config_str = str(config).strip().lower()
     
-    # Map common variations
-    if 'rtx' in config_str.lower() and '5090' in config_str:
-        return 'RTX 5090+RTX 5060Ti'
-    elif 'm4' in config_str.lower() and 'max' in config_str.lower():
-        return 'M4 Max 128GB'
-    elif 'm4' in config_str.lower() and 'pro' in config_str.lower():
-        return 'M4 Pro 64GB'
-    elif 'framework' in config_str.lower() or 'ryzen' in config_str.lower():
-        return 'Framework Ryzen AI 395'
-    elif 'ollama' in config_str.lower():
-        return 'Ollama Performance'
-    elif 'lm studio' in config_str.lower() or 'lmstudio' in config_str.lower():
-        return 'LM Studio'
-    else:
-        return config_str
+    # Basic cleaning - remove extra spaces
+    cleaned = ' '.join(config_str.split())
+    
+    # Try exact mappings first
+    hardware_mappings = HARDWARE_MAPPINGS.get("hardware_mappings", {})
+    for key, clean_name in hardware_mappings.items():
+        if key.lower() in cleaned:
+            return clean_name
+    
+    # Try fallback patterns
+    fallback_patterns = HARDWARE_MAPPINGS.get("fallback_patterns", {})
+    for pattern, clean_name in fallback_patterns.items():
+        if re.search(pattern.lower(), cleaned):
+            return clean_name
+    
+    # If no mapping found, return cleaned version with basic formatting
+    return cleaned.replace('_', ' ').replace('-', ' ').title()
 
 def extract_prompt_info(filename):
     """Extract prompt category and complexity from filename."""
@@ -148,29 +210,62 @@ def extract_prompt_info(filename):
         return filename_lower.replace('_', ' ').title()
 
 def extract_hardware_config(source_file_path):
-    """Extract hardware configuration from source file path."""
-    file_path = str(source_file_path).lower()
+    """
+    Extract hardware configuration from source file path.
     
-    if 'rtx5090' in file_path or 'rtx_5090' in file_path:
-        return 'RTX 5090+RTX 5060Ti'
-    elif 'm4max' in file_path or 'm4_max' in file_path:
-        return 'M4 Max 128GB'
-    elif 'm4pro' in file_path or 'm4_pro' in file_path:
-        return 'M4 Pro 64GB'
-    elif 'fw_ryzen' in file_path or 'framework' in file_path or 'ryzen_ai' in file_path:
-        return 'Framework Ryzen AI 395'
-    elif 'ollama' in file_path:
-        return 'Ollama Performance'
-    elif 'lm_studio' in file_path and 'gemma' in file_path:
-        return 'LM Studio'
-    else:
-        return 'Unknown'
+    This function dynamically extracts hardware names from file paths,
+    allowing for new hardware configurations without code changes.
+    It looks for hardware-specific terms in directory and file names.
+    """
+    file_path = str(source_file_path)
+    filename = os.path.basename(file_path)
+    
+    # Look for hardware patterns at the beginning of the filename
+    # Most files follow pattern: hardware_model_quantization_...
+    filename_lower = filename.lower()
+    
+    # Try to extract hardware from beginning of filename
+    # Look for known hardware patterns
+    hardware_patterns = [
+        'rtx5090wrtx5060ti', 'rtx5090', 'rtx_5090',
+        'm4max', 'm4_max', 'm4pro', 'm4_pro', 
+        'm3max', 'm3_max', 'm3pro', 'm3_pro', 'm3ultra', 'm3_ultra',
+        'm3mba', 'm3_mba', 'm2max', 'm2_max', 'm2mba', 'm2_mba',
+        'm1pro', 'm1_pro', 'm1mba', 'm1_mba',
+        'fw_ryzen_ai_395', 'fw_ryzen', 'framework',
+        'xelite', 'xplus', 'surface_laptop7', 'surface_laptop6',
+        'galaxybook4edge', 'vivobooks15', 'xps13',
+        'corei5', 'corei9', 'coreu7'
+    ]
+    
+    # Sort by length (longest first) to match more specific patterns first
+    hardware_patterns.sort(key=len, reverse=True)
+    
+    for pattern in hardware_patterns:
+        if filename_lower.startswith(pattern.lower()):
+            return pattern
+    
+    # Fallback: look for hardware terms in the first part of filename
+    first_part = filename.split('_')[0].lower()
+    if any(hw_term in first_part for hw_term in [
+        'rtx', 'm1', 'm2', 'm3', 'm4', 'intel', 'amd', 'ryzen', 
+        'framework', 'surface', 'xps', 'galaxy'
+    ]):
+        return filename.split('_')[0]
+    
+    return 'Unknown'
 
 def extract_quantization_level(source_file_path):
-    """Extract quantization level from source file path."""
+    """Extract quantization level from source file path using mapping file."""
     file_path = str(source_file_path).lower()
     
-    # Check for various quantization patterns
+    # Try mappings first
+    quant_mappings = HARDWARE_MAPPINGS.get("quantization_mappings", {})
+    for key, clean_name in quant_mappings.items():
+        if key.lower() in file_path:
+            return clean_name
+    
+    # Fallback to original logic for unmapped quantizations
     if 'q4' in file_path or '4bit' in file_path or 'mlx4bit' in file_path:
         return '4-bit'
     elif 'q8' in file_path or '8bit' in file_path:
@@ -185,20 +280,54 @@ def extract_quantization_level(source_file_path):
         return 'Unknown'
 
 def extract_model_info(source_file_path):
-    """Extract model information from source file path."""
-    file_path = str(source_file_path)
+    """Extract model information from source file path using mapping file."""
+    file_path = str(source_file_path).lower()
     
-    # Extract from directory structure (e.g., results/qwen3_coder_30b/...)
+    # Try mappings first
+    model_mappings = HARDWARE_MAPPINGS.get("model_mappings", {})
+    for key, clean_name in model_mappings.items():
+        if key.lower() in file_path:
+            return clean_name
+    
+    # Fallback to original logic for unmapped models
     if 'qwen3_coder_30b' in file_path:
         return 'qwen3_coder_30b'
     elif 'llama_3.3_70b' in file_path:
         return 'llama_3.3_70b'
     elif 'qwen3_235b' in file_path:
         return 'qwen3_235b'
-    elif 'gemma' in file_path.lower():
+    elif 'gemma' in file_path:
         return 'gemma'
     else:
         return 'unknown'
+
+def resolve_filter_value(user_input, current_values, mapping_dict, mapping_key):
+    """
+    Resolve user filter input to actual values in the data.
+    Supports both raw keys and clean names from mappings.
+    """
+    if not user_input:
+        return None
+    
+    # Check if user input exactly matches any current value
+    if user_input in current_values:
+        return user_input
+    
+    # Check if user input is a raw key that maps to a clean name in current values
+    mappings = mapping_dict.get(mapping_key, {})
+    for raw_key, clean_name in mappings.items():
+        if user_input.lower() == raw_key.lower() and clean_name in current_values:
+            return clean_name
+        if user_input.lower() == clean_name.lower() and clean_name in current_values:
+            return clean_name
+    
+    # Check for partial matches (case insensitive)
+    user_lower = user_input.lower()
+    for value in current_values:
+        if user_lower in value.lower() or value.lower() in user_lower:
+            return value
+    
+    return None
 
 def create_prompt_hardware_chart(df, metric='tokens_per_second_mean', show_chart=True, 
                                 filter_model=None, filter_quantization=None):
@@ -217,19 +346,30 @@ def create_prompt_hardware_chart(df, metric='tokens_per_second_mean', show_chart
     # Clean hardware names
     df['hardware_config'] = df['hardware_config'].apply(clean_hardware_config)
     
-    # Filter out Unknown hardware and Ollama results
+    # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df['hardware_config'] != 'Unknown']
-    df = df[df['hardware_config'] != 'Ollama Performance']
     
     # Apply model filter if specified
     if filter_model:
-        df = df[df['model_name'] == filter_model]
-        print(f"🔍 Filtered to model: {filter_model}")
+        resolved_model = resolve_filter_value(filter_model, df['model_name'].unique(), 
+                                            HARDWARE_MAPPINGS, 'model_mappings')
+        if resolved_model:
+            df = df[df['model_name'] == resolved_model]
+            print(f"🔍 Filtered to model: {filter_model} → {resolved_model}")
+        else:
+            print(f"❌ Model '{filter_model}' not found. Available: {list(df['model_name'].unique())}")
+            return None, None
     
     # Apply quantization filter if specified
     if filter_quantization:
-        df = df[df['quantization'] == filter_quantization]
-        print(f"🔍 Filtered to quantization: {filter_quantization}")
+        resolved_quant = resolve_filter_value(filter_quantization, df['quantization'].unique(),
+                                            HARDWARE_MAPPINGS, 'quantization_mappings')
+        if resolved_quant:
+            df = df[df['quantization'] == resolved_quant]
+            print(f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}")
+        else:
+            print(f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}")
+            return None, None
     
     if df.empty:
         print("❌ No data remaining after filtering")
@@ -250,6 +390,9 @@ def create_prompt_hardware_chart(df, metric='tokens_per_second_mean', show_chart
     hardware_configs = sorted(grouped['hardware_config'].unique())
     
     print(f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs")
+    
+    # Generate dynamic color scheme for all hardware configurations
+    hardware_colors = generate_hardware_colors(hardware_configs)
     
     # Add bars for each hardware config
     for hardware in hardware_configs:
@@ -277,7 +420,7 @@ def create_prompt_hardware_chart(df, metric='tokens_per_second_mean', show_chart
                 )
         
         if x_values:  # Only add trace if there's data
-            color = HARDWARE_COLORS.get(hardware, '#95A5A6')
+            color = hardware_colors.get(hardware, '#95A5A6')
             
             fig.add_trace(go.Bar(
                 name=hardware,
@@ -361,19 +504,30 @@ def create_prompt_processing_delay_chart(df, show_chart=True, filter_model=None,
     # Clean hardware names
     df['hardware_config'] = df['hardware_config'].apply(clean_hardware_config)
     
-    # Filter out Unknown hardware and Ollama results
+    # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df['hardware_config'] != 'Unknown']
-    df = df[df['hardware_config'] != 'Ollama Performance']
     
     # Apply model filter if specified
     if filter_model:
-        df = df[df['model_name'] == filter_model]
-        print(f"🔍 Filtered to model: {filter_model}")
+        resolved_model = resolve_filter_value(filter_model, df['model_name'].unique(), 
+                                            HARDWARE_MAPPINGS, 'model_mappings')
+        if resolved_model:
+            df = df[df['model_name'] == resolved_model]
+            print(f"🔍 Filtered to model: {filter_model} → {resolved_model}")
+        else:
+            print(f"❌ Model '{filter_model}' not found. Available: {list(df['model_name'].unique())}")
+            return None, None
     
     # Apply quantization filter if specified
     if filter_quantization:
-        df = df[df['quantization'] == filter_quantization]
-        print(f"🔍 Filtered to quantization: {filter_quantization}")
+        resolved_quant = resolve_filter_value(filter_quantization, df['quantization'].unique(),
+                                            HARDWARE_MAPPINGS, 'quantization_mappings')
+        if resolved_quant:
+            df = df[df['quantization'] == resolved_quant]
+            print(f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}")
+        else:
+            print(f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}")
+            return None, None
     
     if df.empty:
         print("❌ No data remaining after filtering")
@@ -394,6 +548,9 @@ def create_prompt_processing_delay_chart(df, show_chart=True, filter_model=None,
     hardware_configs = sorted(grouped['hardware_config'].unique())
     
     print(f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs")
+    
+    # Generate dynamic color scheme for all hardware configurations
+    hardware_colors = generate_hardware_colors(hardware_configs)
     
     # Add bars for each hardware config
     for hardware in hardware_configs:
@@ -421,7 +578,7 @@ def create_prompt_processing_delay_chart(df, show_chart=True, filter_model=None,
                 )
         
         if x_values:  # Only add trace if there's data
-            color = HARDWARE_COLORS.get(hardware, '#95A5A6')
+            color = hardware_colors.get(hardware, '#95A5A6')
             
             fig.add_trace(go.Bar(
                 name=hardware,
@@ -548,6 +705,37 @@ def create_summary_stats(grouped_data):
         test_count = grouped_data[grouped_data['hardware_config'] == hardware]['count'].sum()
         print(f"{i:2d}. {hardware}: {avg_perf:.1f} tokens/sec avg ({test_count} total tests)")
 
+def show_detected_hardware_names(df):
+    """Show all detected hardware names to help with mapping file creation."""
+    print("\n🔍 DETECTED HARDWARE NAMES:")
+    print("=" * 50)
+    
+    # Get raw hardware names before cleaning
+    df_temp = df.copy()
+    df_temp['raw_hardware'] = df_temp['source_file'].apply(extract_hardware_config)
+    df_temp['clean_hardware'] = df_temp['raw_hardware'].apply(clean_hardware_config)
+    
+    # Show mapping results
+    hardware_mapping = df_temp[['raw_hardware', 'clean_hardware']].drop_duplicates()
+    hardware_mapping = hardware_mapping[hardware_mapping['raw_hardware'] != 'Unknown']
+    
+    print("Raw Name → Clean Name:")
+    for _, row in hardware_mapping.iterrows():
+        mapped = "✅" if row['raw_hardware'].lower() != row['clean_hardware'].lower() else "❌"
+        print(f"  {mapped} {row['raw_hardware']} → {row['clean_hardware']}")
+    
+    # Show unmapped names
+    unmapped_mask = hardware_mapping.apply(
+        lambda row: row['raw_hardware'].lower() == row['clean_hardware'].lower(), axis=1
+    )
+    unmapped = hardware_mapping[unmapped_mask]
+    if not unmapped.empty:
+        print(f"\n💡 Consider adding these to hardware_mapping.json:")
+        for _, row in unmapped.iterrows():
+            print(f'    "{row["raw_hardware"].lower()}": "Your Clean Name Here",')
+    else:
+        print(f"\n✅ All hardware names are properly mapped!")
+
 def main():
     parser = argparse.ArgumentParser(description='Compare hardware performance by prompt type')
     parser.add_argument('--metric', default='tokens_per_second_mean', 
@@ -564,6 +752,8 @@ def main():
                        help='List available models and quantization levels')
     parser.add_argument('--delay-chart', action='store_true',
                        help='Create prompt processing delay chart instead of performance chart')
+    parser.add_argument('--show-hardware-names', action='store_true',
+                       help='Show detected hardware names to help with mapping file creation')
     
     args = parser.parse_args()
     
@@ -576,6 +766,11 @@ def main():
     df['hardware_config'] = df['source_file'].apply(extract_hardware_config)
     df['quantization'] = df['source_file'].apply(extract_quantization_level)
     df['model_name'] = df['source_file'].apply(extract_model_info)
+    
+    # Show detected hardware names if requested
+    if args.show_hardware_names:
+        show_detected_hardware_names(df)
+        return
     
     # List available options if requested
     if args.list_available:
