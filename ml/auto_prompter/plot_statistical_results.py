@@ -614,8 +614,11 @@ def create_combined_dashboard(df: pd.DataFrame) -> str:
     </html>
     """
 
+    # Ensure charts directory exists
+    os.makedirs("charts", exist_ok=True)
+    
     # Save to file
-    output_file = "results/statistical_performance_dashboard.html"
+    output_file = "charts/statistical_performance_dashboard.html"
     with open(output_file, "w") as f:
         f.write(html_content)
 
@@ -650,7 +653,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="results/statistical_llm_performance_plots.html",
+        default="charts/statistical_llm_performance_plots.html",
         help="Output HTML file path",
     )
 
@@ -688,6 +691,9 @@ def main():
         elif args.chart == "scatter":
             fig = create_scatter_plot(df)
 
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        
         # Save individual chart
         fig.write_html(args.output)
         print(f"\n📊 Chart saved to: {args.output}")

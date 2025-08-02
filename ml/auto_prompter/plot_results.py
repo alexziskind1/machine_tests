@@ -355,8 +355,8 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="results/llm_performance_plots.html",
-        help="Output HTML file (default: results/llm_performance_plots.html)",
+        default="charts/llm_performance_plots.html",
+        help="Output HTML file (default: charts/llm_performance_plots.html)",
     )
     parser.add_argument(
         "--chart",
@@ -449,6 +449,9 @@ def main():
         os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
         print(f"Saving plots to {args.output}...")
+        
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
         # For single chart, use Plotly's built-in HTML export with config
         if len(figures) == 1:
