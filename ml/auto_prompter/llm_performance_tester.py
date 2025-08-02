@@ -13,6 +13,8 @@ import os
 import glob
 import argparse
 import subprocess
+import platform
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
@@ -20,11 +22,134 @@ import tiktoken
 
 
 class LLMPerformanceTester:
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = "configs/config_ollama.json", hardware_override: Optional[str] = None):
         """Initialize the performance tester with configuration."""
         self.config = self.load_config(config_path)
         self.results = []
         self.tokenizer = self._initialize_tokenizer()
+        self.hardware_info = hardware_override or self._detect_hardware()
+        self.hardware_mapping = self._load_hardware_mapping()
+
+    def _load_hardware_mapping(self) -> Dict:
+        """Load hardware mapping configuration."""
+        try:
+            with open("hardware_mapping.json", "r") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load hardware mapping: {e}")
+            return {"hardware_mappings": {}, "quantization_mappings": {}, "model_mappings": {}}
+
+    def _detect_hardware(self) -> str:
+        """Detect hardware configuration for organizing results."""
+        try:
+            # Try to detect Apple Silicon first
+            if platform.system() == "Darwin":  # macOS
+                try:
+                    result = subprocess.run(
+                        ["sysctl", "-n", "machdep.cpu.brand_string"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    cpu_info = result.stdout.strip().lower()
+                    
+                    if "apple m1" in cpu_info:
+                        return "m1"
+                    elif "apple m2" in cpu_info:
+                        return "m2"
+                    elif "apple m3" in cpu_info:
+                        return "m3"
+                    elif "apple m4" in cpu_info:
+                        return "m4"
+                except subprocess.TimeoutExpired:
+                    pass
+            
+            # For other systems, return a generic identifier
+            system = platform.system().lower()
+            machine = platform.machine().lower()
+            return f"{system}_{machine}"
+            
+        except Exception:
+            return "unknown_hardware"
+
+    def _parse_model_info(self, model_name: str) -> Tuple[str, str]:
+        """
+        Parse model name to extract base model and quantization.
+        Enhanced to handle various model name formats and use hardware mapping.
+        
+        Args:
+            model_name: Full model name (e.g., "llama3.3:70b-instruct-q4_K_M")
+            
+        Returns:
+            Tuple of (base_model, quantization)
+        """
+        model_name = model_name.lower()
+        original_model = model_name
+        
+        # Extract quantization pattern - enhanced patterns
+        quant_patterns = [
+            r'q\d+(?:_[a-z0-9]+)*',  # q4_k_m, q8_0, q4km, q3, etc.
+            r'fp\d+',                # fp16, fp32
+            r'int\d+',               # int4, int8
+            r'bf\d+',                # bf16
+            r'mlx@?\d*bit',          # mlx4bit, mlx8bit, mlx@4bit
+            r'mlx\d+bit',            # mlx4bit, mlx8bit
+        ]
+        
+        quantization = "unknown"
+        base_model = model_name
+        
+        # First try to find quantization in the model name
+        for pattern in quant_patterns:
+            match = re.search(pattern, model_name)
+            if match:
+                quantization = match.group()
+                # Normalize common patterns
+                if quantization == 'q4km':
+                    quantization = 'q4_k_m'
+                elif 'mlx' in quantization:
+                    quantization = re.sub(r'mlx@?(\d+)bit', r'mlx\1bit', quantization)
+                
+                # Remove quantization from model name to get base model
+                base_model = re.sub(f'[-_:@]{re.escape(match.group())}', '', model_name)
+                break
+        
+        # Clean up base model name
+        base_model = re.sub(r'[-_:](instruct|chat|it)$', '', base_model)
+        base_model = re.sub(r'[^\w\.]', '_', base_model)
+        
+        # Apply model mapping if available
+        model_mappings = self.hardware_mapping.get("model_mappings", {})
+        for key, mapped_name in model_mappings.items():
+            if key in base_model:
+                base_model = key
+                break
+                
+        # Apply quantization mapping if available  
+        quant_mappings = self.hardware_mapping.get("quantization_mappings", {})
+        for key, mapped_quant in quant_mappings.items():
+            if key in quantization:
+                quantization = key
+                break
+        
+        return base_model, quantization
+
+    def _normalize_hardware_name(self, hardware: str) -> str:
+        """Normalize hardware name using hardware mapping."""
+        hardware_lower = hardware.lower()
+        
+        # Check direct mappings first
+        hardware_mappings = self.hardware_mapping.get("hardware_mappings", {})
+        if hardware_lower in hardware_mappings:
+            return hardware_lower
+        
+        # Check fallback patterns
+        fallback_patterns = self.hardware_mapping.get("fallback_patterns", {})
+        for pattern, normalized in fallback_patterns.items():
+            if pattern in hardware_lower:
+                return pattern
+                
+        return hardware
 
     def _initialize_tokenizer(self):
         """Initialize the tokenizer based on the model."""
@@ -408,17 +533,22 @@ class LLMPerformanceTester:
         self.save_results()
 
     def save_results(self) -> None:
-        """Save results to CSV file."""
+        """Save results to CSV file with nested folder structure: /results/<model>/<quantization>/<hardware>."""
         if not self.results:
             print("No results to save")
             return
 
-        # Create results directory if it doesn't exist
-        results_dir = "results"
+        # Parse model information
+        model_name = self.config.get("model", "unknown_model")
+        base_model, quantization = self._parse_model_info(model_name)
+        hardware = self._normalize_hardware_name(self.hardware_info)
+        
+        # Create nested directory structure
+        results_dir = os.path.join("results", base_model, quantization, hardware)
         os.makedirs(results_dir, exist_ok=True)
 
         # Generate timestamped filename
-        base_filename = self.config["output_csv"]
+        base_filename = self.config.get("output_csv", "performance_results.csv")
         name, ext = os.path.splitext(base_filename)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(results_dir, f"{name}_{timestamp}{ext}")
@@ -433,6 +563,9 @@ class LLMPerformanceTester:
             "tokens_per_second",
             "model",
             "llm_url",
+            "base_model",
+            "quantization", 
+            "hardware",
         ]
 
         try:
@@ -441,13 +574,22 @@ class LLMPerformanceTester:
                 writer.writeheader()
 
                 for result in self.results:
-                    # Only include fields that exist in the result
+                    # Add parsed model info to each result
+                    enhanced_result = result.copy()
+                    enhanced_result.update({
+                        "base_model": base_model,
+                        "quantization": quantization,
+                        "hardware": hardware,
+                    })
+                    
+                    # Only include fields that exist in fieldnames
                     filtered_result = {
-                        k: v for k, v in result.items() if k in fieldnames
+                        k: v for k, v in enhanced_result.items() if k in fieldnames
                     }
                     writer.writerow(filtered_result)
 
             print(f"\n=== Results saved to {output_file} ===")
+            print(f"Organization: {base_model}/{quantization}/{hardware}")
             print(f"Total tests: {len(self.results)}")
             successful_tests = sum(1 for r in self.results if r["success"])
             print(f"Successful tests: {successful_tests}/{len(self.results)}")
@@ -468,7 +610,7 @@ def main():
         description="Test LLM performance with multiple prompts"
     )
     parser.add_argument(
-        "--config", default="config.json", help="Configuration file path"
+        "--config", default="configs/config_ollama.json", help="Configuration file path"
     )
     parser.add_argument(
         "--prompts-dir", default="prompts", help="Directory containing prompt files"
@@ -478,11 +620,15 @@ def main():
         action="store_true",
         help="Run all prompts without interactive selection",
     )
+    parser.add_argument(
+        "--hardware",
+        help="Hardware identifier for organizing results (e.g., 'm3max', 'rtx4090'). If not specified, hardware will be auto-detected.",
+    )
 
     args = parser.parse_args()
 
     try:
-        tester = LLMPerformanceTester(args.config)
+        tester = LLMPerformanceTester(args.config, hardware_override=args.hardware)
         tester.run_tests(args.prompts_dir, interactive=not args.no_interactive)
     except Exception as e:
         print(f"Error: {e}")

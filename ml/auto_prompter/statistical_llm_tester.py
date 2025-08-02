@@ -13,6 +13,8 @@ import os
 import glob
 import argparse
 import subprocess
+import platform
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
@@ -78,12 +80,129 @@ class StatisticalSummary:
 
 
 class StatisticalLLMTester:
-    def __init__(self, config_path: str = "config.json"):
-        """Initialize the statistical performance tester."""
+    def __init__(self, config_path: str = "configs/config_ollama.json", hardware_override: Optional[str] = None):
+        """Initialize the statistical LLM tester with configuration."""
         self.config = self.load_config(config_path)
         self.results: List[TestResult] = []
         self.statistical_summaries: List[StatisticalSummary] = []
         self.tokenizer = self._initialize_tokenizer()
+        self.hardware_info = hardware_override or self._detect_hardware()
+        self.hardware_mapping = self._load_hardware_mapping()
+
+    def _load_hardware_mapping(self) -> Dict:
+        """Load hardware mapping configuration."""
+        try:
+            with open("hardware_mapping.json", "r") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load hardware mapping: {e}")
+            return {"hardware_mappings": {}, "quantization_mappings": {}, "model_mappings": {}}
+
+    def _detect_hardware(self) -> str:
+        """Detect hardware configuration for organizing results."""
+        try:
+            # Try to detect Apple Silicon first
+            if platform.system() == "Darwin":  # macOS
+                try:
+                    result = subprocess.run(
+                        ["sysctl", "-n", "machdep.cpu.brand_string"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    cpu_info = result.stdout.strip().lower()
+                    
+                    if "apple m1" in cpu_info:
+                        return "m1"
+                    elif "apple m2" in cpu_info:
+                        return "m2"
+                    elif "apple m3" in cpu_info:
+                        return "m3"
+                    elif "apple m4" in cpu_info:
+                        return "m4"
+                except subprocess.TimeoutExpired:
+                    pass
+            
+            # For other systems, return a generic identifier
+            system = platform.system().lower()
+            machine = platform.machine().lower()
+            return f"{system}_{machine}"
+            
+        except Exception:
+            return "unknown_hardware"
+
+    def _parse_model_info(self, model_name: str) -> Tuple[str, str]:
+        """
+        Parse model name to extract base model and quantization.
+        Enhanced to handle various model name formats and use hardware mapping.
+        """
+        model_name = model_name.lower()
+        original_model = model_name
+        
+        # Extract quantization pattern - enhanced patterns
+        quant_patterns = [
+            r'q\d+(?:_[a-z0-9]+)*',  # q4_k_m, q8_0, q4km, q3, etc.
+            r'fp\d+',                # fp16, fp32
+            r'int\d+',               # int4, int8
+            r'bf\d+',                # bf16
+            r'mlx@?\d*bit',          # mlx4bit, mlx8bit, mlx@4bit
+            r'mlx\d+bit',            # mlx4bit, mlx8bit
+        ]
+        
+        quantization = "unknown"
+        base_model = model_name
+        
+        # First try to find quantization in the model name
+        for pattern in quant_patterns:
+            match = re.search(pattern, model_name)
+            if match:
+                quantization = match.group()
+                # Normalize common patterns
+                if quantization == 'q4km':
+                    quantization = 'q4_k_m'
+                elif 'mlx' in quantization:
+                    quantization = re.sub(r'mlx@?(\d+)bit', r'mlx\1bit', quantization)
+                
+                # Remove quantization from model name to get base model
+                base_model = re.sub(f'[-_:@]{re.escape(match.group())}', '', model_name)
+                break
+        
+        # Clean up base model name
+        base_model = re.sub(r'[-_:](instruct|chat|it)$', '', base_model)
+        base_model = re.sub(r'[^\w\.]', '_', base_model)
+        
+        # Apply model mapping if available
+        model_mappings = self.hardware_mapping.get("model_mappings", {})
+        for key, mapped_name in model_mappings.items():
+            if key in base_model:
+                base_model = key
+                break
+                
+        # Apply quantization mapping if available
+        quant_mappings = self.hardware_mapping.get("quantization_mappings", {})
+        for key, mapped_quant in quant_mappings.items():
+            if key in quantization:
+                quantization = key
+                break
+        
+        return base_model, quantization
+
+    def _normalize_hardware_name(self, hardware: str) -> str:
+        """Normalize hardware name using hardware mapping."""
+        hardware_lower = hardware.lower()
+        
+        # Check direct mappings first
+        hardware_mappings = self.hardware_mapping.get("hardware_mappings", {})
+        if hardware_lower in hardware_mappings:
+            return hardware_lower
+        
+        # Check fallback patterns
+        fallback_patterns = self.hardware_mapping.get("fallback_patterns", {})
+        for pattern, normalized in fallback_patterns.items():
+            if pattern in hardware_lower:
+                return pattern
+                
+        return hardware
 
     def _initialize_tokenizer(self):
         """Initialize the tokenizer based on the model."""
@@ -489,13 +608,18 @@ class StatisticalLLMTester:
         self.print_final_summary()
 
     def save_results(self) -> None:
-        """Save detailed results and statistical summaries to CSV files."""
+        """Save detailed results and statistical summaries to CSV files with nested folder structure."""
         if not self.results:
             print("No results to save")
             return
 
-        # Create results directory
-        results_dir = "results"
+        # Parse model information
+        model_name = self.config.get("model", "unknown_model")
+        base_model, quantization = self._parse_model_info(model_name)
+        hardware = self._normalize_hardware_name(self.hardware_info)
+        
+        # Create nested directory structure
+        results_dir = os.path.join("results", base_model, quantization, hardware)
         os.makedirs(results_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -515,13 +639,28 @@ class StatisticalLLMTester:
             "tokens_per_second",
             "model",
             "llm_url",
+            "base_model",
+            "quantization",
+            "hardware",
         ]
 
         with open(detailed_file, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=detailed_fieldnames)
             writer.writeheader()
             for result in self.results:
-                writer.writerow(result.__dict__)
+                # Add parsed model info to each result
+                enhanced_result = result.__dict__.copy()
+                enhanced_result.update({
+                    "base_model": base_model,
+                    "quantization": quantization,
+                    "hardware": hardware,
+                })
+                
+                # Only include fields that exist in fieldnames
+                filtered_result = {
+                    k: v for k, v in enhanced_result.items() if k in detailed_fieldnames
+                }
+                writer.writerow(filtered_result)
 
         # Save statistical summaries
         stats_file = os.path.join(results_dir, f"{name}_statistics_{timestamp}.csv")
@@ -550,17 +689,35 @@ class StatisticalLLMTester:
             "outlier_threshold",
             "model",
             "llm_url",
+            "base_model",
+            "quantization",
+            "hardware",
         ]
 
         with open(stats_file, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=stats_fieldnames)
             writer.writeheader()
             for stats in self.statistical_summaries:
-                writer.writerow(stats.__dict__)
+                # Add parsed model info to each stats summary
+                enhanced_stats = stats.__dict__.copy()
+                enhanced_stats.update({
+                    "base_model": base_model,
+                    "quantization": quantization,
+                    "hardware": hardware,
+                })
+                
+                # Only include fields that exist in fieldnames
+                filtered_stats = {
+                    k: v for k, v in enhanced_stats.items() if k in stats_fieldnames
+                }
+                writer.writerow(filtered_stats)
 
         print(f"\n=== Results Saved ===")
+        print(f"Organization: {base_model}/{quantization}/{hardware}")
         print(f"Detailed results: {detailed_file}")
         print(f"Statistical summaries: {stats_file}")
+        print(f"Total prompts tested: {len(self.statistical_summaries)}")
+        print(f"Total iterations: {len(self.results)}")
 
     def print_final_summary(self) -> None:
         """Print a comprehensive final summary."""
@@ -633,7 +790,7 @@ class StatisticalLLMTester:
 def main():
     parser = argparse.ArgumentParser(description="Statistical LLM performance testing")
     parser.add_argument(
-        "--config", default="config.json", help="Configuration file path"
+        "--config", default="configs/config_ollama.json", help="Configuration file path"
     )
     parser.add_argument(
         "--prompts-dir", default="prompts", help="Directory containing prompt files"
@@ -643,11 +800,15 @@ def main():
         type=int,
         help="Number of iterations per prompt (overrides config)",
     )
+    parser.add_argument(
+        "--hardware",
+        help="Hardware identifier for organizing results (e.g., 'm3max', 'rtx4090'). If not specified, hardware will be auto-detected.",
+    )
 
     args = parser.parse_args()
 
     try:
-        tester = StatisticalLLMTester(args.config)
+        tester = StatisticalLLMTester(args.config, hardware_override=args.hardware)
         tester.run_statistical_tests(args.prompts_dir, args.iterations)
     except Exception as e:
         print(f"Error: {e}")
