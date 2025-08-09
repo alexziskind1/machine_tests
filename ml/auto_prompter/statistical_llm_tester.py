@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Statistical LLM Performance Tester
+Statistical LLM Performance Tester (refactored for new config schema v3)
 
 This script runs multiple iterations of each prompt to ensure statistical reliability.
 It calculates confidence intervals, standard deviations, and identifies outliers.
@@ -22,6 +22,7 @@ import tiktoken
 import statistics
 import math
 from dataclasses import dataclass
+from config_loader import load_benchmark_config
 
 
 @dataclass
@@ -80,13 +81,17 @@ class StatisticalSummary:
 
 
 class StatisticalLLMTester:
-    def __init__(self, config_path: str = "configs/config_ollama.json", hardware_override: Optional[str] = None):
-        """Initialize the statistical LLM tester with configuration."""
-        self.config = self.load_config(config_path)
+    def __init__(
+        self,
+        config_path: str = "configs/config_lm_studio.json",
+        hardware_override: Optional[str] = None,
+    ):
+        self.cfg = load_benchmark_config(config_path)
+        if hardware_override:
+            self.cfg.hardware.code = hardware_override
         self.results: List[TestResult] = []
         self.statistical_summaries: List[StatisticalSummary] = []
         self.tokenizer = self._initialize_tokenizer()
-        self.hardware_info = hardware_override or self._detect_hardware()
         self.hardware_mapping = self._load_hardware_mapping()
 
     def _load_hardware_mapping(self) -> Dict:
@@ -96,7 +101,11 @@ class StatisticalLLMTester:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load hardware mapping: {e}")
-            return {"hardware_mappings": {}, "quantization_mappings": {}, "model_mappings": {}}
+            return {
+                "hardware_mappings": {},
+                "quantization_mappings": {},
+                "model_mappings": {},
+            }
 
     def _detect_hardware(self) -> str:
         """Detect hardware configuration for organizing results."""
@@ -108,10 +117,10 @@ class StatisticalLLMTester:
                         ["sysctl", "-n", "machdep.cpu.brand_string"],
                         capture_output=True,
                         text=True,
-                        timeout=5
+                        timeout=5,
                     )
                     cpu_info = result.stdout.strip().lower()
-                    
+
                     if "apple m1" in cpu_info:
                         return "m1"
                     elif "apple m2" in cpu_info:
@@ -122,12 +131,12 @@ class StatisticalLLMTester:
                         return "m4"
                 except subprocess.TimeoutExpired:
                     pass
-            
+
             # For other systems, return a generic identifier
             system = platform.system().lower()
             machine = platform.machine().lower()
             return f"{system}_{machine}"
-            
+
         except Exception:
             return "unknown_hardware"
 
@@ -138,84 +147,82 @@ class StatisticalLLMTester:
         """
         model_name = model_name.lower()
         original_model = model_name
-        
+
         # Extract quantization pattern - enhanced patterns
         quant_patterns = [
-            r'q\d+(?:_[a-z0-9]+)*',  # q4_k_m, q8_0, q4km, q3, etc.
-            r'fp\d+',                # fp16, fp32
-            r'int\d+',               # int4, int8
-            r'bf\d+',                # bf16
-            r'mlx@?\d*bit',          # mlx4bit, mlx8bit, mlx@4bit
-            r'mlx\d+bit',            # mlx4bit, mlx8bit
+            r"q\d+(?:_[a-z0-9]+)*",  # q4_k_m, q8_0, q4km, q3, etc.
+            r"fp\d+",  # fp16, fp32
+            r"int\d+",  # int4, int8
+            r"bf\d+",  # bf16
+            r"mlx@?\d*bit",  # mlx4bit, mlx8bit, mlx@4bit
+            r"mlx\d+bit",  # mlx4bit, mlx8bit
         ]
-        
+
         quantization = "unknown"
         base_model = model_name
-        
+
         # First try to find quantization in the model name
         for pattern in quant_patterns:
             match = re.search(pattern, model_name)
             if match:
                 quantization = match.group()
                 # Normalize common patterns
-                if quantization == 'q4km':
-                    quantization = 'q4_k_m'
-                elif 'mlx' in quantization:
-                    quantization = re.sub(r'mlx@?(\d+)bit', r'mlx\1bit', quantization)
-                
+                if quantization == "q4km":
+                    quantization = "q4_k_m"
+                elif "mlx" in quantization:
+                    quantization = re.sub(r"mlx@?(\d+)bit", r"mlx\1bit", quantization)
+
                 # Remove quantization from model name to get base model
-                base_model = re.sub(f'[-_:@]{re.escape(match.group())}', '', model_name)
+                base_model = re.sub(f"[-_:@]{re.escape(match.group())}", "", model_name)
                 break
-        
+
         # Clean up base model name
-        base_model = re.sub(r'[-_:](instruct|chat|it)$', '', base_model)
-        base_model = re.sub(r'[^\w\.]', '_', base_model)
-        
+        base_model = re.sub(r"[-_:](instruct|chat|it)$", "", base_model)
+        base_model = re.sub(r"[^\w\.]", "_", base_model)
+
         # Apply model mapping if available
         model_mappings = self.hardware_mapping.get("model_mappings", {})
         for key, mapped_name in model_mappings.items():
             if key in base_model:
                 base_model = key
                 break
-                
+
         # Apply quantization mapping if available
         quant_mappings = self.hardware_mapping.get("quantization_mappings", {})
         for key, mapped_quant in quant_mappings.items():
             if key in quantization:
                 quantization = key
                 break
-        
+
         return base_model, quantization
 
     def _normalize_hardware_name(self, hardware: str) -> str:
         """Normalize hardware name using hardware mapping."""
         hardware_lower = hardware.lower()
-        
+
         # Check direct mappings first
         hardware_mappings = self.hardware_mapping.get("hardware_mappings", {})
         if hardware_lower in hardware_mappings:
             return hardware_lower
-        
+
         # Check fallback patterns
         fallback_patterns = self.hardware_mapping.get("fallback_patterns", {})
         for pattern, normalized in fallback_patterns.items():
             if pattern in hardware_lower:
                 return pattern
-                
+
         return hardware
 
     def _initialize_tokenizer(self):
         """Initialize the tokenizer based on the model."""
         try:
-            model_name = self.config.get("model", "").lower()
+            model_name = self.cfg.target.model.lower()
             if any(name in model_name for name in ["gpt-4", "gpt-3.5"]):
                 return tiktoken.encoding_for_model("gpt-4")
             elif "gpt" in model_name:
                 return tiktoken.encoding_for_model("gpt-3.5-turbo")
-            else:
-                return tiktoken.get_encoding("cl100k_base")
-        except Exception as e:
-            print(f"Warning: Could not initialize specific tokenizer: {e}")
+            return tiktoken.get_encoding("cl100k_base")
+        except Exception:
             return tiktoken.get_encoding("cl100k_base")
 
     def count_tokens(self, text: str) -> int:
@@ -265,60 +272,59 @@ class StatisticalLLMTester:
 
         return prompts
 
-    def send_curl_request(self, prompt: str) -> Tuple[Optional[Dict], float, bool]:
+    def send_curl_request(self, prompt: str):
         """Send a curl request to the LLM and measure response time."""
         payload = {
-            "model": self.config["model"],
+            "model": self.cfg.target.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
         }
-
+        # generation params
+        for p in [
+            "max_tokens",
+            "temperature",
+            "top_p",
+            "top_k",
+            "frequency_penalty",
+            "presence_penalty",
+        ]:
+            if p in self.cfg.raw:
+                payload[p] = self.cfg.raw[p]
         curl_cmd = [
             "curl",
             "-s",
             "-X",
             "POST",
-            self.config["llm_url"],
+            self.cfg.target.llm_url,
             "-H",
-            f"Content-Type: {self.config['headers']['Content-Type']}",
+            f"Content-Type: {self.cfg.headers.get('Content-Type','application/json')}",
             "-d",
             json.dumps(payload),
             "--max-time",
-            str(self.config["request_timeout"]),
+            str(self.cfg.request_timeout),
         ]
-
-        start_time = time.time()
-
+        start = time.time()
         try:
-            result = subprocess.run(
+            r = subprocess.run(
                 curl_cmd,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
-                timeout=self.config["request_timeout"],
+                timeout=self.cfg.request_timeout,
             )
-
-            end_time = time.time()
-            total_time = end_time - start_time
-
-            if result.returncode == 0:
-                response_text = result.stdout.strip()
+            dt = time.time() - start
+            if r.returncode == 0:
+                txt = r.stdout.strip()
                 try:
-                    response_data = json.loads(response_text)
-                    if (
-                        isinstance(response_data, dict)
-                        and "object" in response_data
-                        and response_data["object"] == "error"
-                    ):
-                        return response_data, total_time, False
-                    return response_data, total_time, True
+                    data = json.loads(txt)
+                    if isinstance(data, dict) and data.get("object") == "error":
+                        return data, dt, False
+                    return data, dt, True
                 except json.JSONDecodeError:
-                    return {"raw_response": response_text}, total_time, False
-            else:
-                return None, total_time, False
-
+                    return {"raw_response": txt}, dt, False
+            return None, dt, False
         except subprocess.TimeoutExpired:
-            return None, self.config["request_timeout"], False
+            return None, self.cfg.request_timeout, False
         except Exception:
             return None, 0, False
 
@@ -348,7 +354,7 @@ class StatisticalLLMTester:
             if "completion_tokens" in usage:
                 token_count = usage["completion_tokens"]
             elif "total_tokens" in usage:
-                token_count = usage["total_tokens"]
+                token_count = response["usage"]["total_tokens"]
 
         # Try other fields
         if token_count == 0:
@@ -380,21 +386,18 @@ class StatisticalLLMTester:
         print("🔥 Warming up the model...")
         warm_up_prompt = "Hello, please respond with just 'Ready'."
 
-        warmup_iterations = self.config.get("warmup_iterations", 2)
-        successful_warmups = 0
-
+        warmup_iterations = self.cfg.raw.get("warmup_iterations", 2)
+        successful = 0
         for i in range(warmup_iterations):
             print(f"  Warm-up {i+1}/{warmup_iterations}")
-            response, response_time, success = self.send_curl_request(warm_up_prompt)
-            if success:
-                successful_warmups += 1
+            _, _, ok = self.send_curl_request(warm_up_prompt)
+            if ok:
+                successful += 1
             time.sleep(1)
 
-        print(
-            f"✓ Completed {successful_warmups}/{warmup_iterations} successful warm-ups"
-        )
+        print(f"✓ Completed {successful}/{warmup_iterations} successful warm-ups")
         time.sleep(2)
-        return successful_warmups > 0
+        return successful > 0
 
     def test_prompt_multiple_times(
         self, filename: str, prompt: str, iterations: int
@@ -403,15 +406,11 @@ class StatisticalLLMTester:
         print(f"\n--- Testing '{filename}' with {iterations} iterations ---")
         prompt_token_count = self.count_tokens(prompt)
         print(f"Prompt length: {prompt_token_count} tokens")
-
         results = []
         successful_runs = 0
-
         for i in range(iterations):
             print(f"  Iteration {i+1}/{iterations}", end=" ")
-
             response, response_time, success = self.send_curl_request(prompt)
-
             result = TestResult(
                 timestamp=datetime.now().isoformat(),
                 filename=filename,
@@ -421,27 +420,20 @@ class StatisticalLLMTester:
                 success=success,
                 response_token_count=0,
                 tokens_per_second=0,
-                model=self.config["model"],
-                llm_url=self.config["llm_url"],
+                model=self.cfg.target.model,
+                llm_url=self.cfg.target.llm_url,
             )
-
             if success and response:
-                response_token_count, tokens_per_second = (
-                    self.calculate_tokens_per_second(response, response_time)
-                )
-                result.response_token_count = response_token_count
-                result.tokens_per_second = tokens_per_second
+                rtoks, tps = self.calculate_tokens_per_second(response, response_time)
+                result.response_token_count = rtoks
+                result.tokens_per_second = tps
                 successful_runs += 1
-                print(f"✓ {tokens_per_second:.1f} tokens/sec ({response_time:.2f}s)")
+                print(f"✓ {tps:.1f} tokens/sec ({response_time:.2f}s)")
             else:
                 print(f"✗ Failed ({response_time:.2f}s)")
-
             results.append(result)
-
-            # Cooldown between iterations
             if i < iterations - 1:
-                time.sleep(self.config.get("cooldown_between_iterations", 2))
-
+                time.sleep(self.cfg.raw.get("cooldown_between_iterations", 2))
         print(f"  Summary: {successful_runs}/{iterations} successful runs")
         return results
 
@@ -473,7 +465,7 @@ class StatisticalLLMTester:
                 response_time_cv=0,
                 tokens_per_second_cv=0,
                 outliers_detected=0,
-                outlier_threshold=self.config.get("outlier_threshold", 2.0),
+                outlier_threshold=self.cfg.raw.get("outlier_threshold", 2.0),
                 model=results[0].model,
                 llm_url=results[0].llm_url,
             )
@@ -504,7 +496,7 @@ class StatisticalLLMTester:
             tps_margin = 0
 
         # Detect outliers using Z-score
-        outlier_threshold = self.config.get("outlier_threshold", 2.0)
+        outlier_threshold = self.cfg.raw.get("outlier_threshold", 2.0)
         outliers = 0
         if rt_std > 0:
             for rt in response_times:
@@ -548,86 +540,102 @@ class StatisticalLLMTester:
     ) -> None:
         """Run statistical tests on prompts."""
         print("=== Statistical LLM Performance Tester ===")
-        print(f"LLM URL: {self.config['llm_url']}")
-        print(f"Model: {self.config['model']}")
-
+        print(f"LLM URL: {self.cfg.target.llm_url}")
+        print(f"Model: {self.cfg.target.model}")
         if iterations is None:
-            iterations = self.config.get("iterations_per_prompt", 5)
-
+            iterations = self.cfg.raw.get("iterations_per_prompt", 5)
         print(f"Iterations per prompt: {iterations}")
         print(
-            f"Outlier detection threshold: {self.config.get('outlier_threshold', 2.0)} standard deviations"
+            f"Outlier detection threshold: {self.cfg.raw.get('outlier_threshold', 2.0)} standard deviations"
         )
-
-        # Warm up the model
         self.warm_up_model()
-
         prompts = self.load_prompts(prompts_dir)
         if not prompts:
             print("No prompts found. Please add .txt files to the prompts directory.")
             return
-
         print(f"\nFound {len(prompts)} prompts to test")
         print(f"Total iterations planned: {len(prompts) * iterations}")
-
         for i, (filename, prompt) in enumerate(prompts, 1):
             print(f"\n{'='*60}")
             print(f"Prompt {i}/{len(prompts)}: {filename}")
-
-            # Test the prompt multiple times
             prompt_results = self.test_prompt_multiple_times(
                 filename, prompt, iterations
             )
             self.results.extend(prompt_results)
-
-            # Calculate statistics for this prompt
             stats = self.calculate_statistics(prompt_results)
             self.statistical_summaries.append(stats)
-
-            # Print immediate summary
             if stats.successful_runs > 0:
-                print(f"  📊 Statistical Summary:")
+                print("  📊 Statistical Summary:")
                 print(
-                    f"     Tokens/sec: {stats.tokens_per_second_mean:.1f} ± {stats.tokens_per_second_std:.1f} "
-                    f"(CV: {stats.tokens_per_second_cv:.1f}%)"
+                    f"     Tokens/sec: {stats.tokens_per_second_mean:.1f} ± {stats.tokens_per_second_std:.1f} (CV: {stats.tokens_per_second_cv:.1f}%)"
                 )
                 print(
-                    f"     Response time: {stats.response_time_mean:.2f} ± {stats.response_time_std:.2f}s "
-                    f"(CV: {stats.response_time_cv:.1f}%)"
+                    f"     Response time: {stats.response_time_mean:.2f} ± {stats.response_time_std:.2f}s (CV: {stats.response_time_cv:.1f}%)"
                 )
                 if stats.outliers_detected > 0:
                     print(f"     ⚠️  {stats.outliers_detected} outlier(s) detected")
-
-            # Cooldown between prompts
             if i < len(prompts):
-                cooldown = self.config.get("cooldown_between_prompts", 5)
+                cooldown = self.cfg.raw.get("cooldown_between_prompts", 5)
                 print(f"  💤 Cooling down for {cooldown} seconds...")
                 time.sleep(cooldown)
-
         self.save_results()
         self.print_final_summary()
+
+    def _canonical_quant(self) -> str:
+        q = (self.cfg.target.quant or "").lower()
+        mapping = self.hardware_mapping.get("quantization_mappings", {})
+        return mapping.get(q, q)
+
+    def _build_result_filename(self, kind: str, timestamp: str) -> str:
+        alloc = (
+            self.cfg.hardware.vram_allocation.lower()
+            if self.cfg.hardware.vram_allocation
+            else "dyn"
+        )
+        alloc_short = {"dynamic": "dyn", "static": "sta"}.get(alloc, alloc[:3])
+        vram_part = ""
+        if self.cfg.hardware.vram_gb and self.cfg.hardware.vram_gb > 0:
+            v = self.cfg.hardware.vram_gb
+            if float(v).is_integer():
+                vram_part = f"{int(v)}gb"
+            else:
+                vram_part = f"{str(v).replace('.', 'p')}gb"
+        raw_quant = self.cfg.target.quant  # keep original quant in filename
+        parts = [
+            timestamp,
+            self.cfg.target.model.split("/")[-1].replace("-", "_"),
+            raw_quant,
+            self.cfg.target.backend,
+            self.cfg.target.runtime,
+            alloc_short + (f"_{vram_part}" if vram_part else ""),
+            self.cfg.hardware.identifier(),
+            kind,
+        ]
+        safe = []
+        for p in parts:
+            p = p.lower()
+            p = re.sub(r"[^a-z0-9]+", "_", p)
+            p = re.sub(r"_+", "_", p).strip("_")
+            safe.append(p)
+        return "__".join([p for p in safe if p]) + ".csv"
 
     def save_results(self) -> None:
         """Save detailed results and statistical summaries to CSV files with nested folder structure."""
         if not self.results:
             print("No results to save")
             return
-
-        # Parse model information
-        model_name = self.config.get("model", "unknown_model")
-        base_model, quantization = self._parse_model_info(model_name)
-        hardware = self._normalize_hardware_name(self.hardware_info)
-        
-        # Create nested directory structure
-        results_dir = os.path.join("results", base_model, quantization, hardware)
+        base_model = self.cfg.target.model.split("/")[-1]
+        quantization = self._canonical_quant()
+        hardware_slug = self.cfg.hardware.identifier()
+        results_dir = os.path.join("results", base_model, quantization, hardware_slug)
         os.makedirs(results_dir, exist_ok=True)
-
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_name = self.config.get("output_csv", "performance_results.csv")
-        name = os.path.splitext(base_name)[0]
-
-        # Save detailed results
-        detailed_file = os.path.join(results_dir, f"{name}_detailed_{timestamp}.csv")
+        detailed_file = os.path.join(
+            results_dir, self._build_result_filename("detailed", timestamp)
+        )
+        stats_file = os.path.join(
+            results_dir, self._build_result_filename("stats", timestamp)
+        )
         detailed_fieldnames = [
             "timestamp",
             "filename",
@@ -641,29 +649,40 @@ class StatisticalLLMTester:
             "llm_url",
             "base_model",
             "quantization",
-            "hardware",
+            "backend",
+            "runtime",
+            "hardware_slug",
+            "hardware_make",
+            "hardware_model",
+            "hardware_cpu",
+            "hardware_mem_gb",
+            "hardware_gpu",
+            "environment_os",
+            "schema_version",
         ]
-
-        with open(detailed_file, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=detailed_fieldnames)
-            writer.writeheader()
-            for result in self.results:
-                # Add parsed model info to each result
-                enhanced_result = result.__dict__.copy()
-                enhanced_result.update({
-                    "base_model": base_model,
-                    "quantization": quantization,
-                    "hardware": hardware,
-                })
-                
-                # Only include fields that exist in fieldnames
-                filtered_result = {
-                    k: v for k, v in enhanced_result.items() if k in detailed_fieldnames
-                }
-                writer.writerow(filtered_result)
-
-        # Save statistical summaries
-        stats_file = os.path.join(results_dir, f"{name}_statistics_{timestamp}.csv")
+        with open(detailed_file, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=detailed_fieldnames)
+            w.writeheader()
+            for r in self.results:
+                row = r.__dict__.copy()
+                row.update(
+                    {
+                        "base_model": base_model,
+                        "quantization": quantization,
+                        "backend": self.cfg.target.backend,
+                        "runtime": self.cfg.target.runtime,
+                        "hardware_slug": hardware_slug,
+                        "hardware_make": self.cfg.hardware.make,
+                        "hardware_model": self.cfg.hardware.device_model,
+                        "hardware_cpu": self.cfg.hardware.cpu,
+                        "hardware_mem_gb": self.cfg.hardware.memory_gb,
+                        "hardware_gpu": self.cfg.hardware.gpu,
+                        "environment_os": self.cfg.environment.os,
+                        "schema_version": self.cfg.schema_version,
+                    }
+                )
+                row = {k: row.get(k, "") for k in detailed_fieldnames}
+                w.writerow(row)
         stats_fieldnames = [
             "filename",
             "prompt_token_count",
@@ -691,29 +710,42 @@ class StatisticalLLMTester:
             "llm_url",
             "base_model",
             "quantization",
-            "hardware",
+            "backend",
+            "runtime",
+            "hardware_slug",
+            "hardware_make",
+            "hardware_model",
+            "hardware_cpu",
+            "hardware_mem_gb",
+            "hardware_gpu",
+            "environment_os",
+            "schema_version",
         ]
-
-        with open(stats_file, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=stats_fieldnames)
-            writer.writeheader()
-            for stats in self.statistical_summaries:
-                # Add parsed model info to each stats summary
-                enhanced_stats = stats.__dict__.copy()
-                enhanced_stats.update({
-                    "base_model": base_model,
-                    "quantization": quantization,
-                    "hardware": hardware,
-                })
-                
-                # Only include fields that exist in fieldnames
-                filtered_stats = {
-                    k: v for k, v in enhanced_stats.items() if k in stats_fieldnames
-                }
-                writer.writerow(filtered_stats)
-
+        with open(stats_file, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=stats_fieldnames)
+            w.writeheader()
+            for s in self.statistical_summaries:
+                row = s.__dict__.copy()
+                row.update(
+                    {
+                        "base_model": base_model,
+                        "quantization": quantization,
+                        "backend": self.cfg.target.backend,
+                        "runtime": self.cfg.target.runtime,
+                        "hardware_slug": hardware_slug,
+                        "hardware_make": self.cfg.hardware.make,
+                        "hardware_model": self.cfg.hardware.device_model,
+                        "hardware_cpu": self.cfg.hardware.cpu,
+                        "hardware_mem_gb": self.cfg.hardware.memory_gb,
+                        "hardware_gpu": self.cfg.hardware.gpu,
+                        "environment_os": self.cfg.environment.os,
+                        "schema_version": self.cfg.schema_version,
+                    }
+                )
+                row = {k: row.get(k, "") for k in stats_fieldnames}
+                w.writerow(row)
         print(f"\n=== Results Saved ===")
-        print(f"Organization: {base_model}/{quantization}/{hardware}")
+        print(f"Organization: {base_model}/{quantization}/{hardware_slug}")
         print(f"Detailed results: {detailed_file}")
         print(f"Statistical summaries: {stats_file}")
         print(f"Total prompts tested: {len(self.statistical_summaries)}")
@@ -790,7 +822,9 @@ class StatisticalLLMTester:
 def main():
     parser = argparse.ArgumentParser(description="Statistical LLM performance testing")
     parser.add_argument(
-        "--config", default="configs/config_ollama.json", help="Configuration file path"
+        "--config",
+        default="configs/config_lm_studio.json",
+        help="Configuration file path",
     )
     parser.add_argument(
         "--prompts-dir", default="prompts", help="Directory containing prompt files"

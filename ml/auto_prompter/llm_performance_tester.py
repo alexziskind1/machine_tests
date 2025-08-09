@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LLM Performance Tester
+LLM Performance Tester (refactored for new config schema v3)
 
 This script sends prompts from text files to an LLM API and measures performance
 including tokens per second. Results are saved to a CSV file for analysis.
@@ -18,16 +18,27 @@ import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
-import tiktoken
+
+try:
+    import tiktoken  # type: ignore
+except ImportError:  # graceful fallback
+    tiktoken = None  # noqa: N816
+from config_loader import load_benchmark_config
 
 
 class LLMPerformanceTester:
-    def __init__(self, config_path: str = "configs/config_ollama.json", hardware_override: Optional[str] = None):
+    def __init__(
+        self,
+        config_path: str = "configs/config_lm_studio.json",
+        hardware_override: Optional[str] = None,
+    ):
         """Initialize the performance tester with configuration."""
-        self.config = self.load_config(config_path)
+        self.cfg = load_benchmark_config(config_path)
         self.results = []
         self.tokenizer = self._initialize_tokenizer()
-        self.hardware_info = hardware_override or self._detect_hardware()
+        # Hardware override just changes slug/device_model
+        if hardware_override:
+            self.cfg.hardware.device_model = hardware_override
         self.hardware_mapping = self._load_hardware_mapping()
 
     def _load_hardware_mapping(self) -> Dict:
@@ -37,7 +48,11 @@ class LLMPerformanceTester:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load hardware mapping: {e}")
-            return {"hardware_mappings": {}, "quantization_mappings": {}, "model_mappings": {}}
+            return {
+                "hardware_mappings": {},
+                "quantization_mappings": {},
+                "model_mappings": {},
+            }
 
     def _detect_hardware(self) -> str:
         """Detect hardware configuration for organizing results."""
@@ -49,10 +64,10 @@ class LLMPerformanceTester:
                         ["sysctl", "-n", "machdep.cpu.brand_string"],
                         capture_output=True,
                         text=True,
-                        timeout=5
+                        timeout=5,
                     )
                     cpu_info = result.stdout.strip().lower()
-                    
+
                     if "apple m1" in cpu_info:
                         return "m1"
                     elif "apple m2" in cpu_info:
@@ -63,12 +78,12 @@ class LLMPerformanceTester:
                         return "m4"
                 except subprocess.TimeoutExpired:
                     pass
-            
+
             # For other systems, return a generic identifier
             system = platform.system().lower()
             machine = platform.machine().lower()
             return f"{system}_{machine}"
-            
+
         except Exception:
             return "unknown_hardware"
 
@@ -76,108 +91,102 @@ class LLMPerformanceTester:
         """
         Parse model name to extract base model and quantization.
         Enhanced to handle various model name formats and use hardware mapping.
-        
+
         Args:
             model_name: Full model name (e.g., "llama3.3:70b-instruct-q4_K_M")
-            
+
         Returns:
             Tuple of (base_model, quantization)
         """
         model_name = model_name.lower()
         original_model = model_name
-        
+
         # Extract quantization pattern - enhanced patterns
         quant_patterns = [
-            r'q\d+(?:_[a-z0-9]+)*',  # q4_k_m, q8_0, q4km, q3, etc.
-            r'fp\d+',                # fp16, fp32
-            r'int\d+',               # int4, int8
-            r'bf\d+',                # bf16
-            r'mlx@?\d*bit',          # mlx4bit, mlx8bit, mlx@4bit
-            r'mlx\d+bit',            # mlx4bit, mlx8bit
+            r"q\d+(?:_[a-z0-9]+)*",  # q4_k_m, q8_0, q4km, q3, etc.
+            r"fp\d+",  # fp16, fp32
+            r"int\d+",  # int4, int8
+            r"bf\d+",  # bf16
+            r"mlx@?\d*bit",  # mlx4bit, mlx8bit, mlx@4bit
+            r"mlx\d+bit",  # mlx4bit, mlx8bit
         ]
-        
+
         quantization = "unknown"
         base_model = model_name
-        
+
         # First try to find quantization in the model name
         for pattern in quant_patterns:
             match = re.search(pattern, model_name)
             if match:
                 quantization = match.group()
                 # Normalize common patterns
-                if quantization == 'q4km':
-                    quantization = 'q4_k_m'
-                elif 'mlx' in quantization:
-                    quantization = re.sub(r'mlx@?(\d+)bit', r'mlx\1bit', quantization)
-                
+                if quantization == "q4km":
+                    quantization = "q4_k_m"
+                elif "mlx" in quantization:
+                    quantization = re.sub(r"mlx@?(\d+)bit", r"mlx\1bit", quantization)
+
                 # Remove quantization from model name to get base model
-                base_model = re.sub(f'[-_:@]{re.escape(match.group())}', '', model_name)
+                base_model = re.sub(f"[-_:@]{re.escape(match.group())}", "", model_name)
                 break
-        
+
         # Clean up base model name
-        base_model = re.sub(r'[-_:](instruct|chat|it)$', '', base_model)
-        base_model = re.sub(r'[^\w\.]', '_', base_model)
-        
+        base_model = re.sub(r"[-_:](instruct|chat|it)$", "", base_model)
+        base_model = re.sub(r"[^\w\.]", "_", base_model)
+
         # Apply model mapping if available
         model_mappings = self.hardware_mapping.get("model_mappings", {})
         for key, mapped_name in model_mappings.items():
             if key in base_model:
                 base_model = key
                 break
-                
-        # Apply quantization mapping if available  
+
+        # Apply quantization mapping if available
         quant_mappings = self.hardware_mapping.get("quantization_mappings", {})
         for key, mapped_quant in quant_mappings.items():
             if key in quantization:
                 quantization = key
                 break
-        
+
         return base_model, quantization
 
     def _normalize_hardware_name(self, hardware: str) -> str:
         """Normalize hardware name using hardware mapping."""
         hardware_lower = hardware.lower()
-        
+
         # Check direct mappings first
         hardware_mappings = self.hardware_mapping.get("hardware_mappings", {})
         if hardware_lower in hardware_mappings:
             return hardware_lower
-        
+
         # Check fallback patterns
         fallback_patterns = self.hardware_mapping.get("fallback_patterns", {})
         for pattern, normalized in fallback_patterns.items():
             if pattern in hardware_lower:
                 return pattern
-                
+
         return hardware
 
     def _initialize_tokenizer(self):
         """Initialize the tokenizer based on the model."""
+        if tiktoken is None:
+            return None
         try:
-            model_name = self.config.get("model", "").lower()
-
-            # Map common model names to tiktoken encodings
+            model_name = self.cfg.target.model.lower()
             if any(name in model_name for name in ["gpt-4", "gpt-3.5"]):
                 return tiktoken.encoding_for_model("gpt-4")
             elif "gpt" in model_name:
                 return tiktoken.encoding_for_model("gpt-3.5-turbo")
-            else:
-                # Use cl100k_base as a reasonable default for most modern models
-                return tiktoken.get_encoding("cl100k_base")
-        except Exception as e:
-            print(
-                f"Warning: Could not initialize specific tokenizer for model {self.config.get('model', 'unknown')}: {e}"
-            )
-            print("Using cl100k_base encoding as fallback")
             return tiktoken.get_encoding("cl100k_base")
+        except Exception:
+            return tiktoken.get_encoding("cl100k_base") if tiktoken else None
 
     def count_tokens(self, text: str) -> int:
         """Count tokens in the given text using the appropriate tokenizer."""
+        if self.tokenizer is None:
+            return len(text) // 4
         try:
             return len(self.tokenizer.encode(text))
-        except Exception as e:
-            print(f"Error counting tokens: {e}")
-            # Fallback to character-based estimation
+        except Exception:
             return len(text) // 4
 
     def load_config(self, config_path: str) -> Dict:
@@ -212,97 +221,60 @@ class LLMPerformanceTester:
 
         return prompts
 
-    def send_curl_request(self, prompt: str) -> Tuple[Optional[Dict], float, bool]:
+    def send_curl_request(self, prompt: str):
         """Send a curl request to the LLM and measure response time."""
-        # Use chat completions format
         payload = {
-            "model": self.config["model"],
+            "model": self.cfg.target.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
         }
-
-        # Add response length control parameters if specified in config
-        if "max_tokens" in self.config:
-            payload["max_tokens"] = self.config["max_tokens"]
-
-        # Add other generation parameters if specified
-        generation_params = [
+        if "max_tokens" in self.cfg.raw:
+            payload["max_tokens"] = self.cfg.raw["max_tokens"]
+        for p in [
             "temperature",
             "top_p",
             "top_k",
             "frequency_penalty",
             "presence_penalty",
-        ]
-        for param in generation_params:
-            if param in self.config:
-                payload[param] = self.config[param]
-
-        # Prepare curl command - removed timing option that was interfering with JSON
+        ]:
+            if p in self.cfg.raw:
+                payload[p] = self.cfg.raw[p]
         curl_cmd = [
             "curl",
-            "-s",  # Silent mode
+            "-s",
             "-X",
             "POST",
-            self.config["llm_url"],
+            self.cfg.target.llm_url,
             "-H",
-            f"Content-Type: {self.config['headers']['Content-Type']}",
+            f"Content-Type: {self.cfg.headers.get('Content-Type','application/json')}",
             "-d",
             json.dumps(payload),
             "--max-time",
-            str(self.config["request_timeout"]),
+            str(self.cfg.request_timeout),
         ]
-
-        print(f"Sending request to {self.config['llm_url']}...")
-        start_time = time.time()
-
+        start = time.time()
         try:
-            # Execute curl command
-            result = subprocess.run(
+            r = subprocess.run(
                 curl_cmd,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
-                timeout=self.config["request_timeout"],
+                timeout=self.cfg.request_timeout,
             )
-
-            end_time = time.time()
-            total_time = end_time - start_time
-
-            if result.returncode == 0:
-                # Try to parse the response
-                response_text = result.stdout.strip()
-
+            dt = time.time() - start
+            if r.returncode == 0:
+                txt = r.stdout.strip()
                 try:
-                    # Parse JSON response
-                    response_data = json.loads(response_text)
-
-                    # Check if the response contains an error
-                    if (
-                        isinstance(response_data, dict)
-                        and "object" in response_data
-                        and response_data["object"] == "error"
-                    ):
-                        print(
-                            f"API Error: {response_data.get('message', 'Unknown error')}"
-                        )
-                        return response_data, total_time, False
-
-                    return response_data, total_time, True
-                except json.JSONDecodeError as e:
-                    # If we can't parse JSON, show more detail for debugging
-                    print(f"JSON parsing error: {e}")
-                    print(f"Response preview: {response_text[:200]}...")
-                    return {"raw_response": response_text}, total_time, False
-            else:
-                print(f"Curl failed with return code {result.returncode}")
-                print(f"Error: {result.stderr}")
-                return None, total_time, False
-
+                    data = json.loads(txt)
+                    if isinstance(data, dict) and data.get("object") == "error":
+                        return data, dt, False
+                    return data, dt, True
+                except json.JSONDecodeError:
+                    return {"raw_response": txt}, dt, False
+            return None, dt, False
         except subprocess.TimeoutExpired:
-            print(f"Request timed out after {self.config['request_timeout']} seconds")
-            return None, self.config["request_timeout"], False
-        except Exception as e:
-            print(f"Error executing curl command: {e}")
+            return None, self.cfg.request_timeout, False
+        except Exception:
             return None, 0, False
 
     def calculate_tokens_per_second(
@@ -470,8 +442,8 @@ class LLMPerformanceTester:
             "success": success,
             "response_token_count": 0,
             "tokens_per_second": 0,
-            "model": self.config["model"],
-            "llm_url": self.config["llm_url"],
+            "model": self.cfg.target.model,
+            "llm_url": self.cfg.target.llm_url,
         }
 
         if success and response:
@@ -496,8 +468,8 @@ class LLMPerformanceTester:
     def run_tests(self, prompts_dir: str = "prompts", interactive: bool = True) -> None:
         """Run tests on all prompts and save results."""
         print("=== LLM Performance Tester ===")
-        print(f"LLM URL: {self.config['llm_url']}")
-        print(f"Model: {self.config['model']}")
+        print(f"LLM URL: {self.cfg.target.llm_url}")
+        print(f"Model: {self.cfg.target.model}")
         print(f"Loading prompts from: {prompts_dir}")
 
         # Warm up the model first
@@ -532,27 +504,62 @@ class LLMPerformanceTester:
 
         self.save_results()
 
-    def save_results(self) -> None:
-        """Save results to CSV file with nested folder structure: /results/<model>/<quantization>/<hardware>."""
+    def _canonical_quant(self) -> str:
+        q = (self.cfg.target.quant or "").lower()
+        mapping = self.hardware_mapping.get("quantization_mappings", {})
+        return mapping.get(q, q)
+
+    def _build_result_filename(
+        self, kind: str = "perf", timestamp: str | None = None
+    ) -> str:
+        if timestamp is None:
+            from datetime import datetime as _dt
+
+            timestamp = _dt.now().strftime("%Y%m%d_%H%M%S")
+        alloc = (
+            self.cfg.hardware.vram_allocation.lower()
+            if self.cfg.hardware.vram_allocation
+            else "dyn"
+        )
+        alloc_short = {"dynamic": "dyn", "static": "sta"}.get(alloc, alloc[:3])
+        vram_part = ""
+        if self.cfg.hardware.vram_gb and self.cfg.hardware.vram_gb > 0:
+            v = self.cfg.hardware.vram_gb
+            if float(v).is_integer():
+                vram_part = f"{int(v)}gb"
+            else:
+                vram_part = f"{str(v).replace('.', 'p')}gb"
+        raw_quant = self.cfg.target.quant  # preserve original for filename
+        parts = [
+            timestamp,
+            self.cfg.target.model.split("/")[-1].replace("-", "_"),
+            raw_quant,
+            self.cfg.target.backend,
+            self.cfg.target.runtime,
+            alloc_short + (f"_{vram_part}" if vram_part else ""),
+            self.cfg.hardware.identifier(),
+        ]
+        if kind:
+            parts.append(kind)
+        safe = []
+        for p in parts:
+            p = str(p).lower()
+            p = re.sub(r"[^a-z0-9]+", "_", p)
+            p = re.sub(r"_+", "_", p).strip("_")
+            safe.append(p)
+        return "__".join([p for p in safe if p]) + ".csv"
+
+    def save_results(self):
         if not self.results:
             print("No results to save")
             return
-
-        # Parse model information
-        model_name = self.config.get("model", "unknown_model")
-        base_model, quantization = self._parse_model_info(model_name)
-        hardware = self._normalize_hardware_name(self.hardware_info)
-        
-        # Create nested directory structure
-        results_dir = os.path.join("results", base_model, quantization, hardware)
+        base_model = self.cfg.target.model.split("/")[-1]
+        quant = self._canonical_quant()
+        hw_id = self.cfg.hardware.identifier()
+        results_dir = os.path.join("results", base_model, quant, hw_id)
         os.makedirs(results_dir, exist_ok=True)
-
-        # Generate timestamped filename
-        base_filename = self.config.get("output_csv", "performance_results.csv")
-        name, ext = os.path.splitext(base_filename)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = os.path.join(results_dir, f"{name}_{timestamp}{ext}")
-
+        filename = self._build_result_filename()
+        output_file = os.path.join(results_dir, filename)
         fieldnames = [
             "timestamp",
             "filename",
@@ -564,45 +571,44 @@ class LLMPerformanceTester:
             "model",
             "llm_url",
             "base_model",
-            "quantization", 
-            "hardware",
+            "quantization",
+            "backend",
+            "runtime",
+            "hardware_make",
+            "hardware_model",
+            "hardware_cpu",
+            "hardware_mem_gb",
+            "hardware_gpu",
+            "hardware_slug",
+            "environment_os",
+            "schema_version",
         ]
-
-        try:
-            with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-
-                for result in self.results:
-                    # Add parsed model info to each result
-                    enhanced_result = result.copy()
-                    enhanced_result.update({
+        with open(output_file, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=fieldnames)
+            w.writeheader()
+            for r in self.results:
+                row = r.copy()
+                row.update(
+                    {
+                        "model": self.cfg.target.model,
+                        "llm_url": self.cfg.target.llm_url,
                         "base_model": base_model,
-                        "quantization": quantization,
-                        "hardware": hardware,
-                    })
-                    
-                    # Only include fields that exist in fieldnames
-                    filtered_result = {
-                        k: v for k, v in enhanced_result.items() if k in fieldnames
+                        "quantization": quant,
+                        "backend": self.cfg.target.backend,
+                        "runtime": self.cfg.target.runtime,
+                        "hardware_make": self.cfg.hardware.make,
+                        "hardware_model": self.cfg.hardware.device_model,
+                        "hardware_cpu": self.cfg.hardware.cpu,
+                        "hardware_mem_gb": self.cfg.hardware.memory_gb,
+                        "hardware_gpu": self.cfg.hardware.gpu,
+                        "hardware_slug": hw_id,
+                        "environment_os": self.cfg.environment.os,
+                        "schema_version": self.cfg.schema_version,
                     }
-                    writer.writerow(filtered_result)
-
-            print(f"\n=== Results saved to {output_file} ===")
-            print(f"Organization: {base_model}/{quantization}/{hardware}")
-            print(f"Total tests: {len(self.results)}")
-            successful_tests = sum(1 for r in self.results if r["success"])
-            print(f"Successful tests: {successful_tests}/{len(self.results)}")
-
-            if successful_tests > 0:
-                avg_tokens_per_sec = (
-                    sum(r["tokens_per_second"] for r in self.results if r["success"])
-                    / successful_tests
                 )
-                print(f"Average tokens per second: {avg_tokens_per_sec:.2f}")
-
-        except Exception as e:
-            print(f"Error saving results: {e}")
+                row = {k: row.get(k, "") for k in fieldnames}
+                w.writerow(row)
+        print(f"Saved results to {output_file}")
 
 
 def main():
