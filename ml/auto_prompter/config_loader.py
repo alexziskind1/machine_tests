@@ -33,8 +33,10 @@ class HardwareConfig:
         return _slugify(base)
 
     def identifier(self) -> str:
-        # Prefer explicit code if provided, otherwise fallback to slug
-        return _slugify(self.code) if self.code else self.slug()
+        # If an explicit code is provided, use it verbatim (trimmed) without slugifying.
+        if self.code and self.code.strip():
+            return self.code.strip()
+        return self.slug()
 
 
 @dataclass

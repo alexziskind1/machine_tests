@@ -509,6 +509,16 @@ class LLMPerformanceTester:
         mapping = self.hardware_mapping.get("quantization_mappings", {})
         return mapping.get(q, q)
 
+    def _base_model_dir(self) -> str:
+        """Return normalized base model name for directory (underscores, no hyphens)."""
+        raw = self.cfg.target.model.split("/")[-1]
+        # replace hyphens with underscores first for backward compatibility
+        raw = raw.replace("-", "_")
+        # collapse any non-alphanumeric into underscores, lowercase
+        safe = re.sub(r"[^a-zA-Z0-9]+", "_", raw).lower()
+        safe = re.sub(r"_+", "_", safe).strip("_")
+        return safe
+
     def _build_result_filename(
         self, kind: str = "perf", timestamp: str | None = None
     ) -> str:
@@ -553,10 +563,11 @@ class LLMPerformanceTester:
         if not self.results:
             print("No results to save")
             return
-        base_model = self.cfg.target.model.split("/")[-1]
+        base_model_raw = self.cfg.target.model.split("/")[-1]
+        base_model_dir = self._base_model_dir()
         quant = self._canonical_quant()
         hw_id = self.cfg.hardware.identifier()
-        results_dir = os.path.join("results", base_model, quant, hw_id)
+        results_dir = os.path.join("results", base_model_dir, quant, hw_id)
         os.makedirs(results_dir, exist_ok=True)
         filename = self._build_result_filename()
         output_file = os.path.join(results_dir, filename)
@@ -592,7 +603,8 @@ class LLMPerformanceTester:
                     {
                         "model": self.cfg.target.model,
                         "llm_url": self.cfg.target.llm_url,
-                        "base_model": base_model,
+                        # keep original (unsanitized) model id in CSV for reference
+                        "base_model": base_model_raw,
                         "quantization": quant,
                         "backend": self.cfg.target.backend,
                         "runtime": self.cfg.target.runtime,

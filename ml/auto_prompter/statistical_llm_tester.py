@@ -586,6 +586,14 @@ class StatisticalLLMTester:
         mapping = self.hardware_mapping.get("quantization_mappings", {})
         return mapping.get(q, q)
 
+    def _base_model_dir(self) -> str:
+        """Return normalized base model name for directory (underscores, no hyphens)."""
+        raw = self.cfg.target.model.split("/")[-1]
+        raw = raw.replace("-", "_")
+        safe = re.sub(r"[^a-zA-Z0-9]+", "_", raw).lower()
+        safe = re.sub(r"_+", "_", safe).strip("_")
+        return safe
+
     def _build_result_filename(self, kind: str, timestamp: str) -> str:
         alloc = (
             self.cfg.hardware.vram_allocation.lower()
@@ -624,10 +632,13 @@ class StatisticalLLMTester:
         if not self.results:
             print("No results to save")
             return
-        base_model = self.cfg.target.model.split("/")[-1]
+        base_model_raw = self.cfg.target.model.split("/")[-1]
+        base_model_dir = self._base_model_dir()
         quantization = self._canonical_quant()
         hardware_slug = self.cfg.hardware.identifier()
-        results_dir = os.path.join("results", base_model, quantization, hardware_slug)
+        results_dir = os.path.join(
+            "results", base_model_dir, quantization, hardware_slug
+        )
         os.makedirs(results_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         detailed_file = os.path.join(
@@ -667,7 +678,7 @@ class StatisticalLLMTester:
                 row = r.__dict__.copy()
                 row.update(
                     {
-                        "base_model": base_model,
+                        "base_model": base_model_raw,
                         "quantization": quantization,
                         "backend": self.cfg.target.backend,
                         "runtime": self.cfg.target.runtime,
@@ -728,7 +739,7 @@ class StatisticalLLMTester:
                 row = s.__dict__.copy()
                 row.update(
                     {
-                        "base_model": base_model,
+                        "base_model": base_model_raw,
                         "quantization": quantization,
                         "backend": self.cfg.target.backend,
                         "runtime": self.cfg.target.runtime,
@@ -745,7 +756,7 @@ class StatisticalLLMTester:
                 row = {k: row.get(k, "") for k in stats_fieldnames}
                 w.writerow(row)
         print(f"\n=== Results Saved ===")
-        print(f"Organization: {base_model}/{quantization}/{hardware_slug}")
+        print(f"Organization: {base_model_dir}/{quantization}/{hardware_slug}")
         print(f"Detailed results: {detailed_file}")
         print(f"Statistical summaries: {stats_file}")
         print(f"Total prompts tested: {len(self.statistical_summaries)}")
