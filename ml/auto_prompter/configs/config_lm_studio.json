@@ -1,11 +1,33 @@
 {
-  "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-  "model": "qwen/qwen3-coder-30b",
+  "schema_version": 3,
   "headers": {
     "Content-Type": "application/json"
   },
+  "_comment_hardware_section": "Physical machine characteristics only (no model/backend/runtime here). VRAM allocation can be dynamic or static",
+  "hardware": {
+    "make": "Framework",
+    "device_model": "Desktop",
+    "cpu": "AMD Ryzen AI Max+ 395",
+    "memory_gb": 128,
+    "is_igpu": true,
+    "gpu": "Radeon 8060S",
+    "vram_allocation": "dynamic",
+    "vram_gb": 0.5,
+    "notes": "Framework Desktop board with iGPU"
+  },
+  "environment": {
+    "os": "Fedora 42"
+  },
+  "_comment_target_section": "Target inference configuration (model + runtime stack)",
+  "target": {
+    "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
+    "model": "qwen/qwen3-coder-30b",
+    "quant": "int4",
+    "backend": "vulkan",
+    "runtime": "lmstudio"
+  },
   "request_timeout": 1000,
-  "output_csv": "fw_ryzen_ai_395_auto512MB_lm_studio_qwen3_coder_30b_q4km_vulkan_results.csv",
+  "output_csv": "results.csv",
 
   "_comment_results_organization": "Results are automatically organized in nested folders: /results/<model>/<quantization>/<hardware>/",
   "_comment_hardware_override": "Use --hardware argument to specify hardware manually, e.g., --hardware m3max",

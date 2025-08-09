@@ -40,7 +40,8 @@
     "lmstudio": "LM Studio",
     "corei5": "Intel Core i5",
     "corei9": "Intel Core i9",
-    "coreU7": "Intel Core Ultra 7"
+    "coreU7": "Intel Core Ultra 7",
+    "ryzen_ai_395": "AMD Ryzen AI Max+ 395"
   },
   "fallback_patterns": {
     "rtx": "NVIDIA RTX",
