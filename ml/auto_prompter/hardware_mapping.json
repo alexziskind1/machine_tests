@@ -67,6 +67,7 @@
     "q4": "int4",
     "4bit": "int4",
     "mlx4bit": "int4",
+    "mlx8bit": "int8",
     "q4km": "int4",
     "q4_km": "int4",
     "q4_k_m": "int4",
