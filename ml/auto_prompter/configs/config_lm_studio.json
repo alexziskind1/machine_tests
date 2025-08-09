@@ -1,11 +1,11 @@
 {
   "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-  "model": "qwen3-coder-30b-a3b-instruct@q8_0",
+  "model": "qwen/qwen3-coder-30b",
   "headers": {
     "Content-Type": "application/json"
   },
   "request_timeout": 1000,
-  "output_csv": "fw_ryzen_ai_395_96GB_lm_studio_qwen3_coder_30b_q8_0_vulkan_results.csv",
+  "output_csv": "fw_ryzen_ai_395_8GB_lm_studio_qwen3_coder_30b_q8_0_vulkan_results.csv",
 
   "_comment_results_organization": "Results are automatically organized in nested folders: /results/<model>/<quantization>/<hardware>/",
   "_comment_hardware_override": "Use --hardware argument to specify hardware manually, e.g., --hardware m3max",
