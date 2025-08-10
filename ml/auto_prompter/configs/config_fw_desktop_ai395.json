@@ -12,8 +12,8 @@
     "memory_gb": 128,
     "is_igpu": true,
     "gpu": "Radeon 8060S",
-    "vram_allocation": "static",
-    "vram_gb": 32,
+    "vram_allocation": "dynamic",
+    "vram_gb": 0.5,
     "notes": "Framework Desktop board with iGPU"
   },
   "environment": {
@@ -22,8 +22,8 @@
   "_comment_target_section": "Target inference configuration (model + runtime stack)",
   "target": {
     "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-    "model": "qwen/qwen3-coder-30b",
-    "quant": "q4_k_m",
+    "model": "qwen3-coder-30b-a3b-instruct@q8_0",
+    "quant": "q8_0",
     "backend": "vulkan",
     "runtime": "lmstudio"
   },
