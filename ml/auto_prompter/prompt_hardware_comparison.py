@@ -1427,9 +1427,9 @@ def show_detected_hardware_names(df):
     print("\n🔍 DETECTED HARDWARE NAMES:")
     print("=" * 50)
 
-    # Get raw hardware names before cleaning
+    # Get raw hardware names before cleaning using the enhanced method
     df_temp = df.copy()
-    df_temp["raw_hardware"] = df_temp["source_file"].apply(extract_hardware_config)
+    df_temp["raw_hardware"] = df_temp.apply(extract_hardware_config_enhanced, axis=1)
     df_temp["clean_hardware"] = df_temp["raw_hardware"].apply(clean_hardware_config)
 
     # Show mapping results
@@ -1437,25 +1437,32 @@ def show_detected_hardware_names(df):
     hardware_mapping = hardware_mapping[hardware_mapping["raw_hardware"] != "Unknown"]
 
     print("Raw Name → Clean Name:")
-    for _, row in hardware_mapping.iterrows():
-        mapped = (
-            "✅"
-            if row["raw_hardware"].lower() != row["clean_hardware"].lower()
-            else "❌"
-        )
-        print(f"  {mapped} {row['raw_hardware']} → {row['clean_hardware']}")
+    if hardware_mapping.empty:
+        print("  (No hardware names found)")
+    else:
+        for _, row in hardware_mapping.iterrows():
+            mapped = (
+                "✅"
+                if row["raw_hardware"].lower() != row["clean_hardware"].lower()
+                else "🔧"  # Use different emoji for already clean names
+            )
+            print(f"  {mapped} {row['raw_hardware']} → {row['clean_hardware']}")
 
-    # Show unmapped names
+    # Show unmapped names (only if they need cleaning)
     unmapped_mask = hardware_mapping.apply(
         lambda row: row["raw_hardware"].lower() == row["clean_hardware"].lower(), axis=1
     )
     unmapped = hardware_mapping[unmapped_mask]
+
+    print(f"\n📊 Summary:")
+    print(f"   Found {len(hardware_mapping)} unique hardware configurations")
     if not unmapped.empty:
-        print(f"\n💡 Consider adding these to hardware_mapping.json:")
-        for _, row in unmapped.iterrows():
-            print(f'    "{row["raw_hardware"].lower()}": "Your Clean Name Here",')
+        print(
+            f"   {len(unmapped)} are using enhanced metadata (already in clean format)"
+        )
+        print(f"   {len(hardware_mapping) - len(unmapped)} have explicit mappings")
     else:
-        print(f"\n✅ All hardware names are properly mapped!")
+        print(f"   All hardware names are properly mapped!")
 
 
 def main():
