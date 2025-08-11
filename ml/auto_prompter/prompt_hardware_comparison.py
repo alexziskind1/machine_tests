@@ -635,6 +635,39 @@ def resolve_filter_value(user_input, current_values, mapping_dict, mapping_key):
     return None
 
 
+def add_arrow_annotation(fig, x0, y0, x1, y1, text="", ax=0, ay=-40):
+    """
+    Add an arrow annotation to the figure.
+
+    Args:
+        fig: Plotly figure object
+        x0, y0: Arrow start point (in data coordinates)
+        x1, y1: Arrow end point (in data coordinates)
+        text: Optional text to display
+        ax, ay: Arrow head offset
+    """
+    fig.add_annotation(
+        x=x1,
+        y=y1,
+        ax=x0,
+        ay=y0,
+        xref="x",
+        yref="y",
+        axref="x",
+        ayref="y",
+        text=text,
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        arrowcolor="red",
+        font=dict(color="red", size=12),
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="red",
+        borderwidth=1,
+    )
+
+
 def create_prompt_hardware_chart(
     df,
     metric="tokens_per_second_mean",
@@ -804,29 +837,71 @@ def create_prompt_hardware_chart(
         bargap=0.2,
         bargroupgap=0.1,
         height=800,  # Increased height
-        width=1400,
+        width=1600,  # Increased total width to accommodate right legend
         template="plotly_white",
         font={"size": 12},
         legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.08,  # Position legend higher to avoid overlap
-            xanchor="center",
-            x=0.5,
+            orientation="v",  # Vertical orientation
+            yanchor="top",
+            y=1.0,  # Align with top of chart
+            xanchor="left",
+            x=1.02,  # Position to the right of chart area
         ),
         margin=dict(
-            t=150,  # Top margin for title and legend
+            t=100,  # Reduced top margin since legend is now on the right
             b=120,  # Bottom margin for rotated labels
             l=80,  # Left margin
-            r=80,  # Right margin
+            r=200,  # Increased right margin for legend space
         ),
     )
 
     # Rotate x-axis labels for better readability
     fig.update_xaxes(tickangle=45)
 
+    # Add helpful annotation for interactive mode with arrow instructions
+    fig.add_annotation(
+        text=(
+            "💡 Interactive Mode: Use the drawing tools in the toolbar to annotate the chart<br>"
+            "🏹 For arrows: Draw a line, then add an annotation with arrow at the end point<br>"
+            "📝 Double-click anywhere to add text annotations with arrows"
+        ),
+        xref="paper",
+        yref="paper",
+        x=0.01,
+        y=0.01,
+        xanchor="left",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(size=10, color="gray"),
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="gray",
+        borderwidth=1,
+    )
+
     if show_chart:
-        fig.show()
+        # Enable interactive drawing tools
+        config = dict(
+            displayModeBar=True,
+            modeBarButtonsToAdd=[
+                "drawline",
+                "drawopenpath",
+                "drawclosedpath",
+                "drawcircle",
+                "drawrect",
+                "eraseshape",
+            ],
+            displaylogo=False,
+            toImageButtonOptions={
+                "format": "png",
+                "filename": f"hardware_comparison_{metric}",
+                "height": 800,
+                "width": 1600,
+                "scale": 1,
+            },
+        )
+
+        # Show the chart with enhanced interactivity
+        fig.show(config=config)
 
     return fig, grouped
 
