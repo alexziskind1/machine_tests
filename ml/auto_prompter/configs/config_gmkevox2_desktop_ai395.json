@@ -22,8 +22,8 @@
   "_comment_target_section": "Target inference configuration (model + runtime stack)",
   "target": {
     "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-    "model": "llama-3.3-70b-instruct@q4_k_m",
-    "quant": "q4_k_m",
+    "model": "qwen3-coder-30b",
+    "quant": "q8_0",
     "backend": "vulkan",
     "runtime": "lmstudio"
   },
