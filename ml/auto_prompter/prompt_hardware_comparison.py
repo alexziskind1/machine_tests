@@ -95,14 +95,15 @@ def load_statistical_results():
     """Load all statistical results CSV files."""
     results_dir = Path("results")
 
-    # Look for statistics files in main directory and subdirectories
+    # Look for stats files in main directory and subdirectories (new format only)
     csv_files = []
-    csv_files.extend(list(results_dir.glob("*statistics*.csv")))
-    csv_files.extend(list(results_dir.glob("**/*statistics*.csv")))
+    csv_files.extend(list(results_dir.glob("*stats*.csv")))
+    csv_files.extend(list(results_dir.glob("**/*stats*.csv")))
 
     if not csv_files:
-        print("❌ No statistics CSV files found in results directory")
+        print("❌ No stats CSV files found in results directory")
         print(f"Searched in: {results_dir.absolute()}")
+        print("💡 Run migrate_to_new_format.py to convert old *statistics*.csv files")
         return None
 
     all_data = []
@@ -166,20 +167,32 @@ def clean_hardware_config(config):
 
     config_str = str(config).strip().lower()
 
+    # If this looks like a properly formatted hardware name (has spaces and mixed case),
+    # don't apply mappings - it's likely from metadata
+    original_config = str(config).strip()
+    if (
+        " " in original_config
+        and not original_config.islower()
+        and not original_config.isupper()
+        and len(original_config) > 10
+    ):  # Detailed hardware names are longer
+        return original_config
+
     # Basic cleaning - remove extra spaces
     cleaned = " ".join(config_str.split())
 
-    # Try exact mappings first
+    # Try exact mappings first for short/slug-style hardware names
     hardware_mappings = HARDWARE_MAPPINGS.get("hardware_mappings", {})
     for key, clean_name in hardware_mappings.items():
-        if key.lower() in cleaned:
+        if key.lower() == cleaned:  # Exact match only
             return clean_name
 
-    # Try fallback patterns
-    fallback_patterns = HARDWARE_MAPPINGS.get("fallback_patterns", {})
-    for pattern, clean_name in fallback_patterns.items():
-        if re.search(pattern.lower(), cleaned):
-            return clean_name
+    # Try fallback patterns only for short hardware identifiers
+    if len(cleaned) < 15:  # Only apply fallback to short identifiers
+        fallback_patterns = HARDWARE_MAPPINGS.get("fallback_patterns", {})
+        for pattern, clean_name in fallback_patterns.items():
+            if re.search(pattern.lower(), cleaned):
+                return clean_name
 
     # If no mapping found, return cleaned version with basic formatting
     return cleaned.replace("_", " ").replace("-", " ").title()
@@ -249,6 +262,202 @@ def extract_prompt_info(filename):
     else:
         # Fallback - use the filename itself cleaned up
         return filename_lower.replace("_", " ").title()
+
+
+def extract_memory_config(source_file):
+    """
+    Extract memory configuration from filename.
+
+    Args:
+        source_file: Path to the source file
+
+    Returns:
+        str: Memory configuration (e.g., "64GB", "8GB", "Dynamic 0.5GB") or None
+    """
+    if not source_file:
+        return None
+
+    filename = str(source_file)
+
+    # Extract memory configurations from filename
+    import re
+
+    # Static memory configs (sta_64gb, sta_8gb, sta_0p5gb, etc.)
+    static_match = re.search(r"sta_(\d+(?:[p\.]\d+)?)gb", filename)
+    if static_match:
+        size = static_match.group(1).replace("p", ".")
+        return f"{size}GB"
+
+    # Dynamic memory configs (dyn_0p5gb, dyn_1gb, etc.)
+    dynamic_match = re.search(r"dyn_(\d+(?:p\d+)?)gb", filename)
+    if dynamic_match:
+        size = dynamic_match.group(1).replace("p", ".")
+        return f"Dynamic {size}GB"
+
+    return None
+
+
+def extract_hardware_config_enhanced(row):
+    """
+    Extract hardware configuration from new metadata columns or fall back to filename parsing.
+    Includes memory configuration information when available.
+
+    Args:
+        row: DataFrame row with columns that may include new metadata
+
+    Returns:
+        str: Hardware configuration name
+    """
+    # Try to use new metadata columns first
+    base_hardware = None
+    if (
+        "hardware_make" in row
+        and "hardware_model" in row
+        and pd.notna(row["hardware_make"])
+    ):
+        hardware_make = str(row["hardware_make"]).strip()
+        hardware_model = str(row["hardware_model"]).strip()
+
+        if hardware_make != "Unknown" and hardware_model != "Unknown":
+            # Use the detailed hardware info from new format
+            # Avoid duplication if model already contains make
+            if hardware_make.lower() in hardware_model.lower():
+                base_hardware = hardware_model
+            else:
+                base_hardware = f"{hardware_make} {hardware_model}"
+
+    # Fall back to hardware_slug if available
+    if not base_hardware and "hardware_slug" in row and pd.notna(row["hardware_slug"]):
+        hardware_slug = str(row["hardware_slug"]).strip()
+        if hardware_slug != "unknown" and hardware_slug != "":
+            base_hardware = hardware_slug
+
+    # Fall back to old filename-based extraction
+    if not base_hardware and "source_file" in row:
+        base_hardware = extract_hardware_config(row["source_file"])
+
+    if not base_hardware:
+        base_hardware = "Unknown"
+
+    # Extract memory configuration and append it to hardware name
+    memory_config = None
+    if "source_file" in row:
+        memory_config = extract_memory_config(row["source_file"])
+
+    if memory_config:
+        return f"{base_hardware} ({memory_config})"
+    else:
+        return base_hardware
+
+
+def extract_model_info_enhanced(row):
+    """
+    Extract model information from new metadata columns or fall back to filename parsing.
+
+    Args:
+        row: DataFrame row with columns that may include new metadata
+
+    Returns:
+        str: Model name
+    """
+    # Try to use new metadata columns first
+    if "base_model" in row and pd.notna(row["base_model"]):
+        base_model = str(row["base_model"]).strip()
+        if base_model != "unknown" and base_model != "":
+            # Clean the model name using the same logic as filename-based extraction
+            cleaned_model = clean_model_name(base_model)
+            return cleaned_model
+
+    # Fall back to old filename-based extraction
+    if "source_file" in row:
+        return extract_model_info(row["source_file"])
+
+    return "unknown"
+
+
+def clean_model_name(model_name):
+    """
+    Clean and normalize model names using mapping rules.
+
+    Args:
+        model_name: Raw model name from metadata or filename
+
+    Returns:
+        str: Cleaned model name
+    """
+    model_lower = model_name.lower()
+
+    # Try mappings first
+    model_mappings = HARDWARE_MAPPINGS.get("model_mappings", {})
+    for key, clean_name in model_mappings.items():
+        if key.lower() in model_lower:
+            return clean_name
+
+    # Apply common cleaning patterns
+    # Remove common suffixes and prefixes
+    cleaned = model_name
+
+    # Remove @ and everything after it (versioning)
+    if "@" in cleaned:
+        cleaned = cleaned.split("@")[0]
+
+    # Remove common suffixes
+    suffixes_to_remove = ["-instruct", "_instruct", "-a3b", "_a3b", "-chat", "_chat"]
+    for suffix in suffixes_to_remove:
+        if cleaned.endswith(suffix):
+            cleaned = cleaned[: -len(suffix)]
+
+    # Normalize underscores to hyphens for consistency
+    if "qwen3_coder_30b" in cleaned.lower():
+        return "qwen3-coder-30b"
+    elif "llama_3.3_70b" in cleaned.lower() or "llama-3-3-70b" in cleaned.lower():
+        return "llama-3-3-70b"
+    elif "qwen3_235b" in cleaned.lower():
+        return "qwen3-235b"
+    elif "gemma" in cleaned.lower():
+        return "gemma"
+
+    return cleaned
+
+
+def extract_quantization_enhanced(row):
+    """
+    Extract quantization from new metadata columns or fall back to filename parsing.
+
+    Args:
+        row: DataFrame row with columns that may include new metadata
+
+    Returns:
+        str: Quantization level
+    """
+    # Try to use new metadata columns first
+    if "quantization" in row and pd.notna(row["quantization"]):
+        quantization = str(row["quantization"]).strip()
+        if quantization != "unknown" and quantization != "":
+            return quantization
+
+    # Fall back to old filename-based extraction
+    if "source_file" in row:
+        return extract_quantization_level(row["source_file"])
+
+    return "unknown"
+
+
+def clean_quantization(quantization):
+    """Clean and normalize quantization values using mapping."""
+    if pd.isna(quantization) or str(quantization).strip() == "":
+        return "unknown"
+
+    quant_str = str(quantization).strip().lower()
+
+    # Apply quantization mappings
+    quant_mappings = HARDWARE_MAPPINGS.get("quantization_mappings", {})
+    for key, clean_name in quant_mappings.items():
+        if key.lower() == quant_str:
+            return clean_name
+
+    # If no mapping found, return as-is
+    return quantization
 
 
 def extract_hardware_config(source_file_path):
@@ -351,14 +560,12 @@ def extract_quantization_level(source_file_path):
     # Fallback to consistent format matching mapping file
     if "q4" in file_path or "4bit" in file_path or "mlx4bit" in file_path:
         return "int4"
-    elif "q8" in file_path or "8bit" in file_path:
+    elif "q8" in file_path or "8bit" in file_path or "mlx8bit" in file_path:
         return "int8"
     elif "q3" in file_path or "3bit" in file_path:
         return "int3"
     elif "fp16" in file_path or "f16" in file_path:
         return "fp16"
-    elif "mlx" in file_path and "bit" not in file_path:
-        return "mlx"
     else:
         return "unknown"
 
@@ -405,7 +612,6 @@ def resolve_filter_value(user_input, current_values, mapping_dict, mapping_key):
             "8-bit": "int8",
             "3-bit": "int3",
             "FP16": "fp16",
-            "MLX": "mlx",
         }
         if user_input in legacy_quantization_map:
             mapped_value = legacy_quantization_map[user_input]
@@ -442,14 +648,16 @@ def create_prompt_hardware_chart(
     df = df.copy()
     df = df[df["successful_runs"] > 0]  # Only include successful tests
 
-    # Extract hardware config, prompt type, quantization, and model info
-    df["hardware_config"] = df["source_file"].apply(extract_hardware_config)
+    # Extract hardware config, prompt type, quantization, and model info using enhanced methods
+    df["hardware_config"] = df.apply(extract_hardware_config_enhanced, axis=1)
     df["prompt_type"] = df["filename"].apply(extract_prompt_info)
-    df["quantization"] = df["source_file"].apply(extract_quantization_level)
-    df["model_name"] = df["source_file"].apply(extract_model_info)
+    df["quantization"] = df.apply(extract_quantization_enhanced, axis=1)
+    df["model_name"] = df.apply(extract_model_info_enhanced, axis=1)
 
     # Clean hardware names
     df["hardware_config"] = df["hardware_config"].apply(clean_hardware_config)
+    df["quantization"] = df["quantization"].apply(clean_quantization)
+    df["quantization"] = df["quantization"].apply(clean_quantization)
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
@@ -640,14 +848,15 @@ def create_prompt_processing_chart(
     # Filter out negative values (unrealistic estimates)
     df = df[df["estimated_prompt_processing_time"] >= 0]
 
-    # Extract hardware config, prompt type, quantization, and model info
-    df["hardware_config"] = df["source_file"].apply(extract_hardware_config)
+    # Extract hardware config, prompt type, quantization, and model info using enhanced methods
+    df["hardware_config"] = df.apply(extract_hardware_config_enhanced, axis=1)
     df["prompt_type"] = df["filename"].apply(extract_prompt_info)
-    df["quantization"] = df["source_file"].apply(extract_quantization_level)
-    df["model_name"] = df["source_file"].apply(extract_model_info)
+    df["quantization"] = df.apply(extract_quantization_enhanced, axis=1)
+    df["model_name"] = df.apply(extract_model_info_enhanced, axis=1)
 
     # Clean hardware names
     df["hardware_config"] = df["hardware_config"].apply(clean_hardware_config)
+    df["quantization"] = df["quantization"].apply(clean_quantization)
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
@@ -882,14 +1091,15 @@ def create_prompt_processing_delay_chart(
     df = df.copy()
     df = df[df["successful_runs"] > 0]  # Only include successful tests
 
-    # Extract hardware config, prompt type, quantization, and model info
-    df["hardware_config"] = df["source_file"].apply(extract_hardware_config)
+    # Extract hardware config, prompt type, quantization, and model info using enhanced methods
+    df["hardware_config"] = df.apply(extract_hardware_config_enhanced, axis=1)
     df["prompt_type"] = df["filename"].apply(extract_prompt_info)
-    df["quantization"] = df["source_file"].apply(extract_quantization_level)
-    df["model_name"] = df["source_file"].apply(extract_model_info)
+    df["quantization"] = df.apply(extract_quantization_enhanced, axis=1)
+    df["model_name"] = df.apply(extract_model_info_enhanced, axis=1)
 
     # Clean hardware names
     df["hardware_config"] = df["hardware_config"].apply(clean_hardware_config)
+    df["quantization"] = df["quantization"].apply(clean_quantization)
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
@@ -1180,17 +1390,28 @@ def main():
     parser.add_argument(
         "--metric",
         default="tokens_per_second_mean",
-        choices=["tokens_per_second_mean", "response_time", "cv"],
+        choices=[
+            "tokens_per_second_mean",
+            "response_time_mean",
+            "tokens_per_second_cv",
+        ],
         help="Metric to compare (default: tokens_per_second_mean)",
     )
     parser.add_argument("--filter-prompt", help="Filter to specific prompt type")
     parser.add_argument("--filter-hardware", help="Filter to specific hardware config")
     parser.add_argument(
+        "--hardware",
+        nargs="+",
+        help="Filter to specific hardware configs (space-separated list). "
+        "Use exact hardware names or partial matches. "
+        "Example: --hardware 'NVIDIA RTX' 'Apple Mac Studio M4' 'Framework'",
+    )
+    parser.add_argument(
         "--model", help="Filter to specific model (e.g., qwen3_coder_30b)"
     )
     parser.add_argument(
         "--quantization",
-        choices=["int4", "int8", "int3", "fp4", "fp8", "fp16", "mlx"],
+        choices=["int4", "int8", "int3", "fp4", "fp8", "fp16"],
         help="Filter to specific quantization level",
     )
     parser.add_argument(
@@ -1240,10 +1461,10 @@ def main():
         if df is None:
             return
 
-    # Add metadata columns
-    df["hardware_config"] = df["source_file"].apply(extract_hardware_config)
-    df["quantization"] = df["source_file"].apply(extract_quantization_level)
-    df["model_name"] = df["source_file"].apply(extract_model_info)
+    # Add metadata columns using enhanced methods
+    df["hardware_config"] = df.apply(extract_hardware_config_enhanced, axis=1)
+    df["quantization"] = df.apply(extract_quantization_enhanced, axis=1)
+    df["model_name"] = df.apply(extract_model_info_enhanced, axis=1)
 
     # Show detected hardware names if requested
     if args.show_hardware_names:
@@ -1282,10 +1503,29 @@ def main():
     if args.filter_hardware:
         df = df[
             df["hardware_config"].str.contains(
-                args.filter_hardware, case=False, na=False
+                args.filter_hardware, case=False, na=False, regex=False
             )
         ]
         print(f"🔍 Filtered to hardware containing: {args.filter_hardware}")
+
+    # Apply multiple hardware filter (new enhanced filtering)
+    if args.hardware:
+        # Create a condition that matches any of the specified hardware names
+        hardware_conditions = []
+        for hardware_name in args.hardware:
+            condition = df["hardware_config"].str.contains(
+                hardware_name, case=False, na=False, regex=False
+            )
+            hardware_conditions.append(condition)
+
+        # Combine conditions with OR logic
+        combined_condition = hardware_conditions[0]
+        for condition in hardware_conditions[1:]:
+            combined_condition = combined_condition | condition
+
+        df = df[combined_condition]
+        print(f"🔍 Filtered to hardware matching any of: {', '.join(args.hardware)}")
+        print(f"📊 Found hardware configs: {sorted(df['hardware_config'].unique())}")
 
     if df.empty:
         print("❌ No data remaining after filtering")

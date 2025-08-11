@@ -1,5 +1,6 @@
 {
   "hardware_mappings": {
+    "rtx5090wrtx5060ti": "RTX 5090 + RTX 5060 Ti",
     "rtx5090": "RTX 5090 + RTX 5060Ti",
     "rtx_5090": "RTX 5090 + RTX 5060Ti",
     "m4max": "M4 Max",
@@ -26,7 +27,7 @@
     "m1mba": "M1 MacBook Air",
     "m1_mba": "M1 MacBook Air",
     "fw_ryzen": "Framework Ryzen AI 395",
-    "framework": "Framework Laptop",
+    "framework": "Framework Desktop",
     "ryzen_ai": "AMD Ryzen AI 395",
     "xelite": "Snapdragon X Elite",
     "xplus": "Snapdragon X Plus",
@@ -55,7 +56,7 @@
     "mbp": "MacBook Pro",
     "mba": "MacBook Air",
     "xps": "Dell XPS",
-    "framework": "Framework Laptop"
+    "framework": "Framework Desktop"
   },
   "model_mappings": {
     "qwen3_coder_30b": "Qwen 3 Coder 30B",
@@ -68,6 +69,7 @@
     "4bit": "int4",
     "mlx4bit": "int4",
     "mlx8bit": "int8",
+    "mxfp4": "int4",
     "q4km": "int4",
     "q4_km": "int4",
     "q4_k_m": "int4",
