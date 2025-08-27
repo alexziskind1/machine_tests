@@ -22,9 +22,9 @@
   "_comment_target_section": "Target inference configuration (model + runtime stack)",
   "target": {
     "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-    "model": "openai/gpt-oss-20b",
-    "quant": "mxfp4",
-    "backend": "vulkan",
+    "model": "google/gemma-3-4b",
+    "quant": "int4",
+    "backend": "mlx",
     "runtime": "lmstudio"
   },
   "request_timeout": 1000,
