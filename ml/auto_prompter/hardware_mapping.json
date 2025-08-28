@@ -5,8 +5,11 @@
     "rtx_5090": "RTX 5090 + RTX 5060Ti",
     "m4max": "M4 Max",
     "m4_max": "M4 Max",
+    "mbp_m4max": "M4 Max MacBook Pro",
     "m4pro": "M4 Pro", 
     "m4_pro": "M4 Pro",
+    "m4mba": "M4 MacBook Air",
+    "m4_mba": "M4 MacBook Air",
     "m4": "M4", 
 
     "m3ultra": "M3 Ultra",
@@ -29,6 +32,9 @@
     "fw_ryzen": "Framework Ryzen AI 395",
     "framework": "Framework Desktop",
     "ryzen_ai": "AMD Ryzen AI 395",
+    "fw_desktop_ai395": "Framework Desktop AI 395",
+    "fw_ryzen_ai_395": "Framework Ryzen AI 395",
+    "gmk_evox2_ai395": "GMKtec EvoX2 AI 395",
     "xelite": "Snapdragon X Elite",
     "xplus": "Snapdragon X Plus",
     "surface_laptop7": "Surface Laptop 7",
@@ -52,17 +58,14 @@
     "amd": "AMD",
     "ryzen": "AMD Ryzen",
     "surface": "Microsoft Surface",
-    "macbook": "MacBook",
-    "mbp": "MacBook Pro",
-    "mba": "MacBook Air",
+    "m1_mba": "M1 MacBook Air",
     "xps": "Dell XPS",
     "framework": "Framework Desktop"
   },
   "model_mappings": {
     "qwen3_coder_30b": "Qwen 3 Coder 30B",
     "llama_3.3_70b": "Llama 3.3 70B",
-    "qwen3_235b": "Qwen 3 235B",
-    "gemma": "Google Gemma"
+    "qwen3_235b": "Qwen 3 235B"
   },
   "quantization_mappings": {
     "q4": "int4",

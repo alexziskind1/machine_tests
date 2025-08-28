@@ -165,37 +165,51 @@ def clean_hardware_config(config):
     if pd.isna(config):
         return "Unknown"
 
-    config_str = str(config).strip().lower()
+    config_str = str(config).strip()
+
+    # Check if this has a memory configuration appended (pattern: "hardware (Dynamic/Static XGB)")
+    memory_config = ""
+    base_hardware = config_str
+
+    # Extract memory configuration if present
+    import re
+
+    memory_match = re.search(
+        r"\s*\((Dynamic\s+[\d.]+GB|Static\s+[\d.]+GB|[\d.]+GB)\)$", config_str
+    )
+    if memory_match:
+        memory_config = memory_match.group(0)
+        base_hardware = config_str[: memory_match.start()].strip()
 
     # If this looks like a properly formatted hardware name (has spaces and mixed case),
     # don't apply mappings - it's likely from metadata
-    original_config = str(config).strip()
     if (
-        " " in original_config
-        and not original_config.islower()
-        and not original_config.isupper()
-        and len(original_config) > 10
+        " " in base_hardware
+        and not base_hardware.islower()
+        and not base_hardware.isupper()
+        and len(base_hardware) > 10
     ):  # Detailed hardware names are longer
-        return original_config
+        return config_str  # Return original with memory config
 
     # Basic cleaning - remove extra spaces
-    cleaned = " ".join(config_str.split())
+    cleaned = " ".join(base_hardware.lower().split())
 
     # Try exact mappings first for short/slug-style hardware names
     hardware_mappings = HARDWARE_MAPPINGS.get("hardware_mappings", {})
     for key, clean_name in hardware_mappings.items():
         if key.lower() == cleaned:  # Exact match only
-            return clean_name
+            return clean_name + memory_config
 
     # Try fallback patterns only for short hardware identifiers
     if len(cleaned) < 15:  # Only apply fallback to short identifiers
         fallback_patterns = HARDWARE_MAPPINGS.get("fallback_patterns", {})
         for pattern, clean_name in fallback_patterns.items():
             if re.search(pattern.lower(), cleaned):
-                return clean_name
+                return clean_name + memory_config
 
     # If no mapping found, return cleaned version with basic formatting
-    return cleaned.replace("_", " ").replace("-", " ").title()
+    cleaned_base = cleaned.replace("_", " ").replace("-", " ").title()
+    return cleaned_base + memory_config
 
 
 def extract_prompt_info(filename):
@@ -308,9 +322,15 @@ def extract_hardware_config_enhanced(row):
     Returns:
         str: Hardware configuration name
     """
-    # Try to use new metadata columns first
+    # Try hardware_slug first if available (most specific)
     base_hardware = None
-    if (
+    if "hardware_slug" in row and pd.notna(row["hardware_slug"]):
+        hardware_slug = str(row["hardware_slug"]).strip()
+        if hardware_slug != "unknown" and hardware_slug != "":
+            base_hardware = hardware_slug
+
+    # Fall back to hardware_make + hardware_model if slug not available
+    if not base_hardware and (
         "hardware_make" in row
         and "hardware_model" in row
         and pd.notna(row["hardware_make"])
@@ -325,12 +345,6 @@ def extract_hardware_config_enhanced(row):
                 base_hardware = hardware_model
             else:
                 base_hardware = f"{hardware_make} {hardware_model}"
-
-    # Fall back to hardware_slug if available
-    if not base_hardware and "hardware_slug" in row and pd.notna(row["hardware_slug"]):
-        hardware_slug = str(row["hardware_slug"]).strip()
-        if hardware_slug != "unknown" and hardware_slug != "":
-            base_hardware = hardware_slug
 
     # Fall back to old filename-based extraction
     if not base_hardware and "source_file" in row:
@@ -481,10 +495,13 @@ def extract_hardware_config(source_file_path):
         "rtx5090wrtx5060ti",
         "rtx5090",
         "rtx_5090",
+        "mbp_m4max",
         "m4max",
         "m4_max",
         "m4pro",
         "m4_pro",
+        "m4mba",
+        "m4_mba",
         "m3max",
         "m3_max",
         "m3pro",
@@ -521,6 +538,11 @@ def extract_hardware_config(source_file_path):
 
     for pattern in hardware_patterns:
         if filename_lower.startswith(pattern.lower()):
+            return pattern
+
+    # Also check if pattern appears anywhere in the filename (new directory structure)
+    for pattern in hardware_patterns:
+        if pattern.lower() in filename_lower:
             return pattern
 
     # Fallback: look for hardware terms in the first part of filename
