@@ -1,0 +1,50 @@
+{
+  "schema_version": 3,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "_comment_hardware_section": "Physical machine characteristics only (no model/backend/runtime here). VRAM allocation can be dynamic or static",
+  "hardware": {
+    "make": "GMKTec",
+    "device_model": "EVO T1",
+    "code": "gmk_evot1_285H",  
+    "cpu": "Intel Core Ultra 9 285H",
+    "memory_gb": 64,
+    "is_igpu": true,
+    "gpu": "Arc 140T",
+    "vram_allocation": "dynamic",
+    "vram_gb": 36,
+    "notes": "GMKTec EVO T1 with iGPU"
+  },
+  "environment": {
+    "os": "Fedora 42"
+  },
+  "_comment_target_section": "Target inference configuration (model + runtime stack)",
+  "target": {
+    "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
+    "model": "qwen/qwen3-4b-2507",
+    "quant": "q4_k_m",
+    "backend": "vulkan",
+    "runtime": "lmstudio"
+  },
+  "request_timeout": 1000,
+  "output_csv": "results.csv",
+
+  "_comment_results_organization": "Results are automatically organized in nested folders: /results/<model>/<quantization>/<hardware_code>/",
+  "_comment_hardware_override": "Use --hardware argument to specify hardware manually; sets hardware code in folder path",
+  
+  "_comment_generation_params": "Parameters to control response generation for consistent benchmarking",
+  "max_tokens": 512,
+  "temperature": 0.1,
+  
+  "_comment_statistical_params": "Parameters for statistical reliability testing",
+  "iterations_per_prompt": 5,
+  "outlier_threshold": 2.0,
+  "warmup_iterations": 2,
+  "cooldown_between_iterations": 2,
+  "cooldown_between_prompts": 5,
+  
+  "_comment_reliability": "Reliability thresholds for analysis",
+  "max_acceptable_cv": 20.0,
+  "min_success_rate": 80.0
+}
