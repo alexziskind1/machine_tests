@@ -610,6 +610,10 @@ def extract_quantization_level(source_file_path):
         return "bf16"
     elif "fp16" in file_path or "f16" in file_path:
         return "fp16"
+    elif "fp8" in file_path:
+        return "fp8"
+    elif "fp4" in file_path:
+        return "fp4"
     else:
         return "unknown"
 
