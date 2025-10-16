@@ -415,16 +415,34 @@ def clean_model_name(model_name):
     if "@" in cleaned:
         cleaned = cleaned.split("@")[0]
 
+    # Remove : and everything after it (Ollama-style quantization suffix like :30b-a3b-fp16)
+    if ":" in cleaned:
+        cleaned = cleaned.split(":")[0]
+
     # Remove common suffixes (case insensitive)
     cleaned_lower = cleaned.lower()
-    suffixes_to_remove = ["-instruct", "_instruct", "-a3b", "_a3b", "-a22b", "_a22b", "-chat", "_chat"]
+    suffixes_to_remove = [
+        "-instruct",
+        "_instruct",
+        "-a3b",
+        "_a3b",
+        "-a22b",
+        "_a22b",
+        "-chat",
+        "_chat",
+    ]
     for suffix in suffixes_to_remove:
         if cleaned_lower.endswith(suffix):
             cleaned = cleaned[: -len(suffix)]
             cleaned_lower = cleaned.lower()
 
     # Normalize underscores to hyphens for consistency
-    if "qwen3_coder_30b" in cleaned_lower or "qwen3-coder-30b" in cleaned_lower:
+    if (
+        "qwen3_coder_30b" in cleaned_lower
+        or "qwen3-coder-30b" in cleaned_lower
+        or "qwen3_coder" in cleaned_lower
+        or "qwen3-coder" in cleaned_lower
+    ):
         return "qwen3-coder-30b"
     elif "llama_3.3_70b" in cleaned_lower or "llama-3-3-70b" in cleaned_lower:
         return "llama-3-3-70b"
@@ -740,7 +758,7 @@ def create_prompt_hardware_chart(
         # Handle both single value and list of values
         if isinstance(filter_quantization, str):
             filter_quantization = [filter_quantization]
-        
+
         resolved_quants = []
         for quant in filter_quantization:
             resolved_quant = resolve_filter_value(
@@ -756,7 +774,7 @@ def create_prompt_hardware_chart(
                 print(
                     f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
                 )
-        
+
         if resolved_quants:
             df = df[df["quantization"].isin(resolved_quants)]
         else:
@@ -993,7 +1011,7 @@ def create_prompt_processing_chart(
         # Handle both single value and list of values
         if isinstance(filter_quantization, str):
             filter_quantization = [filter_quantization]
-        
+
         resolved_quants = []
         for quant in filter_quantization:
             resolved_quant = resolve_filter_value(
@@ -1009,7 +1027,7 @@ def create_prompt_processing_chart(
                 print(
                     f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
                 )
-        
+
         if resolved_quants:
             df = df[df["quantization"].isin(resolved_quants)]
         else:
@@ -1248,7 +1266,7 @@ def create_prompt_processing_delay_chart(
         # Handle both single value and list of values
         if isinstance(filter_quantization, str):
             filter_quantization = [filter_quantization]
-        
+
         resolved_quants = []
         for quant in filter_quantization:
             resolved_quant = resolve_filter_value(
@@ -1264,7 +1282,7 @@ def create_prompt_processing_delay_chart(
                 print(
                     f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
                 )
-        
+
         if resolved_quants:
             df = df[df["quantization"].isin(resolved_quants)]
         else:
@@ -1727,7 +1745,9 @@ def main():
             if args.quantization:
                 if isinstance(args.quantization, list):
                     # Join multiple quantizations with underscore
-                    quant_str = "_".join([q.replace("-", "") for q in args.quantization])
+                    quant_str = "_".join(
+                        [q.replace("-", "") for q in args.quantization]
+                    )
                     filename_parts.append(quant_str)
                 else:
                     filename_parts.append(args.quantization.replace("-", ""))
