@@ -415,20 +415,22 @@ def clean_model_name(model_name):
     if "@" in cleaned:
         cleaned = cleaned.split("@")[0]
 
-    # Remove common suffixes
-    suffixes_to_remove = ["-instruct", "_instruct", "-a3b", "_a3b", "-chat", "_chat"]
+    # Remove common suffixes (case insensitive)
+    cleaned_lower = cleaned.lower()
+    suffixes_to_remove = ["-instruct", "_instruct", "-a3b", "_a3b", "-a22b", "_a22b", "-chat", "_chat"]
     for suffix in suffixes_to_remove:
-        if cleaned.endswith(suffix):
+        if cleaned_lower.endswith(suffix):
             cleaned = cleaned[: -len(suffix)]
+            cleaned_lower = cleaned.lower()
 
     # Normalize underscores to hyphens for consistency
-    if "qwen3_coder_30b" in cleaned.lower():
+    if "qwen3_coder_30b" in cleaned_lower or "qwen3-coder-30b" in cleaned_lower:
         return "qwen3-coder-30b"
-    elif "llama_3.3_70b" in cleaned.lower() or "llama-3-3-70b" in cleaned.lower():
+    elif "llama_3.3_70b" in cleaned_lower or "llama-3-3-70b" in cleaned_lower:
         return "llama-3-3-70b"
-    elif "qwen3_235b" in cleaned.lower():
+    elif "qwen3_235b" in cleaned_lower or "qwen3-235b" in cleaned_lower:
         return "qwen3-235b"
-    elif "gemma" in cleaned.lower():
+    elif "gemma" in cleaned_lower:
         return "gemma"
 
     return cleaned
@@ -586,6 +588,8 @@ def extract_quantization_level(source_file_path):
         return "int8"
     elif "q3" in file_path or "3bit" in file_path:
         return "int3"
+    elif "bf16" in file_path:
+        return "bf16"
     elif "fp16" in file_path or "f16" in file_path:
         return "fp16"
     else:
@@ -733,21 +737,30 @@ def create_prompt_hardware_chart(
 
     # Apply quantization filter if specified
     if filter_quantization:
-        resolved_quant = resolve_filter_value(
-            filter_quantization,
-            df["quantization"].unique(),
-            HARDWARE_MAPPINGS,
-            "quantization_mappings",
-        )
-        if resolved_quant:
-            df = df[df["quantization"] == resolved_quant]
-            print(
-                f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}"
+        # Handle both single value and list of values
+        if isinstance(filter_quantization, str):
+            filter_quantization = [filter_quantization]
+        
+        resolved_quants = []
+        for quant in filter_quantization:
+            resolved_quant = resolve_filter_value(
+                quant,
+                df["quantization"].unique(),
+                HARDWARE_MAPPINGS,
+                "quantization_mappings",
             )
+            if resolved_quant:
+                resolved_quants.append(resolved_quant)
+                print(f"🔍 Filtered to quantization: {quant} → {resolved_quant}")
+            else:
+                print(
+                    f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
+                )
+        
+        if resolved_quants:
+            df = df[df["quantization"].isin(resolved_quants)]
         else:
-            print(
-                f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}"
-            )
+            print("❌ No valid quantizations found")
             return None, None
 
     if df.empty:
@@ -835,7 +848,10 @@ def create_prompt_hardware_chart(
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
-        title_parts.append(f"Quantization: {filter_quantization}")
+        if isinstance(filter_quantization, list):
+            title_parts.append(f"Quantizations: {', '.join(filter_quantization)}")
+        else:
+            title_parts.append(f"Quantization: {filter_quantization}")
 
     title_text = "<br>".join(title_parts)
     if len(title_parts) > 1:
@@ -974,21 +990,30 @@ def create_prompt_processing_chart(
 
     # Apply quantization filter if specified
     if filter_quantization:
-        resolved_quant = resolve_filter_value(
-            filter_quantization,
-            df["quantization"].unique(),
-            HARDWARE_MAPPINGS,
-            "quantization_mappings",
-        )
-        if resolved_quant:
-            df = df[df["quantization"] == resolved_quant]
-            print(
-                f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}"
+        # Handle both single value and list of values
+        if isinstance(filter_quantization, str):
+            filter_quantization = [filter_quantization]
+        
+        resolved_quants = []
+        for quant in filter_quantization:
+            resolved_quant = resolve_filter_value(
+                quant,
+                df["quantization"].unique(),
+                HARDWARE_MAPPINGS,
+                "quantization_mappings",
             )
+            if resolved_quant:
+                resolved_quants.append(resolved_quant)
+                print(f"🔍 Filtered to quantization: {quant} → {resolved_quant}")
+            else:
+                print(
+                    f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
+                )
+        
+        if resolved_quants:
+            df = df[df["quantization"].isin(resolved_quants)]
         else:
-            print(
-                f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}"
-            )
+            print("❌ No valid quantizations found")
             return None, None
 
     if df.empty:
@@ -1080,7 +1105,10 @@ def create_prompt_processing_chart(
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
-        title_parts.append(f"Quantization: {filter_quantization}")
+        if isinstance(filter_quantization, list):
+            title_parts.append(f"Quantizations: {', '.join(filter_quantization)}")
+        else:
+            title_parts.append(f"Quantization: {filter_quantization}")
 
     title_text = "<br>".join(title_parts)
     title_text += (
@@ -1217,21 +1245,30 @@ def create_prompt_processing_delay_chart(
 
     # Apply quantization filter if specified
     if filter_quantization:
-        resolved_quant = resolve_filter_value(
-            filter_quantization,
-            df["quantization"].unique(),
-            HARDWARE_MAPPINGS,
-            "quantization_mappings",
-        )
-        if resolved_quant:
-            df = df[df["quantization"] == resolved_quant]
-            print(
-                f"🔍 Filtered to quantization: {filter_quantization} → {resolved_quant}"
+        # Handle both single value and list of values
+        if isinstance(filter_quantization, str):
+            filter_quantization = [filter_quantization]
+        
+        resolved_quants = []
+        for quant in filter_quantization:
+            resolved_quant = resolve_filter_value(
+                quant,
+                df["quantization"].unique(),
+                HARDWARE_MAPPINGS,
+                "quantization_mappings",
             )
+            if resolved_quant:
+                resolved_quants.append(resolved_quant)
+                print(f"🔍 Filtered to quantization: {quant} → {resolved_quant}")
+            else:
+                print(
+                    f"❌ Quantization '{quant}' not found. Available: {list(df['quantization'].unique())}"
+                )
+        
+        if resolved_quants:
+            df = df[df["quantization"].isin(resolved_quants)]
         else:
-            print(
-                f"❌ Quantization '{filter_quantization}' not found. Available: {list(df['quantization'].unique())}"
-            )
+            print("❌ No valid quantizations found")
             return None, None
 
     if df.empty:
@@ -1319,7 +1356,10 @@ def create_prompt_processing_delay_chart(
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
-        title_parts.append(f"Quantization: {filter_quantization}")
+        if isinstance(filter_quantization, list):
+            title_parts.append(f"Quantizations: {', '.join(filter_quantization)}")
+        else:
+            title_parts.append(f"Quantization: {filter_quantization}")
 
     title_text = "<br>".join(title_parts)
     title_text += "<br><sub>Average Response Time (Lower is Better)</sub>"
@@ -1515,8 +1555,9 @@ def main():
     )
     parser.add_argument(
         "--quantization",
-        choices=["int4", "int8", "int3", "fp4", "fp8", "fp16"],
-        help="Filter to specific quantization level",
+        nargs="+",
+        choices=["int4", "int8", "int3", "fp4", "fp8", "fp16", "bf16"],
+        help="Filter to specific quantization level(s). Can specify multiple values separated by spaces (e.g., --quantization bf16 fp16)",
     )
     parser.add_argument(
         "--no-chart", action="store_true", help="Skip showing the chart"
@@ -1684,7 +1725,12 @@ def main():
             if args.model:
                 filename_parts.append(args.model)
             if args.quantization:
-                filename_parts.append(args.quantization.replace("-", ""))
+                if isinstance(args.quantization, list):
+                    # Join multiple quantizations with underscore
+                    quant_str = "_".join([q.replace("-", "") for q in args.quantization])
+                    filename_parts.append(quant_str)
+                else:
+                    filename_parts.append(args.quantization.replace("-", ""))
             if not args.delay_chart and not args.pp:
                 filename_parts.append(args.metric)
 

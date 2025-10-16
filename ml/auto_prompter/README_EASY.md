@@ -21,6 +21,11 @@ python plot_results.py --csv results/qwen3_coder_30b/int4/m4pro/20250801_115217_
 python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4
 ```
 
+### Compare multiple quantizations for a model
+```bash
+python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization bf16 fp16 int4
+```
+
 ### Compare specific hardware for a model/quantization
 ```bash
 python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --hardware "Apple MacBook Pro M4 Pro"
@@ -103,7 +108,7 @@ python prompt_hardware_comparison.py --show-hardware-names
 ## Available Options
 
 - **Models**: qwen3-coder-30b, qwen3-235b, llama-3-3-70b, gpt-oss-20b, gpt-oss-120b, deepseek-r1-distill-qwen-7b
-- **Quantizations**: int4, int8, int3, fp4, fp8, fp16
+- **Quantizations**: int4, int8, int3, fp4, fp8, fp16, bf16
 - **Metrics**: tokens_per_second_mean (default), response_time_mean, tokens_per_second_cv
 - **Hardware**: Use `--show-hardware-names` to see all detected configurations
 
