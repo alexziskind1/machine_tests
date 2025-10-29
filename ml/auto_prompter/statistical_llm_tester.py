@@ -272,14 +272,15 @@ class StatisticalLLMTester:
 
         return prompts
 
-    def send_curl_request(self, prompt: str):
+    def send_curl_request(self, prompt: str, max_tokens: int = 200):
         """Send a curl request to the LLM and measure response time."""
         payload = {
             "model": self.cfg.target.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
+            "max_tokens": max_tokens,
         }
-        # generation params
+        # generation params (max_tokens can be overridden by config)
         for p in [
             "max_tokens",
             "temperature",
@@ -381,7 +382,7 @@ class StatisticalLLMTester:
         tokens_per_second = token_count / response_time if response_time > 0 else 0
         return token_count, tokens_per_second
 
-    def warm_up_model(self) -> bool:
+    def warm_up_model(self, max_tokens: int = 200) -> bool:
         """Send warm-up requests to ensure the model is loaded."""
         print("🔥 Warming up the model...")
         warm_up_prompt = "Hello, please respond with just 'Ready'."
@@ -390,7 +391,7 @@ class StatisticalLLMTester:
         successful = 0
         for i in range(warmup_iterations):
             print(f"  Warm-up {i+1}/{warmup_iterations}")
-            _, _, ok = self.send_curl_request(warm_up_prompt)
+            _, _, ok = self.send_curl_request(warm_up_prompt, max_tokens=max_tokens)
             if ok:
                 successful += 1
             time.sleep(1)
@@ -400,7 +401,7 @@ class StatisticalLLMTester:
         return successful > 0
 
     def test_prompt_multiple_times(
-        self, filename: str, prompt: str, iterations: int
+        self, filename: str, prompt: str, iterations: int, max_tokens: int = 200
     ) -> List[TestResult]:
         """Test a single prompt multiple times for statistical reliability."""
         print(f"\n--- Testing '{filename}' with {iterations} iterations ---")
@@ -410,7 +411,9 @@ class StatisticalLLMTester:
         successful_runs = 0
         for i in range(iterations):
             print(f"  Iteration {i+1}/{iterations}", end=" ")
-            response, response_time, success = self.send_curl_request(prompt)
+            response, response_time, success = self.send_curl_request(
+                prompt, max_tokens=max_tokens
+            )
             result = TestResult(
                 timestamp=datetime.now().isoformat(),
                 filename=filename,
@@ -536,7 +539,10 @@ class StatisticalLLMTester:
         )
 
     def run_statistical_tests(
-        self, prompts_dir: str = "prompts", iterations: int = None
+        self,
+        prompts_dir: str = "prompts",
+        iterations: int = None,
+        max_tokens: int = 200,
     ) -> None:
         """Run statistical tests on prompts."""
         print("=== Statistical LLM Performance Tester ===")
@@ -545,10 +551,11 @@ class StatisticalLLMTester:
         if iterations is None:
             iterations = self.cfg.raw.get("iterations_per_prompt", 5)
         print(f"Iterations per prompt: {iterations}")
+        print(f"Max tokens per response: {max_tokens}")
         print(
             f"Outlier detection threshold: {self.cfg.raw.get('outlier_threshold', 2.0)} standard deviations"
         )
-        self.warm_up_model()
+        self.warm_up_model(max_tokens=max_tokens)
         prompts = self.load_prompts(prompts_dir)
         if not prompts:
             print("No prompts found. Please add .txt files to the prompts directory.")
@@ -559,7 +566,7 @@ class StatisticalLLMTester:
             print(f"\n{'='*60}")
             print(f"Prompt {i}/{len(prompts)}: {filename}")
             prompt_results = self.test_prompt_multiple_times(
-                filename, prompt, iterations
+                filename, prompt, iterations, max_tokens=max_tokens
             )
             self.results.extend(prompt_results)
             stats = self.calculate_statistics(prompt_results)
@@ -854,7 +861,7 @@ def main():
 
     try:
         tester = StatisticalLLMTester(args.config, hardware_override=args.hardware)
-        tester.run_statistical_tests(args.prompts_dir, args.iterations)
+        tester.run_statistical_tests(args.prompts_dir, args.iterations, max_tokens=200)
     except Exception as e:
         print(f"Error: {e}")
         return 1
