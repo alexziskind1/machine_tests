@@ -17,13 +17,13 @@
     "notes": "Beelink GTR9 Desktop board with iGPU"
   },
   "environment": {
-    "os": "Fedora 42"
+    "os": "Windows 11"
   },
   "_comment_target_section": "Target inference configuration (model + runtime stack)",
   "target": {
     "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-    "model": "openai/gpt-oss-20b",
-    "quant": "int4",
+    "model": "qwen3-coder-30b-a3b-instruct@q8_0",
+    "quant": "q8",
     "backend": "vulcan",
     "runtime": "lmstudio"
   },
