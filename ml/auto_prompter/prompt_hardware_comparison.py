@@ -722,8 +722,18 @@ def create_prompt_hardware_chart(
     show_chart=True,
     filter_model=None,
     filter_quantization=None,
+    os_filter=None,
 ):
-    """Create column chart comparing hardware performance by prompt type."""
+    """Create column chart comparing hardware performance by prompt type.
+
+    Args:
+        df: DataFrame with test results
+        metric: Metric to compare (default: tokens_per_second_mean)
+        show_chart: Whether to display the chart
+        filter_model: Model filter
+        filter_quantization: Quantization filter
+        os_filter: List of OS names to compare (creates separate bars per OS)
+    """
 
     # Clean the data and filter out failed tests
     df = df.copy()
@@ -742,6 +752,26 @@ def create_prompt_hardware_chart(
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
+
+    # Create composite label if OS filtering is active
+    use_os_dimension = os_filter is not None and len(os_filter) > 0
+    if use_os_dimension:
+        # Ensure environment_os column exists
+        if "environment_os" not in df.columns:
+            print(
+                "⚠️  Warning: OS filtering requested but environment_os column not found"
+            )
+            use_os_dimension = False
+        else:
+            # Create composite label: "Hardware - OS"
+            df["config_label"] = (
+                df["hardware_config"]
+                + " - "
+                + df["environment_os"].fillna("Unknown OS")
+            )
+            grouping_column = "config_label"
+    else:
+        grouping_column = "hardware_config"
 
     # Apply model filter if specified
     if filter_model:
@@ -789,15 +819,15 @@ def create_prompt_hardware_chart(
         print("❌ No data remaining after filtering")
         return None, None
 
-    # Group by prompt type and hardware, calculate averages
+    # Group by prompt type and hardware (or hardware+OS composite), calculate averages
     grouped = (
-        df.groupby(["prompt_type", "hardware_config"])[metric]
+        df.groupby(["prompt_type", grouping_column])[metric]
         .agg(["mean", "count", "std"])
         .reset_index()
     )
     grouped.columns = [
         "prompt_type",
-        "hardware_config",
+        "config_label",
         "avg_performance",
         "count",
         "std_dev",
@@ -809,20 +839,20 @@ def create_prompt_hardware_chart(
     # Create the chart
     fig = go.Figure()
 
-    # Get unique prompt types and hardware configs
+    # Get unique prompt types and config labels (hardware or hardware+OS)
     prompt_types = sorted(grouped["prompt_type"].unique())
-    hardware_configs = sorted(grouped["hardware_config"].unique())
+    config_labels = sorted(grouped["config_label"].unique())
 
     print(
-        f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs"
+        f"📊 Found {len(prompt_types)} prompt types and {len(config_labels)} {'hardware+OS combinations' if use_os_dimension else 'hardware configs'}"
     )
 
-    # Generate dynamic color scheme for all hardware configurations
-    hardware_colors = generate_hardware_colors(hardware_configs)
+    # Generate dynamic color scheme for all configurations
+    config_colors = generate_hardware_colors(config_labels)
 
-    # Add bars for each hardware config
-    for hardware in hardware_configs:
-        hardware_data = grouped[grouped["hardware_config"] == hardware]
+    # Add bars for each config (hardware or hardware+OS)
+    for config in config_labels:
+        config_data = grouped[grouped["config_label"] == config]
 
         x_values = []
         y_values = []
@@ -830,7 +860,7 @@ def create_prompt_hardware_chart(
         hover_text = []
 
         for prompt_type in prompt_types:
-            prompt_data = hardware_data[hardware_data["prompt_type"] == prompt_type]
+            prompt_data = config_data[config_data["prompt_type"] == prompt_type]
             if not prompt_data.empty:
                 x_values.append(prompt_type)
                 avg_perf = prompt_data["avg_performance"].iloc[0]
@@ -842,7 +872,7 @@ def create_prompt_hardware_chart(
                 )
                 error_values.append(std_dev)
                 hover_text.append(
-                    f"<b>{hardware}</b><br>"
+                    f"<b>{config}</b><br>"
                     f"Prompt: {prompt_type}<br>"
                     f"Avg Performance: {avg_perf:.1f} tokens/sec<br>"
                     f"Tests: {prompt_data['count'].iloc[0]}<br>"
@@ -850,11 +880,11 @@ def create_prompt_hardware_chart(
                 )
 
         if x_values:  # Only add trace if there's data
-            color = hardware_colors.get(hardware, "#95A5A6")
+            color = config_colors.get(config, "#95A5A6")
 
             fig.add_trace(
                 go.Bar(
-                    name=hardware,
+                    name=config,
                     x=x_values,
                     y=y_values,
                     error_y=dict(type="data", array=error_values, visible=True),
@@ -867,6 +897,8 @@ def create_prompt_hardware_chart(
 
     # Create title with filter information
     title_parts = ["Hardware Performance Comparison by Prompt Type"]
+    if use_os_dimension:
+        title_parts[0] = "Hardware & OS Performance Comparison by Prompt Type"
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
@@ -874,6 +906,8 @@ def create_prompt_hardware_chart(
             title_parts.append(f"Quantizations: {', '.join(filter_quantization)}")
         else:
             title_parts.append(f"Quantization: {filter_quantization}")
+    if os_filter:
+        title_parts.append(f"Operating Systems: {', '.join(os_filter)}")
 
     title_text = "<br>".join(title_parts)
     if len(title_parts) > 1:
@@ -967,9 +1001,17 @@ def create_prompt_hardware_chart(
 
 
 def create_prompt_processing_chart(
-    df, show_chart=True, filter_model=None, filter_quantization=None
+    df, show_chart=True, filter_model=None, filter_quantization=None, os_filter=None
 ):
-    """Create column chart comparing estimated prompt processing time by prompt type."""
+    """Create column chart comparing estimated prompt processing time by prompt type.
+
+    Args:
+        df: DataFrame with test results
+        show_chart: Whether to display the chart
+        filter_model: Model filter
+        filter_quantization: Quantization filter
+        os_filter: List of OS names to compare (creates separate bars per OS)
+    """
 
     # Clean the data and filter out failed tests
     df = df.copy()
@@ -995,6 +1037,26 @@ def create_prompt_processing_chart(
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
+
+    # Create composite label if OS filtering is active
+    use_os_dimension = os_filter is not None and len(os_filter) > 0
+    if use_os_dimension:
+        # Ensure environment_os column exists
+        if "environment_os" not in df.columns:
+            print(
+                "⚠️  Warning: OS filtering requested but environment_os column not found"
+            )
+            use_os_dimension = False
+        else:
+            # Create composite label: "Hardware - OS"
+            df["config_label"] = (
+                df["hardware_config"]
+                + " - "
+                + df["environment_os"].fillna("Unknown OS")
+            )
+            grouping_column = "config_label"
+    else:
+        grouping_column = "hardware_config"
 
     # Apply model filter if specified
     if filter_model:
@@ -1042,17 +1104,15 @@ def create_prompt_processing_chart(
         print("❌ No data remaining after filtering")
         return None, None
 
-    # Group by prompt type and hardware, calculate averages for prompt processing time
+    # Group by prompt type and hardware (or hardware+OS composite), calculate averages for prompt processing time
     grouped = (
-        df.groupby(["prompt_type", "hardware_config"])[
-            "estimated_prompt_processing_time"
-        ]
+        df.groupby(["prompt_type", grouping_column])["estimated_prompt_processing_time"]
         .agg(["mean", "count", "std"])
         .reset_index()
     )
     grouped.columns = [
         "prompt_type",
-        "hardware_config",
+        "config_label",
         "avg_prompt_processing_time",
         "count",
         "std_dev",
@@ -1066,20 +1126,20 @@ def create_prompt_processing_chart(
     # Create the chart
     fig = go.Figure()
 
-    # Get unique prompt types and hardware configs
+    # Get unique prompt types and config labels (hardware or hardware+OS)
     prompt_types = sorted(grouped["prompt_type"].unique())
-    hardware_configs = sorted(grouped["hardware_config"].unique())
+    config_labels = sorted(grouped["config_label"].unique())
 
     print(
-        f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs"
+        f"📊 Found {len(prompt_types)} prompt types and {len(config_labels)} {'hardware+OS combinations' if use_os_dimension else 'hardware configs'}"
     )
 
-    # Generate dynamic color scheme for all hardware configurations
-    hardware_colors = generate_hardware_colors(hardware_configs)
+    # Generate dynamic color scheme for all configurations
+    config_colors = generate_hardware_colors(config_labels)
 
-    # Add bars for each hardware config
-    for hardware in hardware_configs:
-        hardware_data = grouped[grouped["hardware_config"] == hardware]
+    # Add bars for each config (hardware or hardware+OS)
+    for config in config_labels:
+        config_data = grouped[grouped["config_label"] == config]
 
         x_values = []
         y_values = []
@@ -1087,7 +1147,7 @@ def create_prompt_processing_chart(
         hover_text = []
 
         for prompt_type in prompt_types:
-            prompt_data = hardware_data[hardware_data["prompt_type"] == prompt_type]
+            prompt_data = config_data[config_data["prompt_type"] == prompt_type]
             if not prompt_data.empty:
                 x_values.append(prompt_type)
                 avg_pp_time = prompt_data["avg_prompt_processing_time"].iloc[0]
@@ -1099,7 +1159,7 @@ def create_prompt_processing_chart(
                 )
                 error_values.append(std_dev)
                 hover_text.append(
-                    f"<b>{hardware}</b><br>"
+                    f"<b>{config}</b><br>"
                     f"Prompt: {prompt_type}<br>"
                     f"Avg Prompt Processing: {avg_pp_time:.2f} seconds<br>"
                     f"Tests: {prompt_data['count'].iloc[0]}<br>"
@@ -1107,11 +1167,11 @@ def create_prompt_processing_chart(
                 )
 
         if x_values:  # Only add trace if there's data
-            color = hardware_colors.get(hardware, "#95A5A6")
+            color = config_colors.get(config, "#95A5A6")
 
             fig.add_trace(
                 go.Bar(
-                    name=hardware,
+                    name=config,
                     x=x_values,
                     y=y_values,
                     error_y=dict(type="data", array=error_values, visible=True),
@@ -1124,6 +1184,8 @@ def create_prompt_processing_chart(
 
     # Create title with filter information
     title_parts = ["Estimated Prompt Processing Time Comparison by Hardware"]
+    if use_os_dimension:
+        title_parts[0] = "Estimated Prompt Processing Time Comparison by Hardware & OS"
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
@@ -1131,6 +1193,8 @@ def create_prompt_processing_chart(
             title_parts.append(f"Quantizations: {', '.join(filter_quantization)}")
         else:
             title_parts.append(f"Quantization: {filter_quantization}")
+    if os_filter:
+        title_parts.append(f"Operating Systems: {', '.join(os_filter)}")
 
     title_text = "<br>".join(title_parts)
     title_text += (
@@ -1230,9 +1294,17 @@ def create_prompt_processing_summary_stats(grouped_data):
 
 
 def create_prompt_processing_delay_chart(
-    df, show_chart=True, filter_model=None, filter_quantization=None
+    df, show_chart=True, filter_model=None, filter_quantization=None, os_filter=None
 ):
-    """Create column chart comparing prompt processing delay (response time) by prompt type."""
+    """Create column chart comparing prompt processing delay (response time) by prompt type.
+
+    Args:
+        df: DataFrame with test results
+        show_chart: Whether to display the chart
+        filter_model: Model filter
+        filter_quantization: Quantization filter
+        os_filter: List of OS names to compare (creates separate bars per OS)
+    """
 
     # Clean the data and filter out failed tests
     df = df.copy()
@@ -1250,6 +1322,26 @@ def create_prompt_processing_delay_chart(
 
     # Filter out only Unknown hardware (keep all valid hardware configurations)
     df = df[df["hardware_config"] != "Unknown"]
+
+    # Create composite label if OS filtering is active
+    use_os_dimension = os_filter is not None and len(os_filter) > 0
+    if use_os_dimension:
+        # Ensure environment_os column exists
+        if "environment_os" not in df.columns:
+            print(
+                "⚠️  Warning: OS filtering requested but environment_os column not found"
+            )
+            use_os_dimension = False
+        else:
+            # Create composite label: "Hardware - OS"
+            df["config_label"] = (
+                df["hardware_config"]
+                + " - "
+                + df["environment_os"].fillna("Unknown OS")
+            )
+            grouping_column = "config_label"
+    else:
+        grouping_column = "hardware_config"
 
     # Apply model filter if specified
     if filter_model:
@@ -1297,15 +1389,15 @@ def create_prompt_processing_delay_chart(
         print("❌ No data remaining after filtering")
         return None, None
 
-    # Group by prompt type and hardware, calculate averages for response time
+    # Group by prompt type and hardware (or hardware+OS composite), calculate averages for response time
     grouped = (
-        df.groupby(["prompt_type", "hardware_config"])["response_time_mean"]
+        df.groupby(["prompt_type", grouping_column])["response_time_mean"]
         .agg(["mean", "count", "std"])
         .reset_index()
     )
     grouped.columns = [
         "prompt_type",
-        "hardware_config",
+        "config_label",
         "avg_delay",
         "count",
         "std_dev",
@@ -1317,20 +1409,20 @@ def create_prompt_processing_delay_chart(
     # Create the chart
     fig = go.Figure()
 
-    # Get unique prompt types and hardware configs
+    # Get unique prompt types and config labels (hardware or hardware+OS)
     prompt_types = sorted(grouped["prompt_type"].unique())
-    hardware_configs = sorted(grouped["hardware_config"].unique())
+    config_labels = sorted(grouped["config_label"].unique())
 
     print(
-        f"📊 Found {len(prompt_types)} prompt types and {len(hardware_configs)} hardware configs"
+        f"📊 Found {len(prompt_types)} prompt types and {len(config_labels)} {'hardware+OS combinations' if use_os_dimension else 'hardware configs'}"
     )
 
-    # Generate dynamic color scheme for all hardware configurations
-    hardware_colors = generate_hardware_colors(hardware_configs)
+    # Generate dynamic color scheme for all configurations
+    config_colors = generate_hardware_colors(config_labels)
 
-    # Add bars for each hardware config
-    for hardware in hardware_configs:
-        hardware_data = grouped[grouped["hardware_config"] == hardware]
+    # Add bars for each config (hardware or hardware+OS)
+    for config in config_labels:
+        config_data = grouped[grouped["config_label"] == config]
 
         x_values = []
         y_values = []
@@ -1338,7 +1430,7 @@ def create_prompt_processing_delay_chart(
         hover_text = []
 
         for prompt_type in prompt_types:
-            prompt_data = hardware_data[hardware_data["prompt_type"] == prompt_type]
+            prompt_data = config_data[config_data["prompt_type"] == prompt_type]
             if not prompt_data.empty:
                 x_values.append(prompt_type)
                 avg_delay = prompt_data["avg_delay"].iloc[0]
@@ -1350,7 +1442,7 @@ def create_prompt_processing_delay_chart(
                 )
                 error_values.append(std_dev)
                 hover_text.append(
-                    f"<b>{hardware}</b><br>"
+                    f"<b>{config}</b><br>"
                     f"Prompt: {prompt_type}<br>"
                     f"Avg Delay: {avg_delay:.2f} seconds<br>"
                     f"Tests: {prompt_data['count'].iloc[0]}<br>"
@@ -1358,11 +1450,11 @@ def create_prompt_processing_delay_chart(
                 )
 
         if x_values:  # Only add trace if there's data
-            color = hardware_colors.get(hardware, "#95A5A6")
+            color = config_colors.get(config, "#95A5A6")
 
             fig.add_trace(
                 go.Bar(
-                    name=hardware,
+                    name=config,
                     x=x_values,
                     y=y_values,
                     error_y=dict(type="data", array=error_values, visible=True),
@@ -1375,6 +1467,8 @@ def create_prompt_processing_delay_chart(
 
     # Create title with filter information
     title_parts = ["Prompt Processing Delay Comparison by Hardware"]
+    if use_os_dimension:
+        title_parts[0] = "Prompt Processing Delay Comparison by Hardware & OS"
     if filter_model:
         title_parts.append(f"Model: {filter_model}")
     if filter_quantization:
@@ -1469,6 +1563,11 @@ def create_delay_summary_stats(grouped_data):
 
 def create_summary_stats(grouped_data):
     """Create summary statistics for the prompt-hardware performance comparison."""
+    # Detect if we're using config_label (hardware+OS) or just hardware_config
+    config_column = (
+        "config_label" if "config_label" in grouped_data.columns else "hardware_config"
+    )
+
     print("\n📊 PROMPT-HARDWARE PERFORMANCE SUMMARY")
     print("=" * 60)
 
@@ -1477,7 +1576,7 @@ def create_summary_stats(grouped_data):
     print("\n🏆 TOP 10 PROMPT-HARDWARE COMBINATIONS:")
     for i, (idx, row) in enumerate(top_combinations.iterrows(), 1):
         print(
-            f"{i:2d}. {row['hardware_config']} - {row['prompt_type']}: "
+            f"{i:2d}. {row[config_column]} - {row['prompt_type']}: "
             f"{row['avg_performance']:.1f} tokens/sec ({row['count']} tests)"
         )
 
@@ -1487,18 +1586,18 @@ def create_summary_stats(grouped_data):
         prompt_data = grouped_data[grouped_data["prompt_type"] == prompt_type]
         best = prompt_data.loc[prompt_data["avg_performance"].idxmax()]
         print(
-            f"   {prompt_type}: {best['hardware_config']} ({best['avg_performance']:.1f} tokens/sec)"
+            f"   {prompt_type}: {best[config_column]} ({best['avg_performance']:.1f} tokens/sec)"
         )
 
     # Hardware rankings
     print("\n🏅 OVERALL HARDWARE RANKINGS:")
     hardware_avg = (
-        grouped_data.groupby("hardware_config")["avg_performance"]
+        grouped_data.groupby(config_column)["avg_performance"]
         .mean()
         .sort_values(ascending=False)
     )
     for i, (hardware, avg_perf) in enumerate(hardware_avg.items(), 1):
-        test_count = grouped_data[grouped_data["hardware_config"] == hardware][
+        test_count = grouped_data[grouped_data[config_column] == hardware][
             "count"
         ].sum()
         print(
@@ -1571,6 +1670,13 @@ def main():
         help="Filter to specific hardware configs (space-separated list). "
         "Use exact hardware names or partial matches. "
         "Example: --hardware 'NVIDIA RTX' 'Apple Mac Studio M4' 'Framework'",
+    )
+    parser.add_argument(
+        "--os",
+        nargs="+",
+        help="Filter to specific operating system(s) (space-separated list). "
+        "Use exact OS names or partial matches. "
+        "Example: --os 'Windows' 'Fedora' or --os 'Windows 11' 'macOS'",
     )
     parser.add_argument(
         "--model", help="Filter to specific model (e.g., qwen3_coder_30b)"
@@ -1660,6 +1766,16 @@ def main():
         for hw in hardware:
             count = len(df[df["hardware_config"] == hw])
             print(f"   {hw} ({count} tests)")
+
+        # Show operating systems if available
+        if "environment_os" in df.columns:
+            print("\n💻 Available Operating Systems:")
+            os_list = sorted(df["environment_os"].unique())
+            for os_name in os_list:
+                if pd.notna(os_name):  # Skip NaN values
+                    count = len(df[df["environment_os"] == os_name])
+                    print(f"   {os_name} ({count} tests)")
+
         return
 
     # Apply legacy filters
@@ -1694,6 +1810,32 @@ def main():
         print(f"🔍 Filtered to hardware matching any of: {', '.join(args.hardware)}")
         print(f"📊 Found hardware configs: {sorted(df['hardware_config'].unique())}")
 
+    # Apply operating system filter
+    if args.os:
+        # Ensure environment_os column exists
+        if "environment_os" not in df.columns:
+            print("⚠️  Warning: environment_os column not found in data")
+            print("   This feature requires data from newer test runs")
+        else:
+            # Create a condition that matches any of the specified OS names
+            os_conditions = []
+            for os_name in args.os:
+                condition = df["environment_os"].str.contains(
+                    os_name, case=False, na=False, regex=False
+                )
+                os_conditions.append(condition)
+
+            # Combine conditions with OR logic
+            combined_condition = os_conditions[0]
+            for condition in os_conditions[1:]:
+                combined_condition = combined_condition | condition
+
+            df = df[combined_condition]
+            print(f"🔍 Filtered to OS matching any of: {', '.join(args.os)}")
+            print(
+                f"📊 Found operating systems: {sorted(df['environment_os'].unique())}"
+            )
+
     if df.empty:
         print("❌ No data remaining after filtering")
         return
@@ -1702,7 +1844,7 @@ def main():
     if args.pp:
         # Create prompt processing time chart
         fig, grouped_data = create_prompt_processing_chart(
-            df, not args.no_chart, args.model, args.quantization
+            df, not args.no_chart, args.model, args.quantization, args.os
         )
 
         if grouped_data is not None:
@@ -1711,7 +1853,7 @@ def main():
     elif args.delay_chart:
         # Create delay chart
         fig, grouped_data = create_prompt_processing_delay_chart(
-            df, not args.no_chart, args.model, args.quantization
+            df, not args.no_chart, args.model, args.quantization, args.os
         )
 
         if grouped_data is not None:
@@ -1720,7 +1862,7 @@ def main():
     else:
         # Create performance chart
         fig, grouped_data = create_prompt_hardware_chart(
-            df, args.metric, not args.no_chart, args.model, args.quantization
+            df, args.metric, not args.no_chart, args.model, args.quantization, args.os
         )
 
         if grouped_data is not None:

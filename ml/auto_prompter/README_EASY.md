@@ -36,6 +36,28 @@ python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4
 python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --hardware "Apple MacBook Pro M4 Pro" "GMKTec EVO X2" "Framework Desktop"
 ```
 
+## Operating System Comparison
+
+### Compare Windows vs Fedora performance
+```bash
+python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --os "Windows" "Fedora"
+```
+
+### Filter to Windows results only
+```bash
+python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --os "Windows"
+```
+
+### Compare macOS vs Linux
+```bash
+python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --os "macOS" "Linux"
+```
+
+### Combine OS and hardware filtering
+```bash
+python prompt_hardware_comparison.py --model qwen3-coder-30b --quantization int4 --hardware "GMKTec EVO X2" --os "Windows" "Fedora"
+```
+
 ## Memory Configuration Analysis
 
 ### Compare all Framework Desktop memory configurations
@@ -111,4 +133,5 @@ python prompt_hardware_comparison.py --show-hardware-names
 - **Quantizations**: int4, int8, int3, fp4, fp8, fp16, bf16
 - **Metrics**: tokens_per_second_mean (default), response_time_mean, tokens_per_second_cv
 - **Hardware**: Use `--show-hardware-names` to see all detected configurations
+- **Operating Systems**: Use `--list-available` to see all available OS options (e.g., Windows, Fedora, macOS, Linux)
 
