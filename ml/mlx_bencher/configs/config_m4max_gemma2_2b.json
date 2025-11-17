@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  
+  "_comment_hardware_section": "Physical machine characteristics",
+  "hardware": {
+    "make": "Apple",
+    "device_model": "MacBook Pro",
+    "code": "mbp_m4max",
+    "cpu": "M4 Max",
+    "memory_gb": 128,
+    "is_igpu": true,
+    "gpu": "M4 Max",
+    "vram_allocation": "dynamic",
+    "vram_gb": 128,
+    "notes": "Apple MacBook Pro with M4 Max (2024)"
+  },
+  
+  "environment": {
+    "os": "macOS Sequoia"
+  },
+  
+  "_comment_target_section": "MLX model configuration",
+  "target": {
+    "model_path": "/Users/alex/.cache/lm-studio/models/lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-MLX-4bit",
+    "model_name": "Qwen3-Coder-30B-A3B-Instruct-MLX-4bit",
+    "quant": "4bit",
+    "max_tokens": 100
+  },
+  
+  "_comment_benchmark_section": "Benchmark parameters",
+  "benchmark": {
+    "prompt_sizes": [16000],
+    "output_tokens": 512,
+    "iterations": 1,
+    "warmup_iterations": 2,
+    "temperature": 0.0,
+    "repetition_penalty": 1.0
+  },
+  
+  "_comment_results": "Results are saved to results/<model_name>/<quant>/<hardware_code>/"
+}
