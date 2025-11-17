@@ -7,7 +7,7 @@
   "hardware": {
     "make": "Framework",
     "device_model": "Desktop",
-    "code": "fw_desktop_ai395",  
+    "code": "fw_desktop_ai395x4",  
     "cpu": "AMD Ryzen AI Max+ 395",
     "memory_gb": 128,
     "is_igpu": true,
@@ -21,11 +21,11 @@
   },
   "_comment_target_section": "Target inference configuration (model + runtime stack)",
   "target": {
-    "llm_url": "http://127.0.0.1:1234/v1/chat/completions",
-    "model": "qwen3-coder-30b-a3b-instruct@q8_0",
-    "quant": "q8_0",
-    "backend": "vulkan",
-    "runtime": "lmstudio"
+    "llm_url": "http://127.0.0.1:8080/v1/chat/completions",
+    "model": "MiniMax-M2-UD-Q6_K_XL-00001-of-00004.gguf",
+    "quant": "Q6_K_XL",
+    "backend": "rocm",
+    "runtime": "llama.cpp"
   },
   "request_timeout": 1000,
   "output_csv": "results.csv",
