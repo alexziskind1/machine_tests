@@ -29,9 +29,9 @@
   
   "_comment_benchmark_section": "Benchmark parameters",
   "benchmark": {
-    "prompt_sizes": [16000],
+    "prompt_sizes": [128, 256],
     "output_tokens": 512,
-    "iterations": 1,
+    "iterations": 2,
     "warmup_iterations": 2,
     "temperature": 0.0,
     "repetition_penalty": 1.0

@@ -88,8 +88,8 @@ class MLXBenchRunner:
 
     def _benchmark_prompt_processing(
         self, prompt: str, prompt_size: int
-    ) -> tuple[float, float]:
-        """Benchmark prompt processing speed (pp test)."""
+    ) -> list[float]:
+        """Benchmark prompt processing speed (pp test) - returns list of individual results."""
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model not loaded")
 
@@ -113,17 +113,10 @@ class MLXBenchRunner:
             tokens_per_sec = len(tokens) / elapsed if elapsed > 0 else 0
             times.append(tokens_per_sec)
 
-        # Calculate mean and std dev
-        mean_tps = sum(times) / len(times)
-        variance = sum((x - mean_tps) ** 2 for x in times) / len(times)
-        std_dev = variance**0.5
+        return times
 
-        return mean_tps, std_dev
-
-    def _benchmark_text_generation(
-        self, prompt: str, prompt_size: int
-    ) -> tuple[float, float]:
-        """Benchmark text generation speed (tg test)."""
+    def _benchmark_text_generation(self, prompt: str, prompt_size: int) -> list[float]:
+        """Benchmark text generation speed (tg test) - returns list of individual results."""
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("Model not loaded")
 
@@ -169,12 +162,7 @@ class MLXBenchRunner:
             )
             times.append(tokens_per_sec)
 
-        # Calculate mean and std dev
-        mean_tps = sum(times) / len(times)
-        variance = sum((x - mean_tps) ** 2 for x in times) / len(times)
-        std_dev = variance**0.5
-
-        return mean_tps, std_dev
+        return times
 
     def run_benchmark(self) -> bool:
         """Run MLX benchmarks with configured parameters."""
@@ -238,30 +226,35 @@ class MLXBenchRunner:
             # Prompt processing (pp) test
             print(f"  Running pp test ({self.cfg.benchmark.iterations} iterations)...")
             try:
-                mean_tps, std_dev = self._benchmark_prompt_processing(
-                    prompt, prompt_size
-                )
+                pp_times = self._benchmark_prompt_processing(prompt, prompt_size)
 
-                result = BenchmarkResult(
-                    timestamp=timestamp,
-                    model_name=self.cfg.target.model_name,
-                    model_size_gb=model_size_gb,
-                    params_b=params_b,
-                    test_type=f"pp{prompt_size}",
-                    prompt_size=prompt_size,
-                    tokens_per_second=mean_tps,
-                    std_dev=std_dev,
-                    quantization=self.cfg.target.quant,
-                    hardware_slug=self.cfg.hardware.identifier(),
-                    hardware_make=self.cfg.hardware.make,
-                    hardware_model=self.cfg.hardware.device_model,
-                    hardware_cpu=self.cfg.hardware.cpu,
-                    hardware_mem_gb=self.cfg.hardware.memory_gb,
-                    hardware_gpu=self.cfg.hardware.gpu,
-                    environment_os=self.cfg.environment.os,
-                    model_path=self.cfg.target.model_path,
-                )
-                self.results.append(result)
+                # Save each iteration as a separate result
+                for iteration_tps in pp_times:
+                    result = BenchmarkResult(
+                        timestamp=timestamp,
+                        model_name=self.cfg.target.model_name,
+                        model_size_gb=model_size_gb,
+                        params_b=params_b,
+                        test_type=f"pp{prompt_size}",
+                        prompt_size=prompt_size,
+                        tokens_per_second=iteration_tps,
+                        std_dev=0.0,  # No std_dev for individual iterations
+                        quantization=self.cfg.target.quant,
+                        hardware_slug=self.cfg.hardware.identifier(),
+                        hardware_make=self.cfg.hardware.make,
+                        hardware_model=self.cfg.hardware.device_model,
+                        hardware_cpu=self.cfg.hardware.cpu,
+                        hardware_mem_gb=self.cfg.hardware.memory_gb,
+                        hardware_gpu=self.cfg.hardware.gpu,
+                        environment_os=self.cfg.environment.os,
+                        model_path=self.cfg.target.model_path,
+                    )
+                    self.results.append(result)
+
+                # Calculate stats for display
+                mean_tps = sum(pp_times) / len(pp_times)
+                variance = sum((x - mean_tps) ** 2 for x in pp_times) / len(pp_times)
+                std_dev = variance**0.5
                 print(f"  ✓ pp: {mean_tps:.2f} ± {std_dev:.2f} tokens/sec")
             except Exception as e:
                 print(f"  ✗ pp test failed: {e}")
@@ -269,28 +262,36 @@ class MLXBenchRunner:
             # Text generation (tg) test
             print(f"  Running tg test ({self.cfg.benchmark.iterations} iterations)...")
             try:
-                mean_tps, std_dev = self._benchmark_text_generation(prompt, prompt_size)
+                tg_times = self._benchmark_text_generation(prompt, prompt_size)
 
-                result = BenchmarkResult(
-                    timestamp=timestamp,
-                    model_name=self.cfg.target.model_name,
-                    model_size_gb=model_size_gb,
-                    params_b=params_b,
-                    test_type=f"tg{prompt_size}",
-                    prompt_size=prompt_size,
-                    tokens_per_second=mean_tps,
-                    std_dev=std_dev,
-                    quantization=self.cfg.target.quant,
-                    hardware_slug=self.cfg.hardware.identifier(),
-                    hardware_make=self.cfg.hardware.make,
-                    hardware_model=self.cfg.hardware.device_model,
-                    hardware_cpu=self.cfg.hardware.cpu,
-                    hardware_mem_gb=self.cfg.hardware.memory_gb,
-                    hardware_gpu=self.cfg.hardware.gpu,
-                    environment_os=self.cfg.environment.os,
-                    model_path=self.cfg.target.model_path,
-                )
-                self.results.append(result)
+                # Save each iteration as a separate result
+                # TG test is named after output_tokens (like llama-bench does), not prompt_size
+                for iteration_tps in tg_times:
+                    result = BenchmarkResult(
+                        timestamp=timestamp,
+                        model_name=self.cfg.target.model_name,
+                        model_size_gb=model_size_gb,
+                        params_b=params_b,
+                        test_type=f"tg{self.cfg.benchmark.output_tokens}",
+                        prompt_size=prompt_size,  # Store actual prompt size used
+                        tokens_per_second=iteration_tps,
+                        std_dev=0.0,  # No std_dev for individual iterations
+                        quantization=self.cfg.target.quant,
+                        hardware_slug=self.cfg.hardware.identifier(),
+                        hardware_make=self.cfg.hardware.make,
+                        hardware_model=self.cfg.hardware.device_model,
+                        hardware_cpu=self.cfg.hardware.cpu,
+                        hardware_mem_gb=self.cfg.hardware.memory_gb,
+                        hardware_gpu=self.cfg.hardware.gpu,
+                        environment_os=self.cfg.environment.os,
+                        model_path=self.cfg.target.model_path,
+                    )
+                    self.results.append(result)
+
+                # Calculate stats for display
+                mean_tps = sum(tg_times) / len(tg_times)
+                variance = sum((x - mean_tps) ** 2 for x in tg_times) / len(tg_times)
+                std_dev = variance**0.5
                 print(f"  ✓ tg: {mean_tps:.2f} ± {std_dev:.2f} tokens/sec")
             except Exception as e:
                 print(f"  ✗ tg test failed: {e}")

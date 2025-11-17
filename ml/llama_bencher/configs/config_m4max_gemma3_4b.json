@@ -22,8 +22,8 @@
   "_comment_target_section": "llama-bench executable and model configuration",
   "target": {
     "llama_bench_path": "~/Code/ml/llama.cpp/build/bin/llama-bench",
-    "model_path": "~/.cache/lm-studio/models/lmstudio-community/gemma-3-4b-it-GGUF/gemma-3-4b-it-Q4_K_M.gguf",
-    "model_name": "gemma-3-4b-it",
+    "model_path": "/Users/alex/.cache/lm-studio/models/lmstudio-community/Qwen3-Coder-30B-A3B-Instruct-GGUF/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+    "model_name": "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M",
     "quant": "Q4_K_M",
     "backend": "Metal",
     "threads": 12
@@ -31,9 +31,9 @@
   
   "_comment_benchmark_section": "Benchmark parameters",
   "benchmark": {
-    "prompt_sizes": [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768],
+    "prompt_sizes": [128, 256],
     "output_tokens": 512,
-    "iterations": 5,
+    "iterations": 2,
     "warmup_iterations": 2
   },
   

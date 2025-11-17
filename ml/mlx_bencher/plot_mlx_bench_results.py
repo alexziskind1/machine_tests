@@ -291,6 +291,10 @@ def create_hardware_comparison_chart(
         print(f"No data after filtering (test_type={test_type_filter})")
         return
 
+    # Get model names for title
+    model_names = filtered_df["model_name"].unique()
+    model_name_for_title = " / ".join(sorted(model_names))
+
     # Group by hardware and prompt size
     grouped = (
         filtered_df.groupby(["hardware_cpu", "prompt_size"])
@@ -336,9 +340,7 @@ def create_hardware_comparison_chart(
     elif test_type_filter == "tg":
         test_type_label = " (Text Generation)"
 
-    title_parts = [f"MLX Bench: Hardware Comparison{test_type_label}"]
-    if filter_model:
-        title_parts.append(f"Model: {filter_model}")
+    title_parts = [f"MLX Bench: {model_name_for_title}{test_type_label}"]
     if filter_quant:
         title_parts.append(f"Quantization: {filter_quant}")
 

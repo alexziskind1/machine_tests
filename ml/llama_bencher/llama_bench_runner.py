@@ -175,24 +175,6 @@ class LlamaBenchRunner:
             print(f"Error: Model not found at {model_path}")
             return False
 
-        # Build command
-        prompt_sizes_str = ",".join(map(str, self.cfg.benchmark.prompt_sizes))
-
-        cmd = [
-            llama_bench_path,
-            "-m",
-            model_path,
-            "-p",
-            prompt_sizes_str,
-            "-n",
-            str(self.cfg.benchmark.output_tokens),
-        ]
-
-        if self.cfg.target.threads:
-            cmd.extend(["-t", str(self.cfg.target.threads)])
-
-        print(f"\nRunning: {' '.join(cmd)}\n")
-
         # Warmup runs - use small prompt size to just load the model
         if self.cfg.benchmark.warmup_iterations > 0:
             print(
@@ -227,86 +209,110 @@ class LlamaBenchRunner:
                 time.sleep(1)  # Shorter pause between warmups
             print("✓ Warmup complete\n")
 
-        # Run actual benchmarks
-        print(f"📊 Running {self.cfg.benchmark.iterations} benchmark iterations...\n")
+        # Run actual benchmarks - one prompt size at a time
+        print(
+            f"📊 Running benchmarks for {len(self.cfg.benchmark.prompt_sizes)} prompt sizes...\n"
+        )
 
-        for iteration in range(self.cfg.benchmark.iterations):
+        for prompt_size in self.cfg.benchmark.prompt_sizes:
             print(f"{'='*80}")
-            print(f"Iteration {iteration + 1}/{self.cfg.benchmark.iterations}")
+            print(f"Prompt Size: {prompt_size} tokens")
             print(f"{'='*80}")
 
-            try:
-                result = subprocess.run(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    timeout=600,
-                    check=True,
-                    text=True,
-                )
+            # Build command for this specific prompt size
+            cmd = [
+                llama_bench_path,
+                "-m",
+                model_path,
+                "-p",
+                str(prompt_size),
+                "-n",
+                str(self.cfg.benchmark.output_tokens),
+            ]
 
-                # Parse output
-                parsed_results = self._parse_llama_bench_output(result.stdout)
+            if self.cfg.target.threads:
+                cmd.extend(["-t", str(self.cfg.target.threads)])
 
-                if not parsed_results:
-                    print("Warning: No results parsed from output")
-                    print("\n--- llama-bench output ---")
-                    print(result.stdout)
-                    print("--- end output ---\n")
+            for iteration in range(self.cfg.benchmark.iterations):
+                print(f"  Iteration {iteration + 1}/{self.cfg.benchmark.iterations}")
+
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        timeout=600,
+                        check=True,
+                        text=True,
+                    )
+
+                    # Parse output
+                    parsed_results = self._parse_llama_bench_output(result.stdout)
+
+                    if not parsed_results:
+                        print(f"  Warning: No results parsed from output")
+                        continue
+
+                    # Store results
+                    timestamp = datetime.now().isoformat()
+                    for res in parsed_results:
+                        test_info = self._parse_test_info(res["test"])
+                        if test_info is None:
+                            continue  # Skip unparseable tests
+
+                        test_type, test_size = test_info
+
+                        tokens_per_sec, std_dev = self._parse_tokens_per_second(
+                            res["tokens_per_second"]
+                        )
+
+                        # For TG tests, override the prompt_size with the actual prompt size used
+                        # (llama-bench reports tg512 but we want to track which prompt size was used)
+                        actual_prompt_size = (
+                            prompt_size if test_type == "tg" else test_size
+                        )
+
+                        benchmark_result = BenchmarkResult(
+                            timestamp=timestamp,
+                            model_name=self.cfg.target.model_name,
+                            model_size_gb=self._parse_model_size(res["size"]),
+                            params_b=self._parse_params(res["params"]),
+                            backend=res["backend"],
+                            threads=res["threads"],
+                            test_type=res["test"],
+                            prompt_size=actual_prompt_size,
+                            tokens_per_second=tokens_per_sec,
+                            std_dev=std_dev,
+                            quantization=self.cfg.target.quant,
+                            hardware_slug=self.cfg.hardware.identifier(),
+                            hardware_make=self.cfg.hardware.make,
+                            hardware_model=self.cfg.hardware.device_model,
+                            hardware_cpu=self.cfg.hardware.cpu,
+                            hardware_mem_gb=self.cfg.hardware.memory_gb,
+                            hardware_gpu=self.cfg.hardware.gpu,
+                            environment_os=self.cfg.environment.os,
+                            model_path=model_path,
+                        )
+
+                        self.results.append(benchmark_result)
+
+                    print(
+                        f"  ✓ Iteration {iteration + 1} complete: {len(parsed_results)} results"
+                    )
+
+                except subprocess.TimeoutExpired:
+                    print(f"  ✗ Iteration {iteration + 1} timed out")
+                    continue
+                except subprocess.CalledProcessError as e:
+                    print(f"  ✗ Iteration {iteration + 1} failed: {e}")
+                    print(f"  stderr: {e.stderr}")
                     continue
 
-                # Store results
-                timestamp = datetime.now().isoformat()
-                for res in parsed_results:
-                    test_info = self._parse_test_info(res["test"])
-                    if test_info is None:
-                        continue  # Skip unparseable tests
+                # Brief pause between iterations
+                if iteration < self.cfg.benchmark.iterations - 1:
+                    time.sleep(1)
 
-                    test_type, test_size = test_info
-
-                    tokens_per_sec, std_dev = self._parse_tokens_per_second(
-                        res["tokens_per_second"]
-                    )
-
-                    benchmark_result = BenchmarkResult(
-                        timestamp=timestamp,
-                        model_name=self.cfg.target.model_name,
-                        model_size_gb=self._parse_model_size(res["size"]),
-                        params_b=self._parse_params(res["params"]),
-                        backend=res["backend"],
-                        threads=res["threads"],
-                        test_type=res["test"],
-                        prompt_size=test_size,  # Now stores both pp and tg sizes
-                        tokens_per_second=tokens_per_sec,
-                        std_dev=std_dev,
-                        quantization=self.cfg.target.quant,
-                        hardware_slug=self.cfg.hardware.identifier(),
-                        hardware_make=self.cfg.hardware.make,
-                        hardware_model=self.cfg.hardware.device_model,
-                        hardware_cpu=self.cfg.hardware.cpu,
-                        hardware_mem_gb=self.cfg.hardware.memory_gb,
-                        hardware_gpu=self.cfg.hardware.gpu,
-                        environment_os=self.cfg.environment.os,
-                        model_path=model_path,
-                    )
-
-                    self.results.append(benchmark_result)
-
-                print(
-                    f"✓ Iteration {iteration + 1} complete: {len(parsed_results)} results"
-                )
-
-            except subprocess.TimeoutExpired:
-                print(f"✗ Iteration {iteration + 1} timed out")
-                continue
-            except subprocess.CalledProcessError as e:
-                print(f"✗ Iteration {iteration + 1} failed: {e}")
-                print(f"stderr: {e.stderr}")
-                continue
-
-            # Brief pause between iterations
-            if iteration < self.cfg.benchmark.iterations - 1:
-                time.sleep(3)
+            print()  # Blank line after each prompt size
 
         print(f"\n{'='*80}")
         print(f"Benchmark complete: {len(self.results)} total results collected")
