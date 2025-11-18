@@ -5,18 +5,18 @@
   "hardware": {
     "make": "Apple",
     "device_model": "MacBook Pro",
-    "code": "mbp_m5",
-    "cpu": "M5",
-    "memory_gb": 32,
+    "code": "mbp_m4max",
+    "cpu": "M4 Max",
+    "memory_gb": 128,
     "is_igpu": true,
-    "gpu": "M5",
+    "gpu": "M4 Max",
     "vram_allocation": "dynamic",
-    "vram_gb": 32,
-    "notes": "Apple MacBook Pro with M5 (2025)"
+    "vram_gb": 128,
+    "notes": "Apple MacBook Pro with M4 Max (2024)"
   },
   
   "environment": {
-    "os": "macOS Tahoe"
+    "os": "macOS Sequoia"
   },
   
   "_comment_target_section": "llama-bench executable and model configuration",
@@ -31,7 +31,7 @@
   
   "_comment_benchmark_section": "Benchmark parameters",
   "benchmark": {
-    "prompt_sizes": [128, 256, 512, 1024, 2048, 4096, 8192, 16384],
+    "prompt_sizes": [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768],
     "output_tokens": 512,
     "iterations": 5,
     "warmup_iterations": 2
