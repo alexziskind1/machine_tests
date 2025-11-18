@@ -5,7 +5,7 @@
   "hardware": {
     "make": "Framework",
     "device_model": "Desktop",
-    "code": "fw_desktop_ai395x4",
+    "code": "fw_desktop_ai395x1",
     "cpu": "AMD Ryzen AI Max+ 395",
     "memory_gb": 128,
     "is_igpu": true,
@@ -29,7 +29,7 @@
     "threads": 12,
     "mmp": 0,
     "fa": 1,
-    "rpc": "192.168.100.11:50052,192.168.100.12:50052,192.168.100.13:50052"
+    "rpc": null
   },
   
   "_comment_benchmark_section": "Benchmark parameters",

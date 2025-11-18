@@ -50,6 +50,12 @@ class TargetConfig:
     mmp: Optional[int] = None  # Main GPU percentage (0-100)
     fa: Optional[int] = None   # Flash attention (0 or 1)
     rpc: Optional[str] = None  # RPC servers (comma-separated)
+    
+    def get_rpc_node_count(self) -> int:
+        """Get the number of RPC nodes from the rpc string."""
+        if not self.rpc:
+            return 0
+        return len([s.strip() for s in self.rpc.split(",") if s.strip()])
 
 
 @dataclass

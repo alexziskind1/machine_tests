@@ -46,6 +46,7 @@ class BenchmarkResult:
     hardware_gpu: str
     environment_os: str
     model_path: str
+    rpc_nodes: int = 0  # Number of RPC nodes used (0 = local only)
 
 
 class LlamaBenchRunner:
@@ -326,6 +327,7 @@ class LlamaBenchRunner:
                             hardware_gpu=self.cfg.hardware.gpu,
                             environment_os=self.cfg.environment.os,
                             model_path=model_path,
+                            rpc_nodes=self.cfg.target.get_rpc_node_count(),
                         )
 
                         self.results.append(benchmark_result)
@@ -398,6 +400,7 @@ class LlamaBenchRunner:
             "hardware_gpu",
             "environment_os",
             "model_path",
+            "rpc_nodes",
         ]
 
         saved_files = []
@@ -433,6 +436,7 @@ class LlamaBenchRunner:
                             "hardware_gpu": result.hardware_gpu,
                             "environment_os": result.environment_os,
                             "model_path": result.model_path,
+                            "rpc_nodes": result.rpc_nodes,
                         }
                     )
 
@@ -472,6 +476,7 @@ class LlamaBenchRunner:
                             "hardware_gpu": result.hardware_gpu,
                             "environment_os": result.environment_os,
                             "model_path": result.model_path,
+                            "rpc_nodes": result.rpc_nodes,
                         }
                     )
 

@@ -108,15 +108,18 @@ def create_prompt_size_performance_chart(
         print(f"No data after filtering (test_type={test_type_filter})")
         return
 
-    # Create hardware + model + quant labels for grouping
-    filtered_df["config_label"] = (
-        filtered_df["hardware_cpu"]
-        + " - "
-        + filtered_df["model_name"]
-        + " ("
-        + filtered_df["quantization"]
-        + ")"
-    )
+    # Create hardware + RPC nodes labels for grouping
+    # (model name and quant are already in the chart title)
+    def create_config_label(row):
+        label = f"{row['hardware_cpu']}"
+        # Add RPC node count if present and not 0
+        if 'rpc_nodes' in row and pd.notna(row['rpc_nodes']) and row['rpc_nodes'] > 0:
+            label += f" - {int(row['rpc_nodes'])} RPC nodes"
+        elif 'rpc_nodes' in row and pd.notna(row['rpc_nodes']) and row['rpc_nodes'] == 0:
+            label += " - Local only"
+        return label
+    
+    filtered_df["config_label"] = filtered_df.apply(create_config_label, axis=1)
 
     # Group by prompt size and configuration, calculate statistics
     grouped = (
@@ -295,9 +298,22 @@ def create_hardware_comparison_chart(
     model_names = filtered_df["model_name"].unique()
     model_name_for_title = " / ".join(sorted(model_names))
 
-    # Group by hardware and prompt size
+    # Create hardware + RPC nodes labels for grouping
+    # (model name and quant are already in the chart title)
+    def create_config_label(row):
+        label = f"{row['hardware_cpu']}"
+        # Add RPC node count if present and not 0
+        if 'rpc_nodes' in row and pd.notna(row['rpc_nodes']) and row['rpc_nodes'] > 0:
+            label += f" - {int(row['rpc_nodes'])} RPC nodes"
+        elif 'rpc_nodes' in row and pd.notna(row['rpc_nodes']) and row['rpc_nodes'] == 0:
+            label += " - Local only"
+        return label
+    
+    filtered_df["config_label"] = filtered_df.apply(create_config_label, axis=1)
+
+    # Group by config label and prompt size
     grouped = (
-        filtered_df.groupby(["hardware_cpu", "prompt_size"])
+        filtered_df.groupby(["config_label", "prompt_size"])
         .agg({"tokens_per_second": ["mean", "std"]})
         .reset_index()
     )
