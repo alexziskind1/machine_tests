@@ -99,7 +99,11 @@ class LlamaBenchRunner:
         return None
 
     def _build_llama_bench_cmd(
-        self, llama_bench_path: str, model_path: str, prompt_size: int, output_tokens: int
+        self,
+        llama_bench_path: str,
+        model_path: str,
+        prompt_size: int,
+        output_tokens: int,
     ) -> list:
         """Build llama-bench command with all configured options."""
         cmd = [
@@ -132,20 +136,34 @@ class LlamaBenchRunner:
         lines = output.split("\n")
         results = []
 
-        # Find the table header (look for the separator line with dashes)
-        header_found = False
-        data_start = 0
+        # Find the table header and parse column positions
+        header_line = None
+        header_idx = -1
         for i, line in enumerate(lines):
-            # Look for the separator line with dashes (appears after header)
-            if line.strip().startswith("|") and "---" in line:
-                header_found = True
-                # Data starts on next line
-                data_start = i + 1
+            if line.strip().startswith("|") and "model" in line.lower():
+                header_line = line
+                header_idx = i
                 break
 
-        if not header_found:
-            print("Warning: Could not find llama-bench output table")
+        if not header_line:
+            print("Warning: Could not find llama-bench output table header")
             return results
+
+        # Parse header to get column names and positions
+        header_parts = [p.strip().lower() for p in header_line.split("|")]
+
+        # Create column mapping (skip empty strings from leading/trailing pipes)
+        col_map = {}
+        for idx, col_name in enumerate(header_parts):
+            if col_name:
+                col_map[col_name] = idx
+
+        # Find where data starts (after separator line with dashes)
+        data_start = header_idx + 1
+        for i in range(header_idx + 1, len(lines)):
+            if "---" in lines[i]:
+                data_start = i + 1
+                break
 
         # Parse data rows
         for line in lines[data_start:]:
@@ -158,45 +176,69 @@ class LlamaBenchRunner:
 
             # Split by | and clean up
             parts = [p.strip() for p in line.split("|")]
-            
-            # The table can have variable columns depending on options used
-            # Standard: model | size | params | backend | ngl | threads | test | t/s
-            # With RPC/FA: model | size | params | backend | ngl | threads | fa | mmap | test | t/s
-            
-            if len(parts) < 9:  # Minimum columns needed
+
+            # Skip rows with insufficient data
+            if len(parts) < len(col_map) + 1:  # +1 for trailing empty
                 continue
 
-            # Skip empty rows
-            if not parts[1]:
+            # Skip empty rows (check if model column is empty)
+            if "model" in col_map and not parts[col_map["model"]]:
                 continue
 
             try:
-                # Always present columns
-                result = {
-                    "model": parts[1],
-                    "size": parts[2],
-                    "params": parts[3],
-                    "backend": parts[4],
-                    "ngl": int(parts[5]) if parts[5].isdigit() else 0,
-                    "threads": int(parts[6]) if parts[6].isdigit() else 0,
-                }
-                
-                # Detect if we have the extended format (fa/mmap columns)
-                # If parts[7] is a number (0 or 1), it's the fa column
-                if len(parts) >= 11 and parts[7].isdigit() and int(parts[7]) in [0, 1]:
-                    # Extended format: fa and mmap are present
-                    result["fa"] = int(parts[7])
-                    result["mmap"] = int(parts[8]) if parts[8].isdigit() else 0
-                    result["test"] = parts[9]
-                    result["tokens_per_second"] = parts[10]
+                # Build result dict using column mapping
+                result = {}
+
+                # Extract required columns
+                if "model" in col_map:
+                    result["model"] = parts[col_map["model"]]
+                if "size" in col_map:
+                    result["size"] = parts[col_map["size"]]
+                if "params" in col_map:
+                    result["params"] = parts[col_map["params"]]
+                if "backend" in col_map:
+                    result["backend"] = parts[col_map["backend"]]
+                if "threads" in col_map:
+                    result["threads"] = (
+                        int(parts[col_map["threads"]])
+                        if parts[col_map["threads"]].isdigit()
+                        else 0
+                    )
+                if "test" in col_map:
+                    result["test"] = parts[col_map["test"]]
+                if "t/s" in col_map:
+                    result["tokens_per_second"] = parts[col_map["t/s"]]
+
+                # Optional columns
+                if "ngl" in col_map:
+                    result["ngl"] = (
+                        int(parts[col_map["ngl"]])
+                        if parts[col_map["ngl"]].isdigit()
+                        else 0
+                    )
                 else:
-                    # Standard format: no fa/mmap columns
-                    result["test"] = parts[7]
-                    result["tokens_per_second"] = parts[8]
-                
-                results.append(result)
+                    result["ngl"] = 0
+
+                if "fa" in col_map:
+                    result["fa"] = (
+                        int(parts[col_map["fa"]])
+                        if parts[col_map["fa"]].isdigit()
+                        else 0
+                    )
+
+                if "mmap" in col_map:
+                    result["mmap"] = (
+                        int(parts[col_map["mmap"]])
+                        if parts[col_map["mmap"]].isdigit()
+                        else 0
+                    )
+
+                # Only add if we have the essential columns
+                if "test" in result and "tokens_per_second" in result:
+                    results.append(result)
+
             except (ValueError, IndexError) as e:
-                print(f"Warning: Could not parse line: {line}")
+                print(f"Warning: Could not parse line: {line} - {e}")
                 continue
 
         return results
@@ -422,10 +464,13 @@ class LlamaBenchRunner:
                     # Store results and save immediately
                     timestamp = datetime.now().isoformat()
                     iteration_results = []
-                    
+
                     for res in parsed_results:
                         test_info = self._parse_test_info(res["test"])
                         if test_info is None:
+                            print(
+                                f"  Warning: Could not parse test name: '{res['test']}'"
+                            )
                             continue  # Skip unparseable tests
 
                         test_type, test_size = test_info
@@ -682,7 +727,6 @@ def main():
         runner = LlamaBenchRunner(args.config)
 
         if runner.run_benchmark():
-            runner.save_results()
             runner.print_summary()
             return 0
         else:
