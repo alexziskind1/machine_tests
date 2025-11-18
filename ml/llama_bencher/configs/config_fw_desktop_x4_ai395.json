@@ -22,14 +22,14 @@
   "_comment_target_section": "llama-bench executable and model configuration",
   "target": {
     "llama_bench_path": "/usr/local/sbin/llama-bench",
-    "model_path": "/mnt/external/models/lmstudio-community/gemma-3-4b-it-GGUF/gemma-3-4b-it-Q4_K_M.gguf",
-    "model_name": "gemma-3-4b-it-Q4_K_M",
-    "quant": "Q4_K_M",
+    "model_path": "/mnt/external/models/unsloth/MiniMax-M2/MiniMax-M2-UD-Q6_K_XL-00001-of-00004.gguf",
+    "model_name": "MiniMax-M2-UD-Q6_K_XL",
+    "quant": "Q6_K_XL",
     "backend": "ROCm",
     "threads": 12,
     "mmp": 0,
     "fa": 1,
-    "rpc": null
+    "rpc": "192.168.100.11:50052,192.168.100.12:50052"
   },
   
   "_comment_benchmark_section": "Benchmark parameters",
