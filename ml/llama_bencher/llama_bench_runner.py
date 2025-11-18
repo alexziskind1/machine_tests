@@ -201,6 +201,134 @@ class LlamaBenchRunner:
 
         return results
 
+    def _initialize_csv_files(self):
+        """Initialize CSV files for incremental writing."""
+        # Create nested directory structure: results/<model>/<quant>/<hardware>/
+        model_dir = (
+            self.cfg.target.model_name.replace("-", "_").replace(" ", "_").lower()
+        )
+        quant_dir = self.cfg.target.quant.lower()
+        hardware_dir = self.cfg.hardware.identifier()
+
+        self.results_dir = Path("results") / model_dir / quant_dir / hardware_dir
+        self.results_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate timestamp for this run
+        self.run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # CSV fieldnames
+        self.fieldnames = [
+            "timestamp",
+            "model_name",
+            "model_size_gb",
+            "params_b",
+            "backend",
+            "threads",
+            "test_type",
+            "prompt_size",
+            "tokens_per_second",
+            "std_dev",
+            "quantization",
+            "hardware_slug",
+            "hardware_make",
+            "hardware_model",
+            "hardware_cpu",
+            "hardware_mem_gb",
+            "hardware_gpu",
+            "environment_os",
+            "model_path",
+            "rpc_nodes",
+        ]
+
+        # Create file paths
+        pp_filename = f"{self.run_timestamp}__{self.cfg.target.model_name.replace('-', '_')}__{self.cfg.target.quant}__{self.cfg.target.backend}__{hardware_dir}__llama_bench_pp.csv"
+        tg_filename = f"{self.run_timestamp}__{self.cfg.target.model_name.replace('-', '_')}__{self.cfg.target.quant}__{self.cfg.target.backend}__{hardware_dir}__llama_bench_tg.csv"
+
+        self.pp_filepath = self.results_dir / pp_filename
+        self.tg_filepath = self.results_dir / tg_filename
+
+        # Initialize files with headers
+        with open(self.pp_filepath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+            writer.writeheader()
+
+        with open(self.tg_filepath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+            writer.writeheader()
+
+        print(f"\nResults will be saved to:")
+        print(f"  PP: {self.pp_filepath}")
+        print(f"  TG: {self.tg_filepath}\n")
+
+    def _save_results_incremental(self, new_results: list):
+        """Append new results to CSV files immediately."""
+        if not new_results:
+            return
+
+        # Separate by test type
+        pp_results = [r for r in new_results if r.test_type.startswith("pp")]
+        tg_results = [r for r in new_results if r.test_type.startswith("tg")]
+
+        # Append pp results
+        if pp_results:
+            with open(self.pp_filepath, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                for result in pp_results:
+                    writer.writerow(
+                        {
+                            "timestamp": result.timestamp,
+                            "model_name": result.model_name,
+                            "model_size_gb": result.model_size_gb,
+                            "params_b": result.params_b,
+                            "backend": result.backend,
+                            "threads": result.threads,
+                            "test_type": result.test_type,
+                            "prompt_size": result.prompt_size,
+                            "tokens_per_second": result.tokens_per_second,
+                            "std_dev": result.std_dev,
+                            "quantization": result.quantization,
+                            "hardware_slug": result.hardware_slug,
+                            "hardware_make": result.hardware_make,
+                            "hardware_model": result.hardware_model,
+                            "hardware_cpu": result.hardware_cpu,
+                            "hardware_mem_gb": result.hardware_mem_gb,
+                            "hardware_gpu": result.hardware_gpu,
+                            "environment_os": result.environment_os,
+                            "model_path": result.model_path,
+                            "rpc_nodes": result.rpc_nodes,
+                        }
+                    )
+
+        # Append tg results
+        if tg_results:
+            with open(self.tg_filepath, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                for result in tg_results:
+                    writer.writerow(
+                        {
+                            "timestamp": result.timestamp,
+                            "model_name": result.model_name,
+                            "model_size_gb": result.model_size_gb,
+                            "params_b": result.params_b,
+                            "backend": result.backend,
+                            "threads": result.threads,
+                            "test_type": result.test_type,
+                            "prompt_size": result.prompt_size,
+                            "tokens_per_second": result.tokens_per_second,
+                            "std_dev": result.std_dev,
+                            "quantization": result.quantization,
+                            "hardware_slug": result.hardware_slug,
+                            "hardware_make": result.hardware_make,
+                            "hardware_model": result.hardware_model,
+                            "hardware_cpu": result.hardware_cpu,
+                            "hardware_mem_gb": result.hardware_mem_gb,
+                            "hardware_gpu": result.hardware_gpu,
+                            "environment_os": result.environment_os,
+                            "model_path": result.model_path,
+                            "rpc_nodes": result.rpc_nodes,
+                        }
+                    )
+
     def run_benchmark(self) -> bool:
         """Run llama-bench with configured parameters."""
         print("=== llama-bench Benchmark Runner ===")
@@ -223,6 +351,9 @@ class LlamaBenchRunner:
         if not os.path.exists(model_path):
             print(f"Error: Model not found at {model_path}")
             return False
+
+        # Initialize CSV files for incremental writing
+        self._initialize_csv_files()
 
         # Warmup runs - use small prompt size to just load the model
         if self.cfg.benchmark.warmup_iterations > 0:
@@ -288,8 +419,10 @@ class LlamaBenchRunner:
                         print(f"  Warning: No results parsed from output")
                         continue
 
-                    # Store results
+                    # Store results and save immediately
                     timestamp = datetime.now().isoformat()
+                    iteration_results = []
+                    
                     for res in parsed_results:
                         test_info = self._parse_test_info(res["test"])
                         if test_info is None:
@@ -331,9 +464,13 @@ class LlamaBenchRunner:
                         )
 
                         self.results.append(benchmark_result)
+                        iteration_results.append(benchmark_result)
+
+                    # Save results immediately after each iteration
+                    self._save_results_incremental(iteration_results)
 
                     print(
-                        f"  ✓ Iteration {iteration + 1} complete: {len(parsed_results)} results"
+                        f"  ✓ Iteration {iteration + 1} complete: {len(parsed_results)} results (saved)"
                     )
 
                 except subprocess.TimeoutExpired:
@@ -352,7 +489,10 @@ class LlamaBenchRunner:
 
         print(f"\n{'='*80}")
         print(f"Benchmark complete: {len(self.results)} total results collected")
-        print(f"{'='*80}\n")
+        print(f"{'='*80}")
+        print(f"\nResults saved to:")
+        print(f"  PP: {self.pp_filepath}")
+        print(f"  TG: {self.tg_filepath}\n")
 
         return len(self.results) > 0
 
