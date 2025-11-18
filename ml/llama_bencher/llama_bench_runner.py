@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 llama-bench Benchmark Runner
 
@@ -97,6 +97,35 @@ class LlamaBenchRunner:
 
         return None
 
+    def _build_llama_bench_cmd(
+        self, llama_bench_path: str, model_path: str, prompt_size: int, output_tokens: int
+    ) -> list:
+        """Build llama-bench command with all configured options."""
+        cmd = [
+            llama_bench_path,
+            "-m",
+            model_path,
+            "-p",
+            str(prompt_size),
+            "-n",
+            str(output_tokens),
+        ]
+
+        # Add optional parameters
+        if self.cfg.target.threads:
+            cmd.extend(["-t", str(self.cfg.target.threads)])
+
+        if self.cfg.target.mmp is not None:
+            cmd.extend(["-mmp", str(self.cfg.target.mmp)])
+
+        if self.cfg.target.fa is not None:
+            cmd.extend(["-fa", str(self.cfg.target.fa)])
+
+        if self.cfg.target.rpc:
+            cmd.extend(["--rpc", self.cfg.target.rpc])
+
+        return cmd
+
     def _parse_llama_bench_output(self, output: str) -> List[Dict]:
         """Parse llama-bench table output into structured data."""
         lines = output.split("\n")
@@ -128,7 +157,12 @@ class LlamaBenchRunner:
 
             # Split by | and clean up
             parts = [p.strip() for p in line.split("|")]
-            if len(parts) < 8:
+            
+            # The table can have variable columns depending on options used
+            # Standard: model | size | params | backend | ngl | threads | test | t/s
+            # With RPC/FA: model | size | params | backend | ngl | threads | fa | mmap | test | t/s
+            
+            if len(parts) < 9:  # Minimum columns needed
                 continue
 
             # Skip empty rows
@@ -136,15 +170,29 @@ class LlamaBenchRunner:
                 continue
 
             try:
+                # Always present columns
                 result = {
                     "model": parts[1],
                     "size": parts[2],
                     "params": parts[3],
                     "backend": parts[4],
-                    "threads": int(parts[5]) if parts[5].isdigit() else 0,
-                    "test": parts[6],
-                    "tokens_per_second": parts[7],
+                    "ngl": int(parts[5]) if parts[5].isdigit() else 0,
+                    "threads": int(parts[6]) if parts[6].isdigit() else 0,
                 }
+                
+                # Detect if we have the extended format (fa/mmap columns)
+                # If parts[7] is a number (0 or 1), it's the fa column
+                if len(parts) >= 11 and parts[7].isdigit() and int(parts[7]) in [0, 1]:
+                    # Extended format: fa and mmap are present
+                    result["fa"] = int(parts[7])
+                    result["mmap"] = int(parts[8]) if parts[8].isdigit() else 0
+                    result["test"] = parts[9]
+                    result["tokens_per_second"] = parts[10]
+                else:
+                    # Standard format: no fa/mmap columns
+                    result["test"] = parts[7]
+                    result["tokens_per_second"] = parts[8]
+                
                 results.append(result)
             except (ValueError, IndexError) as e:
                 print(f"Warning: Could not parse line: {line}")
@@ -180,17 +228,9 @@ class LlamaBenchRunner:
             print(
                 f"🔥 Running {self.cfg.benchmark.warmup_iterations} warmup iterations (small prompt)..."
             )
-            warmup_cmd = [
-                llama_bench_path,
-                "-m",
-                model_path,
-                "-p",
-                "128",  # Small prompt for quick warmup
-                "-n",
-                "64",  # Fewer output tokens for warmup
-            ]
-            if self.cfg.target.threads:
-                warmup_cmd.extend(["-t", str(self.cfg.target.threads)])
+            warmup_cmd = self._build_llama_bench_cmd(
+                llama_bench_path, model_path, 128, 64  # Small prompt/output for warmup
+            )
 
             for i in range(self.cfg.benchmark.warmup_iterations):
                 print(f"  Warmup {i+1}/{self.cfg.benchmark.warmup_iterations}")
@@ -220,18 +260,12 @@ class LlamaBenchRunner:
             print(f"{'='*80}")
 
             # Build command for this specific prompt size
-            cmd = [
+            cmd = self._build_llama_bench_cmd(
                 llama_bench_path,
-                "-m",
                 model_path,
-                "-p",
-                str(prompt_size),
-                "-n",
-                str(self.cfg.benchmark.output_tokens),
-            ]
-
-            if self.cfg.target.threads:
-                cmd.extend(["-t", str(self.cfg.target.threads)])
+                prompt_size,
+                self.cfg.benchmark.output_tokens,
+            )
 
             for iteration in range(self.cfg.benchmark.iterations):
                 print(f"  Iteration {iteration + 1}/{self.cfg.benchmark.iterations}")

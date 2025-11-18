@@ -47,6 +47,9 @@ class TargetConfig:
     quant: str
     backend: str
     threads: Optional[int] = None
+    mmp: Optional[int] = None  # Main GPU percentage (0-100)
+    fa: Optional[int] = None   # Flash attention (0 or 1)
+    rpc: Optional[str] = None  # RPC servers (comma-separated)
 
 
 @dataclass
@@ -109,6 +112,9 @@ def load_benchmark_config(config_path: str) -> BenchmarkConfigFull:
         quant=target_data["quant"],
         backend=target_data["backend"],
         threads=target_data.get("threads"),
+        mmp=target_data.get("mmp"),
+        fa=target_data.get("fa"),
+        rpc=target_data.get("rpc"),
     )
 
     # Parse benchmark config

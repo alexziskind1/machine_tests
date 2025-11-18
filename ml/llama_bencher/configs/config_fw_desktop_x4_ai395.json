@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  
+  "_comment_hardware_section": "Physical machine characteristics",
+  "hardware": {
+    "make": "Framework",
+    "device_model": "Desktop",
+    "code": "fw_desktop_ai395x4",
+    "cpu": "AMD Ryzen AI Max+ 395",
+    "memory_gb": 128,
+    "is_igpu": true,
+    "gpu": "Radeon 8060S",
+    "vram_allocation": "dynamic",
+    "vram_gb": 0.5,
+    "notes": "Framework Desktop board with iGPU"
+  },
+  
+  "environment": {
+    "os": "Fedora 42"
+  },
+  
+  "_comment_target_section": "llama-bench executable and model configuration",
+  "target": {
+    "llama_bench_path": "/usr/local/sbin/llama-bench",
+    "model_path": "/mnt/external/models/lmstudio-community/gemma-3-4b-it-GGUF/gemma-3-4b-it-Q4_K_M.gguf",
+    "model_name": "gemma-3-4b-it-Q4_K_M",
+    "quant": "Q4_K_M",
+    "backend": "ROCm",
+    "threads": 12,
+    "mmp": 0,
+    "fa": 1,
+    "rpc": "192.168.100.11:50052,192.168.100.12:50052,192.168.100.13:50052"
+  },
+  
+  "_comment_benchmark_section": "Benchmark parameters",
+  "benchmark": {
+    "prompt_sizes": [128],
+    "output_tokens": 512,
+    "iterations": 1,
+    "warmup_iterations": 2
+  },
+  
+  "_comment_results": "Results are saved to results/<model_name>/<quant>/<hardware_code>/"
+}
