@@ -5,7 +5,7 @@
   "hardware": {
     "make": "Framework",
     "device_model": "Desktop",
-    "code": "fw_desktop_ai395x1",
+    "code": "fw_desktop_ai395",
     "cpu": "AMD Ryzen AI Max+ 395",
     "memory_gb": 128,
     "is_igpu": true,
@@ -22,9 +22,9 @@
   "_comment_target_section": "llama-bench executable and model configuration",
   "target": {
     "llama_bench_path": "/usr/local/sbin/llama-bench",
-    "model_path": "/mnt/external/models/unsloth/MiniMax-M2/MiniMax-M2-UD-Q6_K_XL-00001-of-00004.gguf",
-    "model_name": "MiniMax-M2-UD-Q6_K_XL",
-    "quant": "Q6_K_XL",
+    "model_path": "/home/alex/.lmstudio/models/lmstudio-community/Qwen3-Coder-480B-A35B-Instruct-GGUF/Qwen3-Coder-480B-A35B-Instruct-Q4_K_M-00001-of-00008.gguf",
+    "model_name": "Qwen3-Coder-480B-A35B-Instruct-Q4_K_M",
+    "quant": "Q4_K_M",
     "backend": "ROCm",
     "threads": 12,
     "mmp": 0,

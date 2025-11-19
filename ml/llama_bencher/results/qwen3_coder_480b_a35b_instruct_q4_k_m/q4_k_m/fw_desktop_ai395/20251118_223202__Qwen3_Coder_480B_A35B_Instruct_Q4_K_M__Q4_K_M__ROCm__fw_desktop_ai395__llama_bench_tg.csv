@@ -1,0 +1,1 @@
+timestamp,model_name,model_size_gb,params_b,backend,threads,test_type,prompt_size,tokens_per_second,std_dev,quantization,hardware_slug,hardware_make,hardware_model,hardware_cpu,hardware_mem_gb,hardware_gpu,environment_os,model_path,rpc_nodes

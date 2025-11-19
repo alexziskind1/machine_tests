@@ -413,7 +413,7 @@ class LlamaBenchRunner:
                         warmup_cmd,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        timeout=120,  # Shorter timeout for warmup
+                        timeout=1800,  # 30 minutes for large model warmup
                         check=True,
                     )
                 except subprocess.TimeoutExpired:
@@ -449,7 +449,7 @@ class LlamaBenchRunner:
                         cmd,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        timeout=600,
+                        timeout=3600,  # 60 minutes for large model benchmarks
                         check=True,
                         text=True,
                     )
