@@ -22,9 +22,9 @@
   "_comment_target_section": "llama-bench executable and model configuration",
   "target": {
     "llama_bench_path": "/usr/local/sbin/llama-bench",
-    "model_path": "/home/alex/.lmstudio/models/lmstudio-community/Qwen3-Coder-480B-A35B-Instruct-GGUF/Qwen3-Coder-480B-A35B-Instruct-Q4_K_M-00001-of-00008.gguf",
-    "model_name": "Qwen3-Coder-480B-A35B-Instruct-Q4_K_M",
-    "quant": "Q4_K_M",
+    "model_path": "/home/alex/.lmstudio/models/unsloth/Kimi-K2-Thinking-GGUF/Kimi-K2-Thinking-UD-Q3_K_XL-00001-of-00010.gguf",
+    "model_name": "Kimi-K2-Thinking-UD-Q3_K_XL",
+    "quant": "Q3_K_XL",
     "backend": "ROCm",
     "threads": 12,
     "mmp": 0,
