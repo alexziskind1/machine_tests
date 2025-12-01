@@ -21,15 +21,15 @@
   
   "_comment_target_section": "llama-bench executable and model configuration",
   "target": {
-    "llama_bench_path": "/usr/local/sbin/llama-bench",
-    "model_path": "/home/alex/.lmstudio/models/unsloth/Kimi-K2-Thinking-GGUF/Kimi-K2-Thinking-UD-Q3_K_XL-00001-of-00010.gguf",
-    "model_name": "Kimi-K2-Thinking-UD-Q3_K_XL",
-    "quant": "Q3_K_XL",
+    "llama_bench_path": "/usr/local/bin/llama-bench",
+    "model_path": "/home/alex/.lmstudio/models/lmstudio-community/Llama-3.3-70B-Instruct-GGUF/Llama-3.3-70B-Instruct-Q8_0-00001-of-00002.gguf",
+    "model_name": "Llama-3.3-70B-Instruct-Q8_0",
+    "quant": "Q8_0",
     "backend": "ROCm",
     "threads": 12,
     "mmp": 0,
     "fa": 1,
-    "rpc": "192.168.100.11:50052,192.168.100.12:50052,192.168.100.13:50052"
+    "rpc": "192.168.100.11:50052"
   },
   
   "_comment_benchmark_section": "Benchmark parameters",
