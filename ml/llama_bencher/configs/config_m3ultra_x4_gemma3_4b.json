@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  
+  "_comment_hardware_section": "Physical machine characteristics",
+  "hardware": {
+    "make": "Apple",
+    "device_model": "Mac Studio",
+    "code": "ms_m3ultra",
+    "cpu": "M3 Ultra",
+    "memory_gb": 512,
+    "is_igpu": true,
+    "gpu": "M3 Ultra",
+    "vram_allocation": "dynamic",
+    "vram_gb": 512,
+    "notes": "Apple Mac Studio with M3 Ultra (2025)"
+  },
+  
+  "environment": {
+    "os": "macOS Tahoe"
+  },
+  
+  "_comment_target_section": "llama-bench executable and model configuration",
+  "target": {
+    "llama_bench_path": "~/Code/llama.cpp/build/bin/llama-bench",
+    "model_path": "/Users/alex/Code/models/lmstudio-community/Qwen3-4B-Instruct-2507-GGUF/Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    "model_name": "Qwen3-4B-Instruct-2507-GGUF",
+    "quant": "Q4_K_M",
+    "backend": "Metal",
+    "threads": 12,
+    "mmp": 0,
+    "fa": 1,
+    "rpc": "169.254.185.70:50052"
+  },
+  
+  "_comment_benchmark_section": "Benchmark parameters",
+  "benchmark": {
+    "prompt_sizes": [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768],
+    "output_tokens": 512,
+    "iterations": 5,
+    "warmup_iterations": 2
+  },
+  
+  "_comment_results": "Results are saved to results/<model_name>/<quant>/<hardware_code>/"
+}
