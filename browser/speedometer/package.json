@@ -1,0 +1,12 @@
+{
+  "name": "speedometer",
+  "version": "1.0.0",
+  "description": "Runs Speedometer 3.1 in Google Chrome and prints the score",
+  "private": true,
+  "scripts": {
+    "start": "node speedometer.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.12.0"
+  }
+}
