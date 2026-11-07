@@ -103,7 +103,7 @@ int main() {
     //const int size = 10000000;
     int* arr = new int[size];
 
-    srand(time(nullptr)); // Initialize random seed
+    srand(42); // Fixed seed so every machine sorts the identical data
 
     // Fill the array with random values
     for (int i = 0; i < size; i++)

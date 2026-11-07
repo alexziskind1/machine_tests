@@ -81,7 +81,7 @@ int main()
     sz = 10000000;
     int* arr = new int[sz];
 
-    srand(time(nullptr)); // Initialize random seed
+    srand(42); // Fixed seed so every machine sorts the identical data
 
     for(int i=0;i<sz;i++)
         arr[i]=rand()%100;  //Generate number between 0 to 99
